@@ -1,7 +1,6 @@
 class Metadata:
     def extract(self):
         """Child function. Values remain None."""
-        pass
 
     def start(self):
         print(f"Starting {self.__class__.__name__}")
@@ -13,7 +12,6 @@ class Metadata:
 
     def _setup(self):
         """Child function."""
-        pass
 
     def __init__(self):
         self.tag = []
