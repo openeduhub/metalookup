@@ -4,7 +4,15 @@ class Metadatum:
 
     def start(self):
         print(f"Starting {self.__class__.__name__}")
-        self.values = "cool_value"
+        self._start()
+
+    def _start(self):
+        """Child function. Values remain None."""
+        self.values = None
+
+    def _setup(self):
+        """Child function."""
+        pass
 
     def __init__(self):
         self.tag = []
@@ -12,15 +20,24 @@ class Metadatum:
         self.key = None
         self.values = None
 
+        self._setup()
+
+
+class Advertisement(Metadatum):
+    def _setup(self):
+        self.tag_list = "easylist.txt"
+        self.key = "ads"
+
+    def _start(self):
+        self.values = "cool_value"
+
 
 class Extractor:
     html: str = ""
     metadata_extractors: list = []
 
     def __init__(self):
-        advertisment = Metadatum()
-        advertisment.tag_list = "easylist.txt"
-        advertisment.key = "ads"
+        advertisment = Advertisement()
         self.metadata_extractors.append(advertisment)
 
     def setup(self, html: str):
@@ -30,11 +47,12 @@ class Extractor:
 
         data = {}
         for metadata_extractor in self.metadata_extractors:
+            metadata_extractor: Metadatum
             metadata_extractor.start()
             if metadata_extractor.key:
                 data.update({metadata_extractor.key: metadata_extractor.values})
 
-        print(f"data: {data}")
+        print(f"Resulting data: {data}")
 
 
 if __name__ == '__main__':
