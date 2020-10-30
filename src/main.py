@@ -60,7 +60,7 @@ class IFrameEmbeddable(Metadata):
 
     def _start(self, html_content: str):
         values = super()._start(html_content=html_content)
-        print(values)
+        print(f"{self.tag_list}: {values}")
         if values == "DENY" or values == "SAMEORIGIN" or "ALLOW-FROM" in values:
             return False
         return True
