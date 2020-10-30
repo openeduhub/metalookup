@@ -17,7 +17,7 @@ class Metadata:
 
     def _start(self, html_content: str) -> list:
         if self.tag_list:
-            values = [ele for ele in self.tag_list if (ele in html_content)]
+            values = [ele for ele in self.tag_list if ele in html_content]
         else:
             values = []
         return values
