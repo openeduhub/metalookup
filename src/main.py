@@ -5,49 +5,43 @@ import requests
 
 
 class Metadata:
-    tag: str = ""
     tag_list: list = []
     key: str = ""
-    values: list = []
 
-    def start(self, html_content: str = ""):
+    def start(self, html_content: str = "") -> dict:
         print(f"Starting {self.__class__.__name__}")
-        self._start(html_content=html_content)
+        values = self._start(html_content=html_content)
+        return {self.key: values}
 
-    def _start(self, html_content: str):
-        if not self.tag_list and not self.tag:
-            self.values = []
-        elif self.tag_list and not self.tag:
-            self.values = [ele for ele in self.tag_list if (ele in html_content)]
+    def _start(self, html_content: str) -> list:
+        if self.tag_list:
+            values = [ele for ele in self.tag_list if (ele in html_content)]
         else:
-            self.values = []
-        return self.values
+            values = []
+        return values
 
     def setup(self):
         """Child function."""
 
 
 class Advertisement(Metadata):
-    url: str = ""
+    url: str = "https://easylist.to/easylist/easylist.txt"
+    key: str = "ads"
 
-    def setup(self):
-        # TODO: Split
-        # Setup
-        self.url = 'https://easylist.to/easylist/easylist.txt'
-
-        # I/O
+    def __download_tag_list(self):
         myfile = requests.get(self.url)
         self.tag_list = myfile.text.split("\n")
 
-        # DATA Operation
-        # TODO: Split
+    def __prepare_tag_list(self):
         if "" in self.tag_list:
             self.tag_list.remove("")
 
-        comments = "!"
-        self.tag_list = [x for x in self.tag_list if not x.startswith(comments)]
+        comment_symbol = "!"
+        self.tag_list = [x for x in self.tag_list if not x.startswith(comment_symbol)]
 
-        self.key = "ads"
+    def setup(self):
+        self.__download_tag_list()
+        self.__prepare_tag_list()
 
 
 class Extractor:
@@ -66,12 +60,10 @@ class Extractor:
 
         data = {}
         for metadata_extractor in self.metadata_extractors:
-            metadata_extractor: Metadata
-            metadata_extractor.start(html_content)
-            if metadata_extractor.key:
-                data.update({metadata_extractor.key: metadata_extractor.values})
+            extracted_metadata = metadata_extractor.start(html_content)
+            data.update(extracted_metadata)
 
-        print(f"Resulting data: {data}")
+            print(f"Resulting data: {data}")
 
 
 def load_test_html():
