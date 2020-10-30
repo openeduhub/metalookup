@@ -88,7 +88,7 @@ class Extractor:
             data.update(extracted_metadata)
 
             print(f"Resulting data: {data}")
-
+        return data
 
 def load_test_html():
     data_path = "/home/rcc/projects/WLO/oeh-search-etl/scraped"
