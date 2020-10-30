@@ -52,15 +52,28 @@ class Tracker(Metadata):
     comment_symbol = "!"
 
 
+class IFrameEmbeddable(Metadata):
+    url: str = ""
+    tag_list = ["Content-Security-Policy"]
+    key: str = "iframe_embeddable"
+    comment_symbol = "!"
+
+    def _start(self, html_content: str):
+        values = super()._start(html_content=html_content)
+        print(values)
+        if values == "DENY" or values == "SAMEORIGIN" or "ALLOW-FROM" in values:
+            return False
+        return True
+
+
 class Extractor:
     metadata_extractors: list = []
 
     def __init__(self):
-        advertisement = Advertisement()
-        self.metadata_extractors.append(advertisement)
 
-        tracker = Tracker()
-        self.metadata_extractors.append(tracker)
+        extractors = [Advertisement, Tracker, IFrameEmbeddable]
+        for extractor in extractors:
+            self.metadata_extractors.append(extractor())
 
     def setup(self):
         for metadata_extractor in self.metadata_extractors:
@@ -93,9 +106,9 @@ def load_test_html():
 
 
 if __name__ == '__main__':
-    extractor = Extractor()
+    main_extractor = Extractor()
 
     raw_html = load_test_html()
 
-    extractor.setup()
-    extractor.start(html_content=raw_html)
+    main_extractor.setup()
+    main_extractor.start(html_content=raw_html)
