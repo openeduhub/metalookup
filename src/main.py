@@ -44,12 +44,35 @@ class Advertisement(Metadata):
         self.__prepare_tag_list()
 
 
+class Tracker(Metadata):
+    url: str = "https://easylist.to/easylist/easyprivacy.txt"
+    key: str = "ads"
+
+    def __download_tag_list(self):
+        myfile = requests.get(self.url)
+        self.tag_list = myfile.text.split("\n")
+
+    def __prepare_tag_list(self):
+        if "" in self.tag_list:
+            self.tag_list.remove("")
+
+        comment_symbol = "!"
+        self.tag_list = [x for x in self.tag_list if not x.startswith(comment_symbol)]
+
+    def setup(self):
+        self.__download_tag_list()
+        self.__prepare_tag_list()
+
+
 class Extractor:
     metadata_extractors: list = []
 
     def __init__(self):
         advertisement = Advertisement()
         self.metadata_extractors.append(advertisement)
+
+        tracker = Tracker()
+        self.metadata_extractors.append(tracker)
 
     def setup(self):
         for metadata_extractor in self.metadata_extractors:
