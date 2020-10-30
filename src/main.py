@@ -5,42 +5,37 @@ import requests
 
 
 class Metadata:
-    def extract(self):
-        """Child function. Values remain None."""
+    tag: str = ""
+    tag_list: list = []
+    key: str = ""
+    values: list = []
 
-    def start(self):
+    def start(self, html_content: str = ""):
         print(f"Starting {self.__class__.__name__}")
-        self._start()
+        self._start(html_content=html_content)
 
-    def _start(self):
-        """Child function. Values remain None."""
+    def _start(self, html_content: str):
         if not self.tag_list and not self.tag:
-            self.values = None
+            self.values = []
         elif self.tag_list and not self.tag:
-            self.values = [ele for ele in self.tag_list if (ele in self.html)]
+            self.values = [ele for ele in self.tag_list if (ele in html_content)]
         else:
-            self.values = None
+            self.values = []
         return self.values
 
-    def _setup(self, html: str):
+    def setup(self):
         """Child function."""
-        self.html = html
-
-    def __init__(self):
-        self.tag: str = ""
-        self.tag_list: list = []
-        self.key: str = None
-        self.values: list = []
-        self.html = ""
 
 
 class Advertisement(Metadata):
-    def _setup(self, html):
-        super()._setup(html=html)
+    url: str = ""
+
+    def setup(self):
+        # TODO: Split
+        # Setup
+        self.url = 'https://easylist.to/easylist/easylist.txt'
 
         # I/O
-        # TODO: Split
-        self.url = 'https://easylist.to/easylist/easylist.txt'
         myfile = requests.get(self.url)
         self.tag_list = myfile.text.split("\n")
 
@@ -56,24 +51,23 @@ class Advertisement(Metadata):
 
 
 class Extractor:
-    html: str = ""
     metadata_extractors: list = []
 
     def __init__(self):
         advertisement = Advertisement()
         self.metadata_extractors.append(advertisement)
 
-    def setup(self, html: str):
+    def setup(self):
         for metadata_extractor in self.metadata_extractors:
             metadata_extractor: Metadata
-            metadata_extractor._setup(html)
+            metadata_extractor.setup()
 
-    def start(self):
+    def start(self, html_content: str):
 
         data = {}
         for metadata_extractor in self.metadata_extractors:
             metadata_extractor: Metadata
-            metadata_extractor.start()
+            metadata_extractor.start(html_content)
             if metadata_extractor.key:
                 data.update({metadata_extractor.key: metadata_extractor.values})
 
@@ -81,24 +75,24 @@ class Extractor:
 
 
 def load_test_html():
-    DATA_PATH = "/home/rcc/projects/WLO/oeh-search-etl/scraped"
+    data_path = "/home/rcc/projects/WLO/oeh-search-etl/scraped"
 
-    logs = [f for f in os.listdir(DATA_PATH) if os.path.isfile(os.path.join(DATA_PATH, f)) and ".log" in f]
+    logs = [f for f in os.listdir(data_path) if os.path.isfile(os.path.join(data_path, f)) and ".log" in f]
 
     log = logs[0]
 
-    with open(DATA_PATH + "/" + log, "r") as file:
+    with open(data_path + "/" + log, "r") as file:
         raw = json.load(file)
 
-    html = raw["html"]
+    html_content = raw["html"]
 
-    return html
+    return html_content
 
 
 if __name__ == '__main__':
     extractor = Extractor()
 
-    html = load_test_html()
+    raw_html = load_test_html()
 
-    extractor.setup(html=html)
-    extractor.start()
+    extractor.setup()
+    extractor.start(html_content=raw_html)
