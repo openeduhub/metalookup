@@ -7,6 +7,8 @@ import requests
 class Metadata:
     tag_list: list = []
     key: str = ""
+    url: str = ""
+    comment_symbol: str = ""
 
     def start(self, html_content: str = "") -> dict:
         print(f"Starting {self.__class__.__name__}")
@@ -20,48 +22,34 @@ class Metadata:
             values = []
         return values
 
+    def __download_tag_list(self):
+        result = requests.get(self.url)
+        self.tag_list = result.text.split("\n")
+
+    def __prepare_tag_list(self):
+        if "" in self.tag_list:
+            self.tag_list.remove("")
+
+        if self.comment_symbol != "":
+            self.tag_list = [x for x in self.tag_list if not x.startswith(self.comment_symbol)]
+
     def setup(self):
         """Child function."""
+        if self.url != "":
+            self.__download_tag_list()
+        self.__prepare_tag_list()
 
 
 class Advertisement(Metadata):
     url: str = "https://easylist.to/easylist/easylist.txt"
     key: str = "ads"
-
-    def __download_tag_list(self):
-        myfile = requests.get(self.url)
-        self.tag_list = myfile.text.split("\n")
-
-    def __prepare_tag_list(self):
-        if "" in self.tag_list:
-            self.tag_list.remove("")
-
-        comment_symbol = "!"
-        self.tag_list = [x for x in self.tag_list if not x.startswith(comment_symbol)]
-
-    def setup(self):
-        self.__download_tag_list()
-        self.__prepare_tag_list()
+    comment_symbol = "!"
 
 
 class Tracker(Metadata):
     url: str = "https://easylist.to/easylist/easyprivacy.txt"
-    key: str = "ads"
-
-    def __download_tag_list(self):
-        myfile = requests.get(self.url)
-        self.tag_list = myfile.text.split("\n")
-
-    def __prepare_tag_list(self):
-        if "" in self.tag_list:
-            self.tag_list.remove("")
-
-        comment_symbol = "!"
-        self.tag_list = [x for x in self.tag_list if not x.startswith(comment_symbol)]
-
-    def setup(self):
-        self.__download_tag_list()
-        self.__prepare_tag_list()
+    key: str = "tracker"
+    comment_symbol = "!"
 
 
 class Extractor:
