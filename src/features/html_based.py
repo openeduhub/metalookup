@@ -14,7 +14,7 @@ class Tracker(Metadata):
 
 class Cookies(Metadata):
     url: str = "https://easylist.to/easylist/easylist-cookie.txt"
-    key: str = "cookie"
+    key: str = "cookies"
     comment_symbol = "!"
 
 

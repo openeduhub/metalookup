@@ -3,6 +3,7 @@ import logging
 import multiprocessing
 import os
 import time
+from json import JSONDecodeError
 from logging import handlers
 from queue import Empty
 
@@ -108,7 +109,16 @@ class Manager:
 
     @staticmethod
     def _preprocess_header(header: str) -> dict:
-        header = header.replace("b'", "\"").replace("'", "\"")
+        header = header.replace("b'", "\"").replace("'", "\"").replace("\"\"", "\"").replace("/\"", "/")
+
+        idx = header.find("b\"")
+        if idx >= 0:
+            if header[idx - 1] == "[":
+                bracket_idx = header[idx:].find("]")
+                header = header[:idx] + "\"" \
+                         + header[idx + 2:idx + bracket_idx - 2].replace("\"", " ") \
+                         + header[idx + bracket_idx - 1:]
+
         header = json.loads(header)
         return header
 

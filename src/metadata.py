@@ -34,11 +34,10 @@ class Metadata:
         self.tag_list = result.text.split("\n")
 
     def __prepare_tag_list(self):
-        if "" in self.tag_list:
-            self.tag_list.remove("")
+        self.tag_list = [i for i in self.tag_list if i != ""]
 
         if self.comment_symbol != "":
-            self.tag_list = [x for x in self.tag_list if not x.startswith(self.comment_symbol)]
+            self.tag_list = [x for x in self.tag_list if not x[0] == self.comment_symbol]
 
     def setup(self):
         """Child function."""
