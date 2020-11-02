@@ -66,7 +66,7 @@ class IFrameEmbeddable(Metadata):
         return True
 
 
-class Extractor:
+class Manager:
     metadata_extractors: list = []
 
     def __init__(self):
@@ -90,6 +90,7 @@ class Extractor:
             print(f"Resulting data: {data}")
         return data
 
+
 def load_test_html():
     data_path = "/home/rcc/projects/WLO/oeh-search-etl/scraped"
 
@@ -106,9 +107,9 @@ def load_test_html():
 
 
 if __name__ == '__main__':
-    main_extractor = Extractor()
+    manager = Manager()
 
     raw_html = load_test_html()
 
-    main_extractor.setup()
-    main_extractor.start(html_content=raw_html)
+    manager.setup()
+    manager.start(html_content=raw_html)

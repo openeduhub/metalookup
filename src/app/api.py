@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-from src import main
+import manager
 
 app = FastAPI()
 
@@ -19,7 +19,7 @@ class Output(BaseModel):
 
 @app.post('/extract_meta')
 def extract_meta(request: Input):
-    main_extractor = main.Extractor()
+    main_extractor = manager.Manager()
 
     main_extractor.setup()
     result = main_extractor.start(html_content=Input.url)
