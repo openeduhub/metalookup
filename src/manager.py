@@ -7,77 +7,13 @@ from datetime import datetime
 from logging import handlers
 from queue import Empty
 
-import requests
 import uvicorn
 
 from app.api import app
 from app.communication import ProcessToDaemonCommunication
+from metadata import Metadata
+from features.html_based import Advertisement, Tracker, IFrameEmbeddable
 from settings import API_PORT, LOG_LEVEL, LOG_PATH
-
-
-class Metadata:
-    tag_list: list = []
-    key: str = ""
-    url: str = ""
-    comment_symbol: str = ""
-
-    def __init__(self, logger):
-        self._logger = logger
-
-    def start(self, html_content: str = "") -> dict:
-        self._logger.info(f"Starting {self.__class__.__name__}")
-        values = self._start(html_content=html_content)
-        return {self.key: values}
-
-    def _start(self, html_content: str) -> list:
-        if self.tag_list:
-            values = [ele for ele in self.tag_list if ele in html_content]
-        else:
-            values = []
-        return values
-
-    def __download_tag_list(self):
-        result = requests.get(self.url)
-        self.tag_list = result.text.split("\n")
-
-    def __prepare_tag_list(self):
-        if "" in self.tag_list:
-            self.tag_list.remove("")
-
-        if self.comment_symbol != "":
-            self.tag_list = [x for x in self.tag_list if not x.startswith(self.comment_symbol)]
-
-    def setup(self):
-        """Child function."""
-        if self.url != "":
-            self.__download_tag_list()
-        self.__prepare_tag_list()
-
-
-class Advertisement(Metadata):
-    url: str = "https://easylist.to/easylist/easylist.txt"
-    key: str = "ads"
-    comment_symbol = "!"
-
-
-class Tracker(Metadata):
-    url: str = "https://easylist.to/easylist/easyprivacy.txt"
-    key: str = "tracker"
-    comment_symbol = "!"
-
-
-class IFrameEmbeddable(Metadata):
-    url: str = ""
-    tag_list = ["Content-Security-Policy"]
-    key: str = "iframe_embeddable"
-    comment_symbol = "!"
-
-    def _start(self, html_content: str):
-        values = super()._start(html_content=html_content)
-        self._logger.debug(f"{self.tag_list}: {values}")
-        if values == "DENY" or values == "SAMEORIGIN" or "ALLOW-FROM" in values:
-            return False
-        return True
 
 
 class Manager:
@@ -94,10 +30,10 @@ class Manager:
         self.run()
 
     def _create_api(self):
-        self.api_to_engine_queue = multiprocessing.Queue()
-        self.engine_to_api_queue = multiprocessing.Queue()
+        self.api_to_manager_queue = multiprocessing.Queue()
+        self.manager_to_api_queue = multiprocessing.Queue()
         api_process = multiprocessing.Process(
-            target=api_server, args=(self.api_to_engine_queue, self.engine_to_api_queue)
+            target=api_server, args=(self.api_to_manager_queue, self.manager_to_api_queue)
         )
         api_process.start()
 
@@ -138,9 +74,9 @@ class Manager:
         self._logger.addHandler(fh)
 
     def get_api_request(self):
-        if self.api_to_engine_queue is not None:
+        if self.api_to_manager_queue is not None:
             try:
-                request = self.api_to_engine_queue.get(block=False, timeout=0.1)
+                request = self.api_to_manager_queue.get(block=False, timeout=0.1)
                 if isinstance(request, dict):
                     self.handle_content(request)
             except Empty:
@@ -151,7 +87,7 @@ class Manager:
             metadata_extractor: Metadata
             metadata_extractor.setup()
 
-    def start(self, html_content: str):
+    def _extract_meta_data(self, html_content: str):
 
         data = {}
         for metadata_extractor in self.metadata_extractors:
@@ -176,10 +112,10 @@ class Manager:
             self._logger.debug(f"message: {message}")
             content = message["content"]
 
-            meta_data = self.start(content)
+            meta_data = self._extract_meta_data(content)
 
             response = meta_data
-            self.engine_to_api_queue.put({uuid: response})
+            self.manager_to_api_queue.put({uuid: response})
 
 
 def load_test_html():
@@ -209,4 +145,4 @@ if __name__ == '__main__':
     raw_html = load_test_html()
 
     manager.setup()
-    manager.start(html_content=raw_html)
+    manager._extract_meta_data(html_content=raw_html)
