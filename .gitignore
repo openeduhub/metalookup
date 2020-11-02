@@ -9,3 +9,6 @@ src/app/__pycache__/
 .mypy_cache
 .vscode
 .sonarlint
+
+# Local data
+/local_tools/

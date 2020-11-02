@@ -87,10 +87,13 @@ class Manager:
 
         self._create_logger()
 
-        extractors = [Advertisement, Tracker, IFrameEmbeddable]
-        for extractor in extractors:
-            self.metadata_extractors.append(extractor(self._logger))
+        self._create_extractors()
 
+        self._create_api()
+
+        self.run()
+
+    def _create_api(self):
         self.api_to_engine_queue = multiprocessing.Queue()
         self.engine_to_api_queue = multiprocessing.Queue()
         api_process = multiprocessing.Process(
@@ -98,7 +101,10 @@ class Manager:
         )
         api_process.start()
 
-        self.run()
+    def _create_extractors(self):
+        extractors = [Advertisement, Tracker, IFrameEmbeddable]
+        for extractor in extractors:
+            self.metadata_extractors.append(extractor(self._logger))
 
     def _create_logger(self):
         self._logger = logging.getLogger(name="manager")
