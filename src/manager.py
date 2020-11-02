@@ -2,7 +2,6 @@ import logging
 import multiprocessing
 import os
 import time
-from datetime import datetime
 from logging import handlers
 from queue import Empty
 
@@ -11,6 +10,7 @@ import uvicorn
 from app.api import app
 from app.communication import ProcessToDaemonCommunication
 from lib.config import MESSAGE_CONTENT, LOGFILE_MANAGER
+from lib.timing import get_utc_now
 from metadata import Metadata
 from features.html_based import Advertisement, Tracker, IFrameEmbeddable
 from settings import API_PORT, LOG_LEVEL, LOG_PATH
@@ -96,12 +96,12 @@ class Manager:
             self._logger.debug(f"Resulting data: {data}")
         return data
 
-    # =========== CYCLE ============
+    # =========== LOOP ============
     def run(self):
 
         while True:
             self.get_api_request()
-            self._logger.info(f"Current time: {datetime.utcnow().timestamp()}")
+            self._logger.info(f"Current time: {get_utc_now()}")
             time.sleep(1)
 
     def handle_content(self, request):
@@ -111,7 +111,9 @@ class Manager:
             self._logger.debug(f"message: {message}")
             content = message[MESSAGE_CONTENT]
 
+            starting_extraction = get_utc_now()
             meta_data = self._extract_meta_data(content)
+            meta_data.update({"time_for_extraction": get_utc_now() - starting_extraction})
 
             response = meta_data
             self.manager_to_api_queue.put({uuid: response})
