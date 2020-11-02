@@ -109,7 +109,8 @@ class Manager:
 
     @staticmethod
     def _preprocess_header(header: str) -> dict:
-        header = header.replace("b'", "\"").replace("'", "\"").replace("\"\"", "\"").replace("/\"", "/")
+        header = header.replace("b'", "\"").replace("/'", "\"").replace("'", "\"").replace("\"\"", "\"").replace("/\"",
+                                                                                                                 "/")
 
         idx = header.find("b\"")
         if idx >= 0:
