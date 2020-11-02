@@ -8,7 +8,7 @@ from lib.timing import get_utc_now
 
 class Input(BaseModel):
     url: str
-    content: str
+    content: dict
 
 
 class Output(BaseModel):

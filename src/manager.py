@@ -1,3 +1,4 @@
+import json
 import logging
 import multiprocessing
 import os
@@ -9,10 +10,10 @@ import uvicorn
 
 from app.api import app
 from app.communication import ProcessToDaemonCommunication
-from lib.config import MESSAGE_CONTENT, LOGFILE_MANAGER
+from lib.config import MESSAGE_CONTENT, LOGFILE_MANAGER, MESSAGE_HEADERS, MESSAGE_HTML
 from lib.timing import get_utc_now
 from metadata import Metadata
-from features.html_based import Advertisement, Tracker, IFrameEmbeddable
+from features.html_based import Advertisement, Tracker, IFrameEmbeddable, ContentSecurityPolicy
 from settings import API_PORT, LOG_LEVEL, LOG_PATH
 
 
@@ -38,7 +39,7 @@ class Manager:
         api_process.start()
 
     def _create_extractors(self):
-        extractors = [Advertisement, Tracker, IFrameEmbeddable]
+        extractors = [Advertisement, Tracker, IFrameEmbeddable, ContentSecurityPolicy]
         for extractor in extractors:
             self.metadata_extractors.append(extractor(self._logger))
 
@@ -86,11 +87,10 @@ class Manager:
             metadata_extractor: Metadata
             metadata_extractor.setup()
 
-    def _extract_meta_data(self, html_content: str):
-
+    def _extract_meta_data(self, html_content: str, headers: dict):
         data = {}
         for metadata_extractor in self.metadata_extractors:
-            extracted_metadata = metadata_extractor.start(html_content)
+            extracted_metadata = metadata_extractor.start(html_content, headers)
             data.update(extracted_metadata)
 
             self._logger.debug(f"Resulting data: {data}")
@@ -104,15 +104,24 @@ class Manager:
             self._logger.info(f"Current time: {get_utc_now()}")
             time.sleep(1)
 
+    @staticmethod
+    def _preprocess_header(header: str) -> dict:
+        header = header.replace("b'", "\"").replace("'", "\"")
+        header = json.loads(header)
+        return header
+
     def handle_content(self, request):
 
         self._logger.debug(f"request: {request}")
         for uuid, message in request.items():
             self._logger.debug(f"message: {message}")
             content = message[MESSAGE_CONTENT]
+            # TODO A lot of information needs to be known here
+            html_content = content[MESSAGE_HTML]
+            header_content = self._preprocess_header(content[MESSAGE_HEADERS])
 
             starting_extraction = get_utc_now()
-            meta_data = self._extract_meta_data(content)
+            meta_data = self._extract_meta_data(html_content, header_content)
             meta_data.update({"time_for_extraction": get_utc_now() - starting_extraction})
 
             response = meta_data

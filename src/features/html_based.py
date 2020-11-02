@@ -13,15 +13,17 @@ class Tracker(Metadata):
     comment_symbol = "!"
 
 
-class IFrameEmbeddable(Metadata):
+class ContentSecurityPolicy(Metadata):
     url: str = ""
     tag_list = ["Content-Security-Policy"]
+    key: str = "content_security_policy"
+    comment_symbol = "!"
+    evaluate_header = True
+
+
+class IFrameEmbeddable(Metadata):
+    url: str = ""
+    tag_list = ["X-Frame-Options"]
     key: str = "iframe_embeddable"
     comment_symbol = "!"
-
-    def _start(self, html_content: str):
-        values = super()._start(html_content=html_content)
-        self._logger.debug(f"{self.tag_list}: {values}")
-        if values == "DENY" or values == "SAMEORIGIN" or "ALLOW-FROM" in values:
-            return False
-        return True
+    evaluate_header = True
