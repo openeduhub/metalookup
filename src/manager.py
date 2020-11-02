@@ -8,7 +8,8 @@ from queue import Empty
 import requests
 import uvicorn
 
-from app.api import app, ProcessToDaemonCommunication
+from app.api import app
+from app.communication import ProcessToDaemonCommunication
 
 
 class Metadata:
@@ -95,7 +96,7 @@ class Manager:
         if self.api_to_engine_queue is not None:
             try:
                 request = self.api_to_engine_queue.get(block=False, timeout=0.1)
-                if type(request) == dict:
+                if isinstance(request, dict):
                     self.handle_content(request)
             except Empty:
                 pass
@@ -141,7 +142,8 @@ class Manager:
 def load_test_html():
     data_path = "/home/rcc/projects/WLO/oeh-search-etl/scraped"
 
-    logs = [f for f in os.listdir(data_path) if os.path.isfile(os.path.join(data_path, f)) and ".log" in f]
+    logs = [f for f in os.listdir(data_path)
+            if os.path.isfile(os.path.join(data_path, f)) and ".log" in f]
 
     log = logs[0]
 

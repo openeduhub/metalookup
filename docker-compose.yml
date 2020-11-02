@@ -6,7 +6,7 @@ services:
     ports:
       - "5057:5057"
     healthcheck:
-      test: curl --fail -s http://localhost:5057/hello || exit 1
+      test: curl --fail -s http://localhost:5057/ || exit 1
       interval: 1m30s
       timeout: 10s
       retries: 3
