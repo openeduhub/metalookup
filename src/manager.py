@@ -1,4 +1,3 @@
-import json
 import logging
 import multiprocessing
 import os
@@ -118,22 +117,6 @@ class Manager:
             self.manager_to_api_queue.put({uuid: response})
 
 
-def load_test_html():
-    data_path = "/home/rcc/projects/WLO/oeh-search-etl/scraped"
-
-    logs = [f for f in os.listdir(data_path)
-            if os.path.isfile(os.path.join(data_path, f)) and ".log" in f]
-
-    log = logs[0]
-
-    with open(data_path + "/" + log, "r") as file:
-        raw = json.load(file)
-
-    html_content = raw["html"]
-
-    return html_content
-
-
 def api_server(queue, return_queue):
     app.api_queue = ProcessToDaemonCommunication(queue, return_queue)
     uvicorn.run(app, host="0.0.0.0", port=API_PORT, log_level="info")
@@ -141,8 +124,3 @@ def api_server(queue, return_queue):
 
 if __name__ == '__main__':
     manager = Manager()
-
-    raw_html = load_test_html()
-
-    manager.setup()
-    manager._extract_meta_data(html_content=raw_html)
