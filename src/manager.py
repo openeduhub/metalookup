@@ -1,7 +1,14 @@
 import json
+import multiprocessing
 import os
+import time
+from datetime import datetime
+from queue import Empty
 
 import requests
+import uvicorn
+
+from app.api import app, ProcessToDaemonCommunication
 
 
 class Metadata:
@@ -75,6 +82,24 @@ class Manager:
         for extractor in extractors:
             self.metadata_extractors.append(extractor())
 
+        self.api_to_engine_queue = multiprocessing.Queue()
+        self.engine_to_api_queue = multiprocessing.Queue()
+        api_process = multiprocessing.Process(
+            target=api_server, args=(self.api_to_engine_queue, self.engine_to_api_queue)
+        )
+        api_process.start()
+
+        self.run()
+
+    def get_api_request(self):
+        if self.api_to_engine_queue is not None:
+            try:
+                request = self.api_to_engine_queue.get(block=False, timeout=0.1)
+                if type(request) == dict:
+                    self.handle_content(request)
+            except Empty:
+                pass
+
     def setup(self):
         for metadata_extractor in self.metadata_extractors:
             metadata_extractor: Metadata
@@ -90,6 +115,28 @@ class Manager:
             print(f"Resulting data: {data}")
         return data
 
+    # =========== CYCLE ============
+    def run(self):
+
+        while True:
+            self.get_api_request()
+            print(f"Current time: {datetime.utcnow().timestamp()}")
+            time.sleep(1)
+
+    def handle_content(self, request):
+
+        print(f"request: {request}")
+        for uuid, message in request.items():
+            print(f"message: {message}")
+            content = message["content"]
+
+            result = self.start(content)
+            valid = True
+            error_count = 0
+            response = {"valid": valid, "error_count": error_count, "result": result}
+
+            self.engine_to_api_queue.put({uuid: response})
+
 
 def load_test_html():
     data_path = "/home/rcc/projects/WLO/oeh-search-etl/scraped"
@@ -104,6 +151,11 @@ def load_test_html():
     html_content = raw["html"]
 
     return html_content
+
+
+def api_server(queue, return_queue):
+    app.api_queue = ProcessToDaemonCommunication(queue, return_queue)
+    uvicorn.run(app, host="0.0.0.0", port=5057, log_level="info")
 
 
 if __name__ == '__main__':

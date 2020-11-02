@@ -7,10 +7,12 @@ WORKDIR /home/extractor
 COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
-COPY src/app/api.py ./
+COPY src/app/api.py ./app/api.py
+COPY src/manager.py ./
 
 RUN chown -R extractor:extractor ./
 
 USER extractor
 
-CMD uvicorn api:app --host 0.0.0.0 --port 5057
+# CMD uvicorn api:app --host 0.0.0.0 --port 5057
+CMD python manager.py
