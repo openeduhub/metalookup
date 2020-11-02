@@ -1,8 +1,10 @@
 import json
+import logging
 import multiprocessing
 import os
 import time
 from datetime import datetime
+from logging import handlers
 from queue import Empty
 
 import requests
@@ -10,6 +12,7 @@ import uvicorn
 
 from app.api import app
 from app.communication import ProcessToDaemonCommunication
+from settings import API_PORT, LOG_LEVEL, LOG_PATH
 
 
 class Metadata:
@@ -18,8 +21,11 @@ class Metadata:
     url: str = ""
     comment_symbol: str = ""
 
+    def __init__(self, logger):
+        self._logger = logger
+
     def start(self, html_content: str = "") -> dict:
-        print(f"Starting {self.__class__.__name__}")
+        self._logger.info(f"Starting {self.__class__.__name__}")
         values = self._start(html_content=html_content)
         return {self.key: values}
 
@@ -68,7 +74,7 @@ class IFrameEmbeddable(Metadata):
 
     def _start(self, html_content: str):
         values = super()._start(html_content=html_content)
-        print(f"{self.tag_list}: {values}")
+        self._logger.debug(f"{self.tag_list}: {values}")
         if values == "DENY" or values == "SAMEORIGIN" or "ALLOW-FROM" in values:
             return False
         return True
@@ -79,9 +85,11 @@ class Manager:
 
     def __init__(self):
 
+        self._create_logger()
+
         extractors = [Advertisement, Tracker, IFrameEmbeddable]
         for extractor in extractors:
-            self.metadata_extractors.append(extractor())
+            self.metadata_extractors.append(extractor(self._logger))
 
         self.api_to_engine_queue = multiprocessing.Queue()
         self.engine_to_api_queue = multiprocessing.Queue()
@@ -91,6 +99,37 @@ class Manager:
         api_process.start()
 
         self.run()
+
+    def _create_logger(self):
+        self._logger = logging.getLogger(name="manager")
+
+        self._logger.propagate = True
+
+        self._logger.setLevel(LOG_LEVEL)
+
+        formatter = logging.Formatter("%(asctime)s  %(levelname)-7s %(message)s")
+
+        # Convert time to UTC/GMT time
+        logging.Formatter.converter = time.gmtime
+
+        # standard log
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        print(f"dir_path: {dir_path}")
+
+        data_path = dir_path + "/" + LOG_PATH
+
+        log_15_mb_limit = 1024 * 1024 * 15
+        backup_count = 10000
+
+        if not os.path.exists(data_path):
+            os.mkdir(data_path, mode=0o755)
+        fh = handlers.RotatingFileHandler(filename=f"{data_path}/manager.log", maxBytes=log_15_mb_limit,
+                                          backupCount=backup_count)
+
+        fh.setLevel(LOG_LEVEL)
+        fh.setFormatter(formatter)
+
+        self._logger.addHandler(fh)
 
     def get_api_request(self):
         if self.api_to_engine_queue is not None:
@@ -113,7 +152,7 @@ class Manager:
             extracted_metadata = metadata_extractor.start(html_content)
             data.update(extracted_metadata)
 
-            print(f"Resulting data: {data}")
+            self._logger.debug(f"Resulting data: {data}")
         return data
 
     # =========== CYCLE ============
@@ -121,14 +160,14 @@ class Manager:
 
         while True:
             self.get_api_request()
-            print(f"Current time: {datetime.utcnow().timestamp()}")
+            self._logger.info(f"Current time: {datetime.utcnow().timestamp()}")
             time.sleep(1)
 
     def handle_content(self, request):
 
-        print(f"request: {request}")
+        self._logger.debug(f"request: {request}")
         for uuid, message in request.items():
-            print(f"message: {message}")
+            self._logger.debug(f"message: {message}")
             content = message["content"]
 
             result = self.start(content)
@@ -157,7 +196,7 @@ def load_test_html():
 
 def api_server(queue, return_queue):
     app.api_queue = ProcessToDaemonCommunication(queue, return_queue)
-    uvicorn.run(app, host="0.0.0.0", port=5057, log_level="info")
+    uvicorn.run(app, host="0.0.0.0", port=API_PORT, log_level="info")
 
 
 if __name__ == '__main__':
