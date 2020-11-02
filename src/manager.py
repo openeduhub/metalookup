@@ -10,6 +10,7 @@ import uvicorn
 
 from app.api import app
 from app.communication import ProcessToDaemonCommunication
+from lib.config import MESSAGE_CONTENT, LOGFILE_MANAGER
 from metadata import Metadata
 from features.html_based import Advertisement, Tracker, IFrameEmbeddable
 from settings import API_PORT, LOG_LEVEL, LOG_PATH
@@ -42,7 +43,7 @@ class Manager:
             self.metadata_extractors.append(extractor(self._logger))
 
     def _create_logger(self):
-        self._logger = logging.getLogger(name="manager")
+        self._logger = logging.getLogger(name=LOGFILE_MANAGER)
 
         self._logger.propagate = True
 
@@ -55,7 +56,6 @@ class Manager:
 
         # standard log
         dir_path = os.path.dirname(os.path.realpath(__file__))
-        print(f"dir_path: {dir_path}")
 
         data_path = dir_path + "/" + LOG_PATH
 
@@ -64,7 +64,7 @@ class Manager:
 
         if not os.path.exists(data_path):
             os.mkdir(data_path, mode=0o755)
-        fh = handlers.RotatingFileHandler(filename=f"{data_path}/manager.log", maxBytes=log_15_mb_limit,
+        fh = handlers.RotatingFileHandler(filename=f"{data_path}/{LOGFILE_MANAGER}.log", maxBytes=log_15_mb_limit,
                                           backupCount=backup_count)
 
         fh.setLevel(LOG_LEVEL)
@@ -109,7 +109,7 @@ class Manager:
         self._logger.debug(f"request: {request}")
         for uuid, message in request.items():
             self._logger.debug(f"message: {message}")
-            content = message["content"]
+            content = message[MESSAGE_CONTENT]
 
             meta_data = self._extract_meta_data(content)
 

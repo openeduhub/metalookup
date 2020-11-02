@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from app.communication import ProcessToDaemonCommunication
+from lib.config import MESSAGE_URL, MESSAGE_CONTENT
 
 
 class Input(BaseModel):
@@ -20,7 +21,7 @@ app.api_queue: ProcessToDaemonCommunication
 
 @app.post('/extract_meta', response_model=Output)
 def extract_meta(input_data: Input):
-    uuid = app.api_queue.send_message({"url": input_data.url, "content": input_data.content})
+    uuid = app.api_queue.send_message({MESSAGE_URL: input_data.url, MESSAGE_CONTENT: input_data.content})
 
     meta_data: dict = app.api_queue.get_message(uuid)
 
