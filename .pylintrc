@@ -1,2 +1,2 @@
 # https://github.com/PyCQA/pylint/issues/3570
-disable=logging-fstring-interpolation
+# disable=logging-fstring-interpolation

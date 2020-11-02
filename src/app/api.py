@@ -7,7 +7,6 @@ from app.communication import ProcessToDaemonCommunication
 class Input(BaseModel):
     url: str
     content: str
-    result: dict
 
 
 class Output(BaseModel):
@@ -23,7 +22,7 @@ app.api_queue: ProcessToDaemonCommunication
 def extract_meta(input_data: Input):
     uuid = app.api_queue.send_message({"url": input_data.url, "content": input_data.content})
 
-    result: dict = app.api_queue.get_message(uuid)
+    meta_data: dict = app.api_queue.get_message(uuid)
 
-    out = Output(url=input_data.url, meta={"content_lenght": len(result), "result": result})
+    out = Output(url=input_data.url, meta=meta_data)
     return out

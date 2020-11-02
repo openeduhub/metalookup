@@ -176,11 +176,9 @@ class Manager:
             self._logger.debug(f"message: {message}")
             content = message["content"]
 
-            result = self.start(content)
-            valid = True
-            error_count = 0
-            response = {"valid": valid, "error_count": error_count, "result": result}
+            meta_data = self.start(content)
 
+            response = meta_data
             self.engine_to_api_queue.put({uuid: response})
 
 
