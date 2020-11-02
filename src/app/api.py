@@ -30,3 +30,8 @@ def extract_meta(input_data: Input):
     meta_data.update({"time_until_complete": get_utc_now() - starting_extraction})
     out = Output(url=input_data.url, meta=meta_data)
     return out
+
+
+@app.get('/_ping')
+def ping():
+    return "ok"

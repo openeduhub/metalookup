@@ -1,4 +1,4 @@
-version: '3'
+version: '3.4'
 
 services:
   extractor:
@@ -6,7 +6,8 @@ services:
     ports:
       - "5057:5057"
     healthcheck:
-      test: curl --fail -s http://localhost:5057/ || exit 1
-      interval: 1m30s
-      timeout: 10s
+      test: [ "CMD", "curl", "-f", "http://localhost:5057/_ping" ]
+      interval: 30s
+      timeout: 5s
       retries: 3
+      start_period: 40s
