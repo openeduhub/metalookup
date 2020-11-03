@@ -133,7 +133,11 @@ class Manager:
             header_content = self._preprocess_header(content[MESSAGE_HEADERS])
 
             starting_extraction = get_utc_now()
-            meta_data = self._extract_meta_data(html_content, header_content)
+            try:
+                meta_data = self._extract_meta_data(html_content, header_content)
+            except Exception as e:
+                self._logger.exception(f"Extracting metadata raised: '{e.args}'")
+                meta_data = {}
             meta_data.update({"time_for_extraction": get_utc_now() - starting_extraction})
 
             response = meta_data
