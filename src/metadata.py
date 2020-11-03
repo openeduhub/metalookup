@@ -8,7 +8,7 @@ class Metadata:
     comment_symbol: str = ""
     evaluate_header: bool = False
 
-    def __init__(self, logger):
+    def __init__(self, logger) -> None:
         self._logger = logger
 
     def start(self, html_content: str = "", header=None) -> dict:
@@ -31,18 +31,18 @@ class Metadata:
                 values = []
         return values
 
-    def __download_tag_list(self):
+    def __download_tag_list(self) -> None:
         result = requests.get(self.url)
         if result.status_code == 200:
             self.tag_list = result.text.split("\n")
 
-    def __prepare_tag_list(self):
+    def __prepare_tag_list(self) -> None:
         self.tag_list = [i for i in self.tag_list if i != ""]
 
         if self.comment_symbol != "":
             self.tag_list = [x for x in self.tag_list if not x.startswith(self.comment_symbol)]
 
-    def setup(self):
+    def setup(self) -> None:
         """Child function."""
         if self.url != "":
             self.__download_tag_list()
