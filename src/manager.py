@@ -15,7 +15,7 @@ from lib.config import MESSAGE_CONTENT, LOGFILE_MANAGER, MESSAGE_HEADERS, MESSAG
 from lib.timing import get_utc_now
 from metadata import Metadata
 from features.html_based import Advertisement, Tracker, IFrameEmbeddable, ContentSecurityPolicy, Cookies, \
-    FanboySocialMedia, FanboyAnnoyance, EasylistGermany, Paywalls
+    FanboySocialMedia, FanboyAnnoyance, EasylistGermany, Paywalls, IETracker, AntiAdBlock
 from settings import API_PORT, LOG_LEVEL, LOG_PATH
 
 
@@ -41,8 +41,8 @@ class Manager:
         api_process.start()
 
     def _create_extractors(self):
-        extractors = [Advertisement, Tracker, IFrameEmbeddable, ContentSecurityPolicy, Cookies,
-                      EasylistGermany, FanboyAnnoyance, FanboySocialMedia, ContentSecurityPolicy, Paywalls]
+        extractors = [Advertisement, Tracker, IFrameEmbeddable, ContentSecurityPolicy, Cookies, AntiAdBlock,
+                      EasylistGermany, FanboyAnnoyance, FanboySocialMedia, ContentSecurityPolicy, Paywalls, IETracker]
         for extractor in extractors:
             self.metadata_extractors.append(extractor(self._logger))
 

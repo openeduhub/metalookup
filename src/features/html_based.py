@@ -13,14 +13,20 @@ class Tracker(Metadata):
     comment_symbol = "!"
 
 
+class IETracker(Metadata):
+    url: str = "https://easylist-downloads.adblockplus.org/easyprivacy.tpl"
+    key: str = "internet_explorer_tracker"
+    comment_symbol = "#"
+
+
 class Cookies(Metadata):
-    url: str = "https://easylist.to/easylist/easylist-cookie.txt"
+    url: str = "https://easylist-downloads.adblockplus.org/easylist-cookie.txt"
     key: str = "cookies"
     comment_symbol = "!"
 
 
 class EasylistGermany(Metadata):
-    url: str = "https://easylist.to/easylist/easylistgermany.txt"
+    url: str = "https://easylist.to/easylistgermany/easylistgermany.txt"
     key: str = "easylist_germany"
     comment_symbol = "!"
 
@@ -34,6 +40,12 @@ class FanboyAnnoyance(Metadata):
 class FanboySocialMedia(Metadata):
     url: str = "https://easylist.to/easylist/fanboy-social.txt"
     key: str = "fanboy_social"
+    comment_symbol = "!"
+
+
+class AntiAdBlock(Metadata):
+    url: str = "https://easylist-downloads.adblockplus.org/antiadblockfilters.txt"
+    key: str = "anti_adblock"
     comment_symbol = "!"
 
 

@@ -33,7 +33,8 @@ class Metadata:
 
     def __download_tag_list(self):
         result = requests.get(self.url)
-        self.tag_list = result.text.split("\n")
+        if result.status_code == 200:
+            self.tag_list = result.text.split("\n")
 
     def __prepare_tag_list(self):
         self.tag_list = [i for i in self.tag_list if i != ""]
