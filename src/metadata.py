@@ -11,7 +11,9 @@ class Metadata:
     def __init__(self, logger):
         self._logger = logger
 
-    def start(self, html_content: str = "", header: dict = {}) -> dict:
+    def start(self, html_content: str = "", header=None) -> dict:
+        if header is None:
+            header = {}
         self._logger.info(f"Starting {self.__class__.__name__}")
         values = self._start(html_content=html_content, header=header)
         return {self.key: values}
@@ -37,7 +39,7 @@ class Metadata:
         self.tag_list = [i for i in self.tag_list if i != ""]
 
         if self.comment_symbol != "":
-            self.tag_list = [x for x in self.tag_list if not x[0] == self.comment_symbol]
+            self.tag_list = [x for x in self.tag_list if not x.startswith(self.comment_symbol)]
 
     def setup(self):
         """Child function."""

@@ -4,6 +4,7 @@ from metadata import Metadata
 class Advertisement(Metadata):
     url: str = "https://easylist.to/easylist/easylist.txt"
     key: str = "ads"
+    comment_symbol = "!"
 
 
 class Tracker(Metadata):
