@@ -35,6 +35,8 @@ class Metadata:
         result = requests.get(self.url)
         if result.status_code == 200:
             self.tag_list = result.text.split("\n")
+        else:
+            self._logger.warning(f"Downloading tag list from '{self.url}' yielded status code '{result.status_code}'.")
 
     def __prepare_tag_list(self) -> None:
         self.tag_list = [i for i in self.tag_list if i != ""]
