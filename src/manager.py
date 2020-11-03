@@ -74,7 +74,15 @@ class Manager:
         fh.setLevel(LOG_LEVEL)
         fh.setFormatter(formatter)
 
+        # error log
+        error_handler = handlers.RotatingFileHandler(
+            filename=f"{data_path}/{LOGFILE_MANAGER}_error.log", maxBytes=log_15_mb_limit, backupCount=backup_count
+        )
+        error_handler.setLevel(logging.ERROR)
+        error_handler.setFormatter(formatter)
+
         self._logger.addHandler(fh)
+        self._logger.addHandler(error_handler)
 
     def get_api_request(self):
         if self.api_to_manager_queue is not None:
@@ -133,11 +141,13 @@ class Manager:
             header_content = self._preprocess_header(content[MESSAGE_HEADERS])
 
             starting_extraction = get_utc_now()
+
             try:
                 meta_data = self._extract_meta_data(html_content, header_content)
             except Exception as e:
-                self._logger.exception(f"Extracting metadata raised: '{e.args}'")
+                self._logger.error(f"Extracting metadata raised: '{e.args}'", exc_info=True)
                 meta_data = {}
+
             meta_data.update({"time_for_extraction": get_utc_now() - starting_extraction})
 
             response = meta_data
