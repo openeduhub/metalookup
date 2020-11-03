@@ -113,12 +113,11 @@ class Manager:
                                                                                                                  "/")
 
         idx = header.find("b\"")
-        if idx >= 0:
-            if header[idx - 1] == "[":
-                bracket_idx = header[idx:].find("]")
-                header = header[:idx] + "\"" \
-                         + header[idx + 2:idx + bracket_idx - 2].replace("\"", " ") \
-                         + header[idx + bracket_idx - 1:]
+        if idx >= 0 and header[idx - 1] == "[":
+            bracket_idx = header[idx:].find("]")
+            header = header[:idx] + "\"" \
+                     + header[idx + 2:idx + bracket_idx - 2].replace("\"", " ") \
+                     + header[idx + bracket_idx - 1:]
 
         header = json.loads(header)
         return header
