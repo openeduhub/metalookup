@@ -8,10 +8,12 @@ class Metadata:
     comment_symbol: str = ""
     evaluate_header: bool = False
 
-    def __init__(self, logger):
+    def __init__(self, logger) -> None:
         self._logger = logger
 
-    def start(self, html_content: str = "", header: dict = {}) -> dict:
+    def start(self, html_content: str = "", header=None) -> dict:
+        if header is None:
+            header = {}
         self._logger.info(f"Starting {self.__class__.__name__}")
         values = self._start(html_content=html_content, header=header)
         return {self.key: values}
@@ -29,17 +31,20 @@ class Metadata:
                 values = []
         return values
 
-    def __download_tag_list(self):
+    def __download_tag_list(self) -> None:
         result = requests.get(self.url)
-        self.tag_list = result.text.split("\n")
+        if result.status_code == 200:
+            self.tag_list = result.text.split("\n")
+        else:
+            self._logger.warning(f"Downloading tag list from '{self.url}' yielded status code '{result.status_code}'.")
 
-    def __prepare_tag_list(self):
+    def __prepare_tag_list(self) -> None:
         self.tag_list = [i for i in self.tag_list if i != ""]
 
         if self.comment_symbol != "":
-            self.tag_list = [x for x in self.tag_list if not x[0] == self.comment_symbol]
+            self.tag_list = [x for x in self.tag_list if not x.startswith(self.comment_symbol)]
 
-    def setup(self):
+    def setup(self) -> None:
         """Child function."""
         if self.url != "":
             self.__download_tag_list()
