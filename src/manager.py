@@ -3,7 +3,6 @@ import logging
 import multiprocessing
 import os
 import time
-from json import JSONDecodeError
 from logging import handlers
 from queue import Empty
 
@@ -13,10 +12,10 @@ from app.api import app
 from app.communication import ProcessToDaemonCommunication
 from lib.config import MESSAGE_CONTENT, LOGFILE_MANAGER, MESSAGE_HEADERS, MESSAGE_HTML
 from lib.timing import get_utc_now
-from metadata import Metadata
+from features.MetadataBase import MetadataBase
 from features.html_based import Advertisement, Tracker, IFrameEmbeddable, ContentSecurityPolicy, Cookies, \
     FanboySocialMedia, FanboyAnnoyance, EasylistGermany, Paywalls, IETracker, AntiAdBlock
-from settings import API_PORT, LOG_LEVEL, LOG_PATH
+from lib.settings import API_PORT, LOG_LEVEL, LOG_PATH
 
 
 class Manager:
@@ -66,8 +65,10 @@ class Manager:
         log_15_mb_limit = 1024 * 1024 * 15
         backup_count = 10000
 
+        print(data_path)
         if not os.path.exists(data_path):
             os.mkdir(data_path, mode=0o755)
+
         fh = handlers.RotatingFileHandler(filename=f"{data_path}/{LOGFILE_MANAGER}.log", maxBytes=log_15_mb_limit,
                                           backupCount=backup_count)
 
@@ -95,7 +96,7 @@ class Manager:
 
     def setup(self):
         for metadata_extractor in self.metadata_extractors:
-            metadata_extractor: Metadata
+            metadata_extractor: MetadataBase
             metadata_extractor.setup()
 
     def _extract_meta_data(self, html_content: str, headers: dict):

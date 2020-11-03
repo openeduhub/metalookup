@@ -3,7 +3,7 @@ import re
 import requests
 
 
-class Metadata:
+class MetadataBase:
     tag_list: list = []
     tag_list_last_modified = ""
     tag_list_expires: int = 0
