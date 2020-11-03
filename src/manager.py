@@ -136,7 +136,7 @@ class Manager:
             try:
                 meta_data = self._extract_meta_data(html_content, header_content)
             except Exception as e:
-                self._logger.exception(f"Extracting metadata raised: '{e.args}'")
+                self._logger.error(f"Extracting metadata raised: '{e.args}'", exc_info=True)
                 meta_data = {}
             meta_data.update({"time_for_extraction": get_utc_now() - starting_extraction})
 
