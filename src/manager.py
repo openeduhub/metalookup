@@ -11,11 +11,27 @@ import uvicorn
 from app.api import app
 from app.communication import ProcessToDaemonCommunication
 from features.ExtractLinks import ExtractLinks
-from lib.config import MESSAGE_CONTENT, LOGFILE_MANAGER, MESSAGE_HEADERS, MESSAGE_HTML
+from lib.config import (
+    MESSAGE_CONTENT,
+    LOGFILE_MANAGER,
+    MESSAGE_HEADERS,
+    MESSAGE_HTML,
+)
 from lib.timing import get_utc_now
 from features.MetadataBase import MetadataBase
-from features.html_based import Advertisement, Tracker, IFrameEmbeddable, ContentSecurityPolicy, Cookies, \
-    FanboySocialMedia, FanboyAnnoyance, EasylistGermany, Paywalls, IETracker, AntiAdBlock
+from features.html_based import (
+    Advertisement,
+    Tracker,
+    IFrameEmbeddable,
+    ContentSecurityPolicy,
+    Cookies,
+    FanboySocialMedia,
+    FanboyAnnoyance,
+    EasylistGermany,
+    Paywalls,
+    IETracker,
+    AntiAdBlock,
+)
 from lib.settings import API_PORT, LOG_LEVEL, LOG_PATH
 
 
@@ -36,15 +52,28 @@ class Manager:
         self.api_to_manager_queue = multiprocessing.Queue()
         self.manager_to_api_queue = multiprocessing.Queue()
         api_process = multiprocessing.Process(
-            target=api_server, args=(self.api_to_manager_queue, self.manager_to_api_queue)
+            target=api_server,
+            args=(self.api_to_manager_queue, self.manager_to_api_queue),
         )
         api_process.start()
 
     def _create_extractors(self):
 
-        extractors = [Advertisement, Tracker, IFrameEmbeddable, ContentSecurityPolicy, Cookies, AntiAdBlock,
-                      EasylistGermany, FanboyAnnoyance, FanboySocialMedia, ContentSecurityPolicy, Paywalls, IETracker,
-                      ExtractLinks]
+        extractors = [
+            Advertisement,
+            Tracker,
+            IFrameEmbeddable,
+            ContentSecurityPolicy,
+            Cookies,
+            AntiAdBlock,
+            EasylistGermany,
+            FanboyAnnoyance,
+            FanboySocialMedia,
+            ContentSecurityPolicy,
+            Paywalls,
+            IETracker,
+            ExtractLinks,
+        ]
 
         for extractor in extractors:
             self.metadata_extractors.append(extractor(self._logger))
@@ -56,7 +85,9 @@ class Manager:
 
         self._logger.setLevel(LOG_LEVEL)
 
-        formatter = logging.Formatter("%(asctime)s  %(levelname)-7s %(message)s")
+        formatter = logging.Formatter(
+            "%(asctime)s  %(levelname)-7s %(message)s"
+        )
 
         # Convert time to UTC/GMT time
         logging.Formatter.converter = time.gmtime
@@ -73,15 +104,20 @@ class Manager:
         if not os.path.exists(data_path):
             os.mkdir(data_path, mode=0o755)
 
-        fh = handlers.RotatingFileHandler(filename=f"{data_path}/{LOGFILE_MANAGER}.log", maxBytes=log_15_mb_limit,
-                                          backupCount=backup_count)
+        fh = handlers.RotatingFileHandler(
+            filename=f"{data_path}/{LOGFILE_MANAGER}.log",
+            maxBytes=log_15_mb_limit,
+            backupCount=backup_count,
+        )
 
         fh.setLevel(LOG_LEVEL)
         fh.setFormatter(formatter)
 
         # error log
         error_handler = handlers.RotatingFileHandler(
-            filename=f"{data_path}/{LOGFILE_MANAGER}_error.log", maxBytes=log_15_mb_limit, backupCount=backup_count
+            filename=f"{data_path}/{LOGFILE_MANAGER}_error.log",
+            maxBytes=log_15_mb_limit,
+            backupCount=backup_count,
         )
         error_handler.setLevel(logging.ERROR)
         error_handler.setFormatter(formatter)
@@ -92,7 +128,9 @@ class Manager:
     def get_api_request(self):
         if self.api_to_manager_queue is not None:
             try:
-                request = self.api_to_manager_queue.get(block=False, timeout=0.1)
+                request = self.api_to_manager_queue.get(
+                    block=False, timeout=0.1
+                )
                 if isinstance(request, dict):
                     self.handle_content(request)
             except Empty:
@@ -106,7 +144,9 @@ class Manager:
     def _extract_meta_data(self, html_content: str, headers: dict):
         data = {}
         for metadata_extractor in self.metadata_extractors:
-            extracted_metadata = metadata_extractor.start(html_content, headers)
+            extracted_metadata = metadata_extractor.start(
+                html_content, headers
+            )
             data.update(extracted_metadata)
 
             self._logger.debug(f"Resulting data: {data}")
@@ -122,15 +162,23 @@ class Manager:
 
     @staticmethod
     def _preprocess_header(header: str) -> dict:
-        header = header.replace("b'", "\"").replace("/'", "\"").replace("'", "\"").replace("\"\"", "\"").replace("/\"",
-                                                                                                                 "/")
+        header = (
+            header.replace("b'", '"')
+            .replace("/'", '"')
+            .replace("'", '"')
+            .replace('""', '"')
+            .replace('/"', "/")
+        )
 
-        idx = header.find("b\"")
+        idx = header.find('b"')
         if idx >= 0 and header[idx - 1] == "[":
             bracket_idx = header[idx:].find("]")
-            header = header[:idx] + "\"" \
-                     + header[idx + 2:idx + bracket_idx - 2].replace("\"", " ") \
-                     + header[idx + bracket_idx - 1:]
+            header = (
+                header[:idx]
+                + '"'
+                + header[idx + 2 : idx + bracket_idx - 2].replace('"', " ")
+                + header[idx + bracket_idx - 1 :]
+            )
 
         header = json.loads(header)
         return header
@@ -148,12 +196,18 @@ class Manager:
             starting_extraction = get_utc_now()
 
             try:
-                meta_data = self._extract_meta_data(html_content, header_content)
+                meta_data = self._extract_meta_data(
+                    html_content, header_content
+                )
             except Exception as e:
-                self._logger.error(f"Extracting metadata raised: '{e.args}'", exc_info=True)
+                self._logger.error(
+                    f"Extracting metadata raised: '{e.args}'", exc_info=True
+                )
                 meta_data = {}
 
-            meta_data.update({"time_for_extraction": get_utc_now() - starting_extraction})
+            meta_data.update(
+                {"time_for_extraction": get_utc_now() - starting_extraction}
+            )
 
             response = meta_data
             self.manager_to_api_queue.put({uuid: response})
@@ -164,5 +218,5 @@ def api_server(queue, return_queue):
     uvicorn.run(app, host="0.0.0.0", port=API_PORT, log_level="info")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     manager = Manager()

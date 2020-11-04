@@ -20,18 +20,22 @@ app = FastAPI()
 app.api_queue: ProcessToDaemonCommunication
 
 
-@app.post('/extract_meta', response_model=Output)
+@app.post("/extract_meta", response_model=Output)
 def extract_meta(input_data: Input):
     starting_extraction = get_utc_now()
-    uuid = app.api_queue.send_message({MESSAGE_URL: input_data.url, MESSAGE_CONTENT: input_data.content})
+    uuid = app.api_queue.send_message(
+        {MESSAGE_URL: input_data.url, MESSAGE_CONTENT: input_data.content}
+    )
 
     meta_data: dict = app.api_queue.get_message(uuid)
 
-    meta_data.update({"time_until_complete": get_utc_now() - starting_extraction})
+    meta_data.update(
+        {"time_until_complete": get_utc_now() - starting_extraction}
+    )
     out = Output(url=input_data.url, meta=meta_data)
     return out
 
 
-@app.get('/_ping')
+@app.get("/_ping")
 def ping():
     return "ok"

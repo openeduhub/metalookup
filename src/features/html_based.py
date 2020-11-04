@@ -44,7 +44,9 @@ class FanboySocialMedia(MetadataBase):
 
 
 class AntiAdBlock(MetadataBase):
-    url: str = "https://easylist-downloads.adblockplus.org/antiadblockfilters.txt"
+    url: str = (
+        "https://easylist-downloads.adblockplus.org/antiadblockfilters.txt"
+    )
     key: str = "anti_adblock"
     comment_symbol = "!"
 

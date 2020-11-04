@@ -13,7 +13,21 @@ bs4 = "^0.0.1"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.6.0"
+pre-commit = "^2.8.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 79
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.mypy_cache
+  | \.venv
+  | logs
+  | src\logs
+)/
+'''

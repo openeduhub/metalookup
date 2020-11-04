@@ -5,8 +5,11 @@ from uuid import uuid4, UUID
 
 
 class ProcessToDaemonCommunication:
-
-    def __init__(self, send_queue: multiprocessing.Queue, receive_queue: multiprocessing.Queue):
+    def __init__(
+        self,
+        send_queue: multiprocessing.Queue,
+        receive_queue: multiprocessing.Queue,
+    ):
         self._send_queue = send_queue
         self._receive_queue = receive_queue
         self._request_queue = {}
