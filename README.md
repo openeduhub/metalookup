@@ -14,3 +14,10 @@
     ```shell script
    {"url":"here","meta":{"content_lenght":15}}%     
     ```
+
+# Pre commit
+
+To see tracebacks of why the pre commit hook fails run in terminal:
+``` shell script
+pre-commit run --all-files 
+```
