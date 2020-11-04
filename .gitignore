@@ -12,3 +12,6 @@ src/app/__pycache__/
 
 # Local data
 /local_tools/
+.coverage
+Pipfile
+src/logs/*
