@@ -19,4 +19,8 @@ repos:
       entry: pytest
       language: system
       pass_filenames: false
-
+    - id: pytest-cov
+      name: pytest-cov
+      entry: pipenv run pytest --cov # --cov-fail-under=100
+      language: system
+      pass_filenames: false

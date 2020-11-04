@@ -33,3 +33,6 @@ exclude = '''
   | src\logs
 )/
 '''
+
+[tool.pytest]
+testpaths = "tests"
