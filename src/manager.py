@@ -11,28 +11,28 @@ import uvicorn
 from app.api import app
 from app.communication import ProcessToDaemonCommunication
 from features.ExtractLinks import ExtractLinks
+from features.html_based import (
+    Advertisement,
+    AntiAdBlock,
+    ContentSecurityPolicy,
+    Cookies,
+    EasylistGermany,
+    FanboyAnnoyance,
+    FanboySocialMedia,
+    IETracker,
+    IFrameEmbeddable,
+    Paywalls,
+    Tracker,
+)
+from features.MetadataBase import MetadataBase
 from lib.config import (
-    MESSAGE_CONTENT,
     LOGFILE_MANAGER,
+    MESSAGE_CONTENT,
     MESSAGE_HEADERS,
     MESSAGE_HTML,
 )
-from lib.timing import get_utc_now
-from features.MetadataBase import MetadataBase
-from features.html_based import (
-    Advertisement,
-    Tracker,
-    IFrameEmbeddable,
-    ContentSecurityPolicy,
-    Cookies,
-    FanboySocialMedia,
-    FanboyAnnoyance,
-    EasylistGermany,
-    Paywalls,
-    IETracker,
-    AntiAdBlock,
-)
 from lib.settings import API_PORT, LOG_LEVEL, LOG_PATH
+from lib.timing import get_utc_now
 
 
 class Manager:

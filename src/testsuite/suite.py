@@ -1,8 +1,8 @@
 import json
 import os
+from urllib.parse import urlparse
 
 import requests
-from urllib.parse import urlparse
 
 urls = ["https://www.dictionary.com/"]
 

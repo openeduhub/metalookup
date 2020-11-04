@@ -1,7 +1,7 @@
 import multiprocessing
 import queue
 from typing import Optional
-from uuid import uuid4, UUID
+from uuid import UUID, uuid4
 
 
 class ProcessToDaemonCommunication:

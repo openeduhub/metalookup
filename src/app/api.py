@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 
 from app.communication import ProcessToDaemonCommunication
-from lib.config import MESSAGE_URL, MESSAGE_CONTENT
+from lib.config import MESSAGE_CONTENT, MESSAGE_URL
 from lib.timing import get_utc_now
 
 
