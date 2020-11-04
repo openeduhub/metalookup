@@ -1,6 +1,6 @@
 repos:
 -   repo: https://github.com/ambv/black
-    rev: stable
+    rev: 20.8b1
     hooks:
     - id: black
       language_version: python3.9
@@ -12,3 +12,11 @@ repos:
     rev: 5.6.4
     hooks:
     - id: isort
+-   repo: local
+    hooks:
+    - id: pytest
+      name: pytest
+      entry: pytest
+      language: system
+      pass_filenames: false
+
