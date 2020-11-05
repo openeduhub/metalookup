@@ -125,7 +125,6 @@ def test_ping_container():
         "GET", url, headers=DOCKER_TEST_HEADERS, timeout=20
     )
 
-    ok = "ok"
-    data = response.text.replace('"', "")
-    is_ok = data == ok
+    data = json.loads(response.text)
+    is_ok = data["status"] == "ok"
     assert is_ok

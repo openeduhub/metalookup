@@ -38,4 +38,4 @@ def extract_meta(input_data: Input):
 
 @app.get("/_ping")
 def ping():
-    return "ok"
+    return {"status": "ok"}
