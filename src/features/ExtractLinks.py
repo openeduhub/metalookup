@@ -225,7 +225,7 @@ class ExtractLinks(MetadataBase):
             if extension.replace(".", "") in self.malicious_extensions
         ]
 
-    def _start(self, html_content: str, header: dict) -> list:
+    def _start(self, html_content: str, header: dict) -> dict:
         soup = BeautifulSoup(html_content, "html.parser")
 
         raw_links = self.__extract_raw_links(soup)
@@ -233,7 +233,6 @@ class ExtractLinks(MetadataBase):
         extensions = self.__extract_extensions(raw_links)
         malicious_extensions = self.__extract_malicious_extensions(extensions)
 
-        # FIXME: This breaks the typing. How to resolve?
         return {
             "images": image_links,
             "extensions": extensions,

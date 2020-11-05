@@ -22,9 +22,9 @@ class MetadataBase:
         values = self._start(html_content=html_content, header=header)
         return {
             self.key: {
-                "values": values,
                 "tag_list_last_modified": self.tag_list_last_modified,
                 "tag_list_expires": self.tag_list_expires,
+                **values,
             }
         }
 
@@ -44,12 +44,12 @@ class MetadataBase:
             values = []
         return values
 
-    def _start(self, html_content: str, header: dict) -> list:
+    def _start(self, html_content: str, header: dict) -> dict:
         if self.evaluate_header:
             values = self._work_header(header)
         else:
             values = self._work_html_content(html_content)
-        return values
+        return {"values": values}
 
     def _download_tag_list(self) -> None:
         result = requests.get(self.url)
