@@ -28,26 +28,30 @@ class MetadataBase:
             }
         }
 
-    def _start(self, html_content: str, header: dict) -> list:
-        if self.evaluate_header:
-            if len(self.tag_list) == 1:
-                values = (
-                    header[self.tag_list[0]]
-                    if self.tag_list[0] in header
-                    else ""
-                )
-            else:
-                values = [
-                    header[ele] for ele in self.tag_list if ele in header
-                ]
+    def _work_header(self, header):
+        if len(self.tag_list) == 1:
+            values = (
+                header[self.tag_list[0]] if self.tag_list[0] in header else ""
+            )
         else:
-            if self.tag_list:
-                values = [ele for ele in self.tag_list if ele in html_content]
-            else:
-                values = []
+            values = [header[ele] for ele in self.tag_list if ele in header]
         return values
 
-    def __download_tag_list(self) -> None:
+    def _work_html_content(self, html_content):
+        if self.tag_list:
+            values = [ele for ele in self.tag_list if ele in html_content]
+        else:
+            values = []
+        return values
+
+    def _start(self, html_content: str, header: dict) -> list:
+        if self.evaluate_header:
+            values = self._work_header(header)
+        else:
+            values = self._work_html_content(html_content)
+        return values
+
+    def _download_tag_list(self) -> None:
         result = requests.get(self.url)
         if result.status_code == 200:
             self.tag_list = result.text.split("\n")
@@ -56,7 +60,7 @@ class MetadataBase:
                 f"Downloading tag list from '{self.url}' yielded status code '{result.status_code}'."
             )
 
-    def __extract_date_from_list(self):
+    def _extract_date_from_list(self):
         expires_expression = re.compile(
             r"[!#:]\sExpires[:=]\s?(\d+)\s?\w{0,4}"
         )
@@ -78,7 +82,7 @@ class MetadataBase:
             ):
                 break
 
-    def __prepare_tag_list(self) -> None:
+    def _prepare_tag_list(self) -> None:
         self.tag_list = [i for i in self.tag_list if i != ""]
 
         if self.comment_symbol != "":
@@ -91,6 +95,6 @@ class MetadataBase:
     def setup(self) -> None:
         """Child function."""
         if self.url != "":
-            self.__download_tag_list()
-            self.__extract_date_from_list()
-            self.__prepare_tag_list()
+            self._download_tag_list()
+            self._extract_date_from_list()
+            self._prepare_tag_list()

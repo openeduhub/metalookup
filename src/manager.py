@@ -37,6 +37,7 @@ from lib.timing import get_utc_now
 
 class Manager:
     metadata_extractors: list = []
+    run_loop: bool = False
 
     def __init__(self):
 
@@ -45,6 +46,8 @@ class Manager:
         self._create_extractors()
 
         self._create_api()
+
+        self.run_loop = True
 
         self.run()
 
@@ -155,7 +158,7 @@ class Manager:
     # =========== LOOP ============
     def run(self):
 
-        while True:
+        while self.run_loop:
             self.get_api_request()
             self._logger.info(f"Current time: {get_utc_now()}")
             time.sleep(1)

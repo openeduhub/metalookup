@@ -16,11 +16,11 @@ repos:
     hooks:
     - id: pytest
       name: pytest
-      entry: pytest
-      language: system
+      entry: poetry run pytest
+      language: python
       pass_filenames: false
     - id: pytest-cov
       name: pytest-cov
-      entry: pipenv run pytest --cov # --cov-fail-under=100
-      language: system
+      entry: poetry run pytest --cov # --cov-fail-under=100
+      language: python
       pass_filenames: false
