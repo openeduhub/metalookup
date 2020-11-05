@@ -47,6 +47,8 @@ class Manager:
 
         self._create_api()
 
+        self.setup()
+
         self.run_loop = True
 
         self.run()

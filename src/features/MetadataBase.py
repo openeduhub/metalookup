@@ -23,14 +23,20 @@ class MetadataBase:
         self._logger.info(f"Starting {self.__class__.__name__}")
         before = get_utc_now()
         values = self._start(html_content=html_content, header=header)
-        return {
+        data = {
             self.key: {
-                "tag_list_last_modified": self.tag_list_last_modified,
-                "tag_list_expires": self.tag_list_expires,
                 "time_required": get_utc_now() - before,
                 **values,
             }
         }
+        if self.tag_list_last_modified != "":
+            data[self.key].update(
+                {
+                    "tag_list_last_modified": self.tag_list_last_modified,
+                    "tag_list_expires": self.tag_list_expires,
+                }
+            )
+        return data
 
     def _work_header(self, header):
         if len(self.tag_list) == 1:

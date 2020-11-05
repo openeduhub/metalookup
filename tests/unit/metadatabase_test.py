@@ -43,8 +43,11 @@ def test_start(metadatabase: MetadataBase, mocker):
     assert metadatabase.key in values.keys()
     assert values_has_only_one_key
     assert values[metadatabase.key]["values"] == []
-    assert values[metadatabase.key]["tag_list_last_modified"] == ""
-    assert values[metadatabase.key]["tag_list_expires"] == 0
+
+    # TODO: An if in a test -> is this a bad idea?
+    if "tag_list_last_modified" in values[metadatabase.key].keys():
+        assert values[metadatabase.key]["tag_list_last_modified"] == ""
+        assert values[metadatabase.key]["tag_list_expires"] == 0
     assert _start_spy.call_count == 1
     assert _start_spy.call_args_list[0][1] == {
         html_content: html_content,
