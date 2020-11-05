@@ -2,6 +2,8 @@ import re
 
 import requests
 
+from lib.timing import get_utc_now
+
 
 class MetadataBase:
     tag_list: list = []
@@ -19,11 +21,13 @@ class MetadataBase:
         if header is None:
             header = {}
         self._logger.info(f"Starting {self.__class__.__name__}")
+        before = get_utc_now()
         values = self._start(html_content=html_content, header=header)
         return {
             self.key: {
                 "tag_list_last_modified": self.tag_list_last_modified,
                 "tag_list_expires": self.tag_list_expires,
+                "time_required": get_utc_now() - before,
                 **values,
             }
         }
