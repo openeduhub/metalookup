@@ -10,6 +10,7 @@ fastapi = "^0.61.1"
 uvicorn = "^0.12.2"
 requests = "^2.24.0"
 bs4 = "^0.0.1"
+adblockparser = "^0.7"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.6.0"

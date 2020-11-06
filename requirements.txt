@@ -1,3 +1,6 @@
+adblockparser==0.7 \
+    --hash=sha256:90662a6397d441898e8757553997e0a6cd09c8e56fee4e4ac61b32bda65bad3e \
+    --hash=sha256:7a3407ddc31a29e42732bbcb04f3677c6959bffa1ea9d712afd498e0b4d09b22
 beautifulsoup4==4.9.3 \
     --hash=sha256:4c98143716ef1cb40bf7f39a8e3eec8f8b009509e74904ba3a7b315431577e35 \
     --hash=sha256:fff47e031e34ec82bf17e00da8f592fe7de69aeea38be00523c04623c04fb666 \

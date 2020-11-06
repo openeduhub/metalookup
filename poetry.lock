@@ -1,4 +1,12 @@
 [[package]]
+name = "adblockparser"
+version = "0.7"
+description = "Parser for Adblock Plus rules"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "appdirs"
 version = "1.4.4"
 description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
@@ -476,9 +484,13 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9.0rc1"
-content-hash = "91cfc65995f0404f7ec5a67428ee9881b4ab930c19bf887241e821377f430a64"
+content-hash = "38ace6f5b9d97750fffdf6c2b5464e10fc78b938814f22c14862de9941c9123e"
 
 [metadata.files]
+adblockparser = [
+    {file = "adblockparser-0.7-py2.py3-none-any.whl", hash = "sha256:90662a6397d441898e8757553997e0a6cd09c8e56fee4e4ac61b32bda65bad3e"},
+    {file = "adblockparser-0.7.tar.gz", hash = "sha256:7a3407ddc31a29e42732bbcb04f3677c6959bffa1ea9d712afd498e0b4d09b22"},
+]
 appdirs = [
     {file = "appdirs-1.4.4-py2.py3-none-any.whl", hash = "sha256:a841dacd6b99318a741b166adb07e19ee71a274450e68237b4650ca1055ab128"},
     {file = "appdirs-1.4.4.tar.gz", hash = "sha256:7d5d0167b2b1ba821647616af46a749d1c653740dd0d2415100fe26e27afdf41"},

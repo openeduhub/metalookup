@@ -5,6 +5,7 @@ import time
 from json import JSONDecodeError
 from pathlib import Path
 
+import pytest
 import requests
 
 DOCKER_TEST_URL = "http://0.0.0.0:5057/"
@@ -21,12 +22,28 @@ def _build_and_run_docker():
         )
         os.chdir(new_dir)
 
+    print("Exporting requirements")
+    process = subprocess.call(
+        ["poetry export -o requirements.txt"], shell=True
+    )
+    print(f"process after exporting requirements: {process}")
+
     print("building docker")
     process = subprocess.call(
         ["docker build -t oeh-search-meta:latest ."], shell=True
     )
 
     print(f"process after building docker: {process}")
+
+    # stopping any old container of the same name prior to launch
+
+    subprocess.call(
+        [
+            "docker stop $(docker ps -a -q --filter ancestor=oeh-search-meta:latest --format='{{.ID}}')"
+        ],
+        shell=True,
+    )
+
     process = subprocess.Popen(
         ["docker-compose -f docker-compose.yml up"], shell=True
     )
@@ -40,11 +57,18 @@ def _build_and_run_docker():
 
 def _stop_docker():
     process = subprocess.call(
-        ["docker stop oeh-search-meta_extractor_1"], shell=True
+        [
+            "docker stop $(docker ps -a -q --filter ancestor=oeh-search-meta:latest --format='{{.ID}}')"
+        ],
+        shell=True,
     )
+
     print(f"process after docker stop: {process}")
 
 
+@pytest.mark.skip(
+    reason="This test takes a lot of time, depending on payload etc. Execute manually."
+)
 def test_api_extract_meta():
     url = DOCKER_TEST_URL + "extract_meta"
 
@@ -101,7 +125,7 @@ def test_api_extract_meta():
     _build_and_run_docker()
 
     response = requests.request(
-        "POST", url, headers=DOCKER_TEST_HEADERS, data=payload, timeout=20
+        "POST", url, headers=DOCKER_TEST_HEADERS, data=payload, timeout=60
     )
 
     try:
@@ -122,7 +146,7 @@ def test_ping_container():
     _build_and_run_docker()
 
     response = requests.request(
-        "GET", url, headers=DOCKER_TEST_HEADERS, timeout=20
+        "GET", url, headers=DOCKER_TEST_HEADERS, timeout=60
     )
 
     data = json.loads(response.text)

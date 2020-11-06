@@ -2,7 +2,7 @@ import os
 
 from bs4 import BeautifulSoup
 
-from features.MetadataBase import MetadataBase
+from features.metadata_base import MetadataBase
 
 
 class ExtractLinks(MetadataBase):
@@ -203,10 +203,6 @@ class ExtractLinks(MetadataBase):
     ]
 
     @staticmethod
-    def __extract_raw_links(soup: BeautifulSoup) -> list:
-        return list({a["href"] for a in soup.find_all(href=True)})
-
-    @staticmethod
     def __extract_extensions(links: list):
         file_extensions = [os.path.splitext(link)[-1] for link in links]
         file_extensions = [x for x in list(set(file_extensions)) if x != ""]
@@ -226,9 +222,9 @@ class ExtractLinks(MetadataBase):
         ]
 
     def _start(self, html_content: str, header: dict) -> dict:
-        soup = BeautifulSoup(html_content, "html.parser")
+        soup = self._create_html_soup(html_content)
 
-        raw_links = self.__extract_raw_links(soup)
+        raw_links = self._extract_raw_links(soup)
         image_links = self.__extract_images(soup)
         extensions = self.__extract_extensions(raw_links)
         malicious_extensions = self.__extract_malicious_extensions(extensions)

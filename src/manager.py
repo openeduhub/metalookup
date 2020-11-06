@@ -10,7 +10,7 @@ import uvicorn
 
 from app.api import app
 from app.communication import ProcessToDaemonCommunication
-from features.ExtractLinks import ExtractLinks
+from features.extract_links import ExtractLinks
 from features.html_based import (
     Advertisement,
     AntiAdBlock,
@@ -24,7 +24,7 @@ from features.html_based import (
     Paywalls,
     Tracker,
 )
-from features.MetadataBase import MetadataBase
+from features.metadata_base import MetadataBase
 from lib.config import (
     LOGFILE_MANAGER,
     MESSAGE_CONTENT,
@@ -105,7 +105,6 @@ class Manager:
         log_15_mb_limit = 1024 * 1024 * 15
         backup_count = 10000
 
-        print(data_path)
         if not os.path.exists(data_path):
             os.mkdir(data_path, mode=0o755)
 

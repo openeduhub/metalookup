@@ -1,6 +1,7 @@
+import adblockparser
 import pytest
 
-from features.MetadataBase import MetadataBase
+from features.metadata_base import MetadataBase
 
 
 @pytest.fixture
@@ -34,7 +35,7 @@ def test_start(metadatabase: MetadataBase, mocker):
     html_content = "html_content"
     header = "header"
     metadatabase.key = "test_key"
-    _start_spy = mocker.spy(metadatabase, "_start")
+    start_spy = mocker.spy(metadatabase, "_start")
     values = metadatabase.start(html_content=html_content, header=header)
 
     values_has_only_one_key = len(values.keys()) == 1
@@ -48,14 +49,14 @@ def test_start(metadatabase: MetadataBase, mocker):
     if "tag_list_last_modified" in values[metadatabase.key].keys():
         assert values[metadatabase.key]["tag_list_last_modified"] == ""
         assert values[metadatabase.key]["tag_list_expires"] == 0
-    assert _start_spy.call_count == 1
-    assert _start_spy.call_args_list[0][1] == {
+    assert start_spy.call_count == 1
+    assert start_spy.call_args_list[0][1] == {
         html_content: html_content,
         header: header,
     }
 
     _ = metadatabase.start(html_content=html_content)
-    assert _start_spy.call_args_list[1][1] == {
+    assert start_spy.call_args_list[1][1] == {
         html_content: html_content,
         header: {},
     }
@@ -111,3 +112,41 @@ def test_setup(metadatabase: MetadataBase, mocker):
     assert metadatabase._download_tag_list.call_count == 1
     assert extract_date_from_list_spy.call_count == 1
     assert prepare_tag_spy.call_count == 1
+
+
+"""
+--------------------------------------------------------------------------------
+"""
+
+
+def _create_sample_easylist() -> list:
+    easylist = [
+        "! *** easylist:easylist/easylist_general_block.txt ***",
+        r"/adv_horiz.",
+        r"@@||imx.to/dropzone.js$script",
+        r"||testimx.to/dropzone.js$script",
+        r"||testimx2.to/dropzone.js",
+    ]
+
+    return easylist
+
+
+def _create_sample_urls() -> list:
+    url_to_be_blocked = [
+        ("https://www.dictionary.com/", False),
+        ("/adv_horiz.", True),
+        ("imx.to/dropzone.js", False),
+        ("testimx.to/dropzone.js", False),
+        ("testimx2.to/dropzone.js", True),
+    ]
+    return url_to_be_blocked
+
+
+def test_easylist_filter():
+    urls_to_be_blocked = _create_sample_urls()
+
+    rules = adblockparser.AdblockRules(_create_sample_easylist())
+
+    for url, to_be_blocked in urls_to_be_blocked:
+        result = rules.should_block(url)  # "http://ads.example.com"
+        assert result == to_be_blocked

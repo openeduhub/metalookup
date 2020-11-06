@@ -1,6 +1,8 @@
 import re
 
+import adblockparser
 import requests
+from bs4 import BeautifulSoup
 
 from lib.timing import get_utc_now
 
@@ -47,9 +49,31 @@ class MetadataBase:
             values = [header[ele] for ele in self.tag_list if ele in header]
         return values
 
+    @staticmethod
+    def _create_html_soup(html_content: str) -> BeautifulSoup:
+        return BeautifulSoup(html_content, "html.parser")
+
+    @staticmethod
+    def _extract_raw_links(soup: BeautifulSoup) -> list:
+        return list({a["href"] for a in soup.find_all(href=True)})
+
     def _work_html_content(self, html_content):
         if self.tag_list:
-            values = [ele for ele in self.tag_list if ele in html_content]
+            if self.url.find("easylist") >= 0:
+                # TODO: These raw_links can be stored for further analysis in other Features -> how to store?
+                soup = self._create_html_soup(html_content)
+                raw_links = self._extract_raw_links(soup)
+
+                rules = adblockparser.AdblockRules(self.tag_list)
+                values = []
+                for url in raw_links:
+                    is_blocked = rules.should_block(url)
+                    if is_blocked:
+                        values.append(url)
+            else:
+                values = [
+                    ele for ele in self.tag_list if html_content.find(ele) >= 0
+                ]
         else:
             values = []
         return values
@@ -64,7 +88,7 @@ class MetadataBase:
     def _download_tag_list(self) -> None:
         result = requests.get(self.url)
         if result.status_code == 200:
-            self.tag_list = result.text.split("\n")
+            self.tag_list = result.text.splitlines()
         else:
             self._logger.warning(
                 f"Downloading tag list from '{self.url}' yielded status code '{result.status_code}'."
