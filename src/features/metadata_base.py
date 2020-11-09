@@ -1,4 +1,5 @@
 import re
+from collections import OrderedDict
 
 import adblockparser
 import requests
@@ -13,6 +14,7 @@ class MetadataBase:
     tag_list_expires: int = 0
     key: str = ""
     url: str = ""
+    urls: list = []
     comment_symbol: str = ""
     evaluate_header: bool = False
 
@@ -85,6 +87,13 @@ class MetadataBase:
             values = self._work_html_content(html_content)
         return {"values": values}
 
+    def _download_multiple_tag_lists(self):
+        complete_tag_list = []
+        for url in self.urls:
+            self.url = url
+            self._download_tag_list()
+            complete_tag_list.append(self.tag_list)
+
     def _download_tag_list(self) -> None:
         result = requests.get(self.url)
         if result.status_code == 200:
@@ -119,6 +128,8 @@ class MetadataBase:
     def _prepare_tag_list(self) -> None:
         self.tag_list = [i for i in self.tag_list if i != ""]
 
+        self.tag_list = list(OrderedDict.fromkeys(self.tag_list))
+
         if self.comment_symbol != "":
             self.tag_list = [
                 x
@@ -128,7 +139,11 @@ class MetadataBase:
 
     def setup(self) -> None:
         """Child function."""
-        if self.url != "":
+        if self.urls:
+            self._download_multiple_tag_lists()
+        elif self.url != "":
             self._download_tag_list()
+
+        if self.tag_list:
             self._extract_date_from_list()
             self._prepare_tag_list()

@@ -10,6 +10,7 @@ def manager(mocker):
     Manager._create_logger = mocker.MagicMock()
     Manager._create_api = mocker.MagicMock()
     Manager._logger = mocker.MagicMock()
+    Manager.setup = mocker.MagicMock()
 
     with mock.patch("manager.Manager.run"):
         manager = Manager()
@@ -26,7 +27,7 @@ def test_init(manager: Manager, mocker):
     assert manager._create_logger.call_count == 1
     assert manager._create_api.call_count == 1
     assert run_spy.call_count == 0
-    assert len(manager.metadata_extractors) == 13
+    assert len(manager.metadata_extractors) == 17
     assert manager.run_loop
 
 

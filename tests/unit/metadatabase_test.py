@@ -97,6 +97,7 @@ def test_under_start(metadatabase: MetadataBase, mocker):
 
 def test_setup(metadatabase: MetadataBase, mocker):
     metadatabase._download_tag_list = mocker.MagicMock()
+    metadatabase._download_multiple_tag_lists = mocker.MagicMock()
     extract_date_from_list_spy = mocker.spy(
         metadatabase, "_extract_date_from_list"
     )
@@ -104,12 +105,30 @@ def test_setup(metadatabase: MetadataBase, mocker):
 
     metadatabase.setup()
     assert metadatabase._download_tag_list.call_count == 0
+    assert metadatabase._download_multiple_tag_lists.call_count == 0
     assert extract_date_from_list_spy.call_count == 0
     assert prepare_tag_spy.call_count == 0
 
     metadatabase.url = "hello"
     metadatabase.setup()
     assert metadatabase._download_tag_list.call_count == 1
+    assert metadatabase._download_multiple_tag_lists.call_count == 0
+    assert extract_date_from_list_spy.call_count == 0
+    assert prepare_tag_spy.call_count == 0
+
+    metadatabase.url = ""
+    metadatabase.urls = ["Hello1", "Hello2"]
+    metadatabase.setup()
+    assert metadatabase._download_tag_list.call_count == 1
+    assert metadatabase._download_multiple_tag_lists.call_count == 1
+    assert extract_date_from_list_spy.call_count == 0
+    assert prepare_tag_spy.call_count == 0
+
+    metadatabase.tag_list = ["!Hello"]
+    metadatabase.urls = []
+    metadatabase.setup()
+    assert metadatabase._download_tag_list.call_count == 1
+    assert metadatabase._download_multiple_tag_lists.call_count == 1
     assert extract_date_from_list_spy.call_count == 1
     assert prepare_tag_spy.call_count == 1
 

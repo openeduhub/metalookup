@@ -14,15 +14,20 @@ from features.extract_links import ExtractLinks
 from features.html_based import (
     Advertisement,
     AntiAdBlock,
+    AntiAdBlockEnglish,
+    AntiAdBlockGerman,
     ContentSecurityPolicy,
     Cookies,
+    EasylistAdult,
     EasylistGermany,
+    EasyPrivacy,
     FanboyAnnoyance,
+    FanboyNotification,
     FanboySocialMedia,
     IETracker,
     IFrameEmbeddable,
     Paywalls,
-    Tracker,
+    PopUp,
 )
 from features.metadata_base import MetadataBase
 from lib.config import (
@@ -66,18 +71,22 @@ class Manager:
 
         extractors = [
             Advertisement,
-            Tracker,
-            IFrameEmbeddable,
-            ContentSecurityPolicy,
-            Cookies,
-            AntiAdBlock,
-            EasylistGermany,
-            FanboyAnnoyance,
-            FanboySocialMedia,
-            ContentSecurityPolicy,
-            Paywalls,
-            IETracker,
+            EasyPrivacy,
             ExtractLinks,
+            IETracker,
+            Cookies,
+            FanboyAnnoyance,
+            FanboyNotification,
+            FanboySocialMedia,
+            AntiAdBlock,
+            AntiAdBlockGerman,
+            AntiAdBlockEnglish,
+            EasylistGermany,
+            EasylistAdult,
+            Paywalls,
+            ContentSecurityPolicy,
+            IFrameEmbeddable,
+            PopUp,
         ]
 
         for extractor in extractors:
