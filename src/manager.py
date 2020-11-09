@@ -14,8 +14,6 @@ from features.extract_links import ExtractLinks
 from features.html_based import (
     Advertisement,
     AntiAdBlock,
-    AntiAdBlockEnglish,
-    AntiAdBlockGerman,
     ContentSecurityPolicy,
     Cookies,
     EasylistAdult,
@@ -79,8 +77,6 @@ class Manager:
             FanboyNotification,
             FanboySocialMedia,
             AntiAdBlock,
-            AntiAdBlockGerman,
-            AntiAdBlockEnglish,
             EasylistGermany,
             EasylistAdult,
             Paywalls,

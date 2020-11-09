@@ -20,7 +20,6 @@ class Advertisement(MetadataBase):
         "https://easylist.to/easylist/easylist_thirdparty.txt",
         "https://easylist.to/easylist/easylist_thirdparty_popup.txt",
     ]
-    key: str = "ads"
 
 
 class EasyPrivacy(MetadataBase):
@@ -36,7 +35,6 @@ class EasyPrivacy(MetadataBase):
         "https://github.com/easylist/easylist/blob/master/easyprivacy/easyprivacy_thirdparty.txt",
         "https://github.com/easylist/easylist/blob/master/easyprivacy/easyprivacy_thirdparty_international.txt",
     ]
-    key = "easyprivacy"
 
 
 class IETracker(MetadataBase):
@@ -58,7 +56,6 @@ class Cookies(MetadataBase):
         "https://github.com/easylist/easylist/blob/master/easylist_cookie/easylist_cookie_specific_hide.txt",
         "https://github.com/easylist/easylist/blob/master/easylist_cookie/easylist_cookie_thirdparty.txt",
     ]
-    key: str = "cookies"
 
 
 class FanboyAnnoyance(MetadataBase):
@@ -72,7 +69,6 @@ class FanboyAnnoyance(MetadataBase):
         "https://easylist.to/easylist/fanboy_annoyance_specific_block.txt",
         "https://easylist.to/easylist/fanboy_annoyance_thirdparty.txt",
     ]
-    key: str = "fanboy_annoyance"
 
 
 class FanboyNotification(MetadataBase):
@@ -85,7 +81,6 @@ class FanboyNotification(MetadataBase):
         "https://easylist.to/easylist/fanboy_notifications_specific_hide.txt",
         "https://easylist.to/easylist/fanboy_notifications_thirdparty.txt",
     ]
-    key: str = "fanboy_notification"
 
 
 class FanboySocialMedia(MetadataBase):
@@ -100,24 +95,15 @@ class FanboySocialMedia(MetadataBase):
         "https://easylist.to/easylist/fanboy_social_specific_hide.txt",
         "https://easylist.to/easylist/fanboy_social_thirdparty.txt",
     ]
-    key: str = "fanboy_social"
 
 
 class AntiAdBlock(MetadataBase):
-    url: str = (
-        "https://easylist-downloads.adblockplus.org/antiadblockfilters.txt"
-    )
+    urls: list = [
+        "https://easylist-downloads.adblockplus.org/antiadblockfilters.txt",
+        "https://github.com/easylist/antiadblockfilters/blob/master/antiadblockfilters/antiadblock_german.txt",
+        "https://github.com/easylist/antiadblockfilters/blob/master/antiadblockfilters/antiadblock_english.txt",
+    ]
     key: str = "anti_adblock"
-
-
-class AntiAdBlockGerman(MetadataBase):
-    url: str = "https://github.com/easylist/antiadblockfilters/blob/master/antiadblockfilters/antiadblock_german.txt"
-    key: str = "antiadblock_german"
-
-
-class AntiAdBlockEnglish(MetadataBase):
-    url: str = "https://github.com/easylist/antiadblockfilters/blob/master/antiadblockfilters/antiadblock_english.txt"
-    key: str = "antiadblock_english"
 
 
 class EasylistGermany(MetadataBase):
@@ -138,7 +124,6 @@ class EasylistGermany(MetadataBase):
         "https://github.com/easylist/easylistgermany/blob/master/easylistgermany/easylistgermany_thirdparty.txt",
         "https://github.com/easylist/easylistgermany/blob/master/easylistgermany/easylistgermany_thirdparty_popup.txt",
     ]
-    key: str = "easylist_germany"
 
 
 class EasylistAdult(MetadataBase):
@@ -153,7 +138,6 @@ class EasylistAdult(MetadataBase):
         "https://github.com/easylist/easylist/blob/master/easylist_adult/adult_thirdparty.txt",
         "https://github.com/easylist/easylist/blob/master/easylist_adult/adult_thirdparty_popup.txt",
     ]
-    key: str = "easylist_adult"
 
 
 class Paywalls(MetadataBase):
@@ -163,7 +147,6 @@ class Paywalls(MetadataBase):
 
 class ContentSecurityPolicy(MetadataBase):
     tag_list = ["Content-Security-Policy"]
-    key: str = "content_security_policy"
     evaluate_header = True
 
 
@@ -183,4 +166,3 @@ class PopUp(MetadataBase):
         "interstitial",
         "Interstitial",
     ]
-    key = "popup"

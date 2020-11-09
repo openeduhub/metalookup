@@ -21,6 +21,11 @@ class MetadataBase:
     def __init__(self, logger) -> None:
         self._logger = logger
 
+        if self.key == "":
+            self.key = re.sub(
+                r"(?<!^)(?=[A-Z])", "_", self.__class__.__name__
+            ).lower()
+
     def start(self, html_content: str = "", header=None) -> dict:
         if header is None:
             header = {}
