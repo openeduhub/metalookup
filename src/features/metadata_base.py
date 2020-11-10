@@ -137,7 +137,6 @@ class MetadataBase:
     def _work_html_content(self, html_content) -> list:
         if self.tag_list:
             if self.url.find("easylist") >= 0:
-                # TODO: These raw_links can be stored for further analysis in other Features -> how to store?
                 soup = self._create_html_soup(html_content)
                 raw_links = self._extract_raw_links(soup)
 
