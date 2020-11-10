@@ -50,7 +50,7 @@ class MetadataBase:
     def _work_header(self, header):
         if len(self.tag_list) == 1:
             values = (
-                header[self.tag_list[0]] if self.tag_list[0] in header else ""
+                header[self.tag_list[0]] if self.tag_list[0] in header else []
             )
         else:
             values = [header[ele] for ele in self.tag_list if ele in header]

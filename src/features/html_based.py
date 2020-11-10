@@ -4,21 +4,21 @@ from features.metadata_base import MetadataBase
 class Advertisement(MetadataBase):
     urls = [
         "https://easylist.to/easylist/easylist.txt",
-        "https://easylist.to/easylist/easylist_adservers.txt",
-        "https://easylist.to/easylist/easylist_adservers_popup.txt",
-        "https://easylist.to/easylist/easylist_allowlist.txt",
-        "https://easylist.to/easylist/easylist_allowlist_dimensions.txt",
-        "https://easylist.to/easylist/easylist_allowlist_general_hide.txt",
-        "https://easylist.to/easylist/easylist_allowlist_popup.txt",
-        "https://easylist.to/easylist/easylist_general_block.txt",
-        "https://easylist.to/easylist/easylist_general_block_dimensions.txt",
-        "https://easylist.to/easylist/easylist_general_block_popup.txt",
-        "https://easylist.to/easylist/easylist_general_hide.txt",
-        "https://easylist.to/easylist/easylist_specific_block.txt",
-        "https://easylist.to/easylist/easylist_specific_block_popup.txt",
-        "https://easylist.to/easylist/easylist_specific_hide.txt",
-        "https://easylist.to/easylist/easylist_thirdparty.txt",
-        "https://easylist.to/easylist/easylist_thirdparty_popup.txt",
+        "https://github.com/easylist/easylist/blob/master/easylist/easylist_adservers.txt",
+        "https://github.com/easylist/easylist/blob/master/easylist/easylist_adservers_popup.txt",
+        "https://github.com/easylist/easylist/blob/master/easylist/easylist_allowlist.txt",
+        "https://github.com/easylist/easylist/blob/master/easylist/easylist_allowlist_dimensions.txt",
+        "https://github.com/easylist/easylist/blob/master/easylist/easylist_allowlist_general_hide.txt",
+        "https://github.com/easylist/easylist/blob/master/easylist/easylist_allowlist_popup.txt",
+        "https://github.com/easylist/easylist/blob/master/easylist/easylist_general_block.txt",
+        "https://github.com/easylist/easylist/blob/master/easylist/easylist_general_block_dimensions.txt",
+        "https://github.com/easylist/easylist/blob/master/easylist/easylist_general_block_popup.txt",
+        "https://github.com/easylist/easylist/blob/master/easylist/easylist_general_hide.txt",
+        "https://github.com/easylist/easylist/blob/master/easylist/easylist_specific_block.txt",
+        "https://github.com/easylist/easylist/blob/master/easylist/easylist_specific_block_popup.txt",
+        "https://github.com/easylist/easylist/blob/master/easylist/easylist_specific_hide.txt",
+        "https://github.com/easylist/easylist/blob/master/easylist/easylist_thirdparty.txt",
+        "https://github.com/easylist/easylist/blob/master/easylist/easylist_thirdparty_popup.txt",
     ]
 
 
@@ -61,39 +61,39 @@ class Cookies(MetadataBase):
 class FanboyAnnoyance(MetadataBase):
     urls = [
         "https://easylist.to/easylist/fanboy-annoyance.txt",
-        "https://easylist.to/easylist/fanboy_annoyance_allowlist.txt",
-        "https://easylist.to/easylist/fanboy_annoyance_allowlist_general_hide.txt",
-        "https://easylist.to/easylist/fanboy_annoyance_general_block.txt",
-        "https://easylist.to/easylist/fanboy_annoyance_general_hide.txt",
-        "https://easylist.to/easylist/fanboy_annoyance_international.txt",
-        "https://easylist.to/easylist/fanboy_annoyance_specific_block.txt",
-        "https://easylist.to/easylist/fanboy_annoyance_thirdparty.txt",
+        "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_annoyance_allowlist.txt",
+        "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_annoyance_allowlist_general_hide.txt",
+        "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_annoyance_general_block.txt",
+        "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_annoyance_general_hide.txt",
+        "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_annoyance_international.txt",
+        "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_annoyance_specific_block.txt",
+        "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_annoyance_thirdparty.txt",
     ]
 
 
 class FanboyNotification(MetadataBase):
     urls = [
-        "https://easylist.to/easylist/fanboy_notifications_allowlist.txt",
-        "https://easylist.to/easylist/fanboy_notifications_allowlist_general_hide.txt",
-        "https://easylist.to/easylist/fanboy_notifications_general_block.txt",
-        "https://easylist.to/easylist/fanboy_notifications_general_hide.txt",
-        "https://easylist.to/easylist/fanboy_notifications_specific_block.txt",
-        "https://easylist.to/easylist/fanboy_notifications_specific_hide.txt",
-        "https://easylist.to/easylist/fanboy_notifications_thirdparty.txt",
+        "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_notifications_allowlist.txt",
+        "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_notifications_allowlist_general_hide.txt",
+        "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_notifications_general_block.txt",
+        "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_notifications_general_hide.txt",
+        "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_notifications_specific_block.txt",
+        "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_notifications_specific_hide.txt",
+        "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_notifications_thirdparty.txt",
     ]
 
 
 class FanboySocialMedia(MetadataBase):
     urls = [
         "https://easylist.to/easylist/fanboy-social.txt",
-        "https://easylist.to/easylist/fanboy_social_allowlist.txt",
-        "https://easylist.to/easylist/fanboy_social_allowlist_general_hide.txt",
-        "https://easylist.to/easylist/fanboy_social_general_block.txt",
-        "https://easylist.to/easylist/fanboy_social_general_hide.txt",
-        "https://easylist.to/easylist/fanboy_social_international.txt",
-        "https://easylist.to/easylist/fanboy_social_specific_block.txt",
-        "https://easylist.to/easylist/fanboy_social_specific_hide.txt",
-        "https://easylist.to/easylist/fanboy_social_thirdparty.txt",
+        "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_social_allowlist.txt",
+        "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_social_allowlist_general_hide.txt",
+        "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_social_general_block.txt",
+        "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_social_general_hide.txt",
+        "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_social_international.txt",
+        "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_social_specific_block.txt",
+        "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_social_specific_hide.txt",
+        "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_social_thirdparty.txt",
     ]
 
 

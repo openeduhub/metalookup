@@ -73,8 +73,8 @@ def test_api_extract_meta():
     url = DOCKER_TEST_URL + "extract_meta"
 
     payload = (
-        '{"url": "here", "content": '
-        '{"html": "<OAI-PMH xmlns=\\"http://www.openarchives.org/OAI/2.0/\\" '
+        '{"url": "here",'
+        '"html": "<OAI-PMH xmlns=\\"http://www.openarchives.org/OAI/2.0/\\" '
         'xmlns:xsi=\\"http://www.w3.org/2001/XMLSchema-instance\\" '
         'xsi:schemaLocation=\\"http://www.openarchives.org/OAI/2.0/ '
         'http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd\\">'
@@ -82,7 +82,7 @@ def test_api_extract_meta():
         'identifier=\\"4757e9ca-8829-4377-b0dd-680f1b2b4595\\" metadataPrefix=\\"lom\\">'
         "https://cloud.schulcampus-rlp.de/edu-sharing</request><GetRecord><record><header>"
         "<identifier>4757e9ca-8829-4377-b0dd-680f1b2b4595</identifier><datestamp>2020-10-23T13:58:02Z"
-        '</datestamp></header><metadata><lom xmlns=\\"http://ltsc.ieee.org/xsd/LOM\\" xmlns:xsi=\\'
+        '</datestamp></header><metadata><lom xmlns=\\"http://ltsc.ieee.org/xsd/LOM\\" xmlns:xsi=\\"'
         '"http://www.w3.org/2001/XMLSchema-instance\\" xsi:schemaLocation=\\"http://ltsc.ieee.org/xsd/LOM  '
         'http://ltsc.ieee.org/xsd/lomv1.0/lom.xsd\\">\\n    <general>\\n        <identifier>\\n            '
         "<catalog>local</catalog>\\n            <entry>4757e9ca-8829-4377-b0dd-680f1b2b4595</entry>\\n        "
@@ -116,10 +116,11 @@ def test_api_extract_meta():
         "https://cloud.schulcampus-rlp.de/edu-sharing/preview?nodeId=4757e9ca-8829-4377-b0dd-680f1b2b4595&amp;"
         "storeProtocol=workspace&amp;storeId=SpacesStore&amp;dontcache=1603461482271</string>\\n            "
         "</description>\\n        </resource>\\n    </relation>\\n</lom></metadata></record></GetRecord>"
-        "</OAI-PMH>\", \"headers\":\"{b'Date': [b'Fri, 23 Oct 2020 13:58:01 GMT'], b'Server': [b'Apache'], "
-        "b'Access-Control-Expose-Headers': [b'X-Edu-Scope'], b'Cache-Control': [b'no-cache'], "
-        "b'Expires': [b'0'], b'Content-Type': [b'application/xml'], b'Vary': [b'Accept-Encoding'],"
-        " b'X-Content-Type-Options': [b'nosniff'], b'X-Frame-Options': [b'sameorigin']}\"}}"
+        "</OAI-PMH>', "
+        '"headers":"{b"Date": [b"Fri, 23 Oct 2020 13:58:01 GMT"], b"Server": [b"Apache"], '
+        'b"Access-Control-Expose-Headers": [b"X-Edu-Scope"], b"Cache-Control": [b"no-cache"], '
+        'b"Expires": [b"0"], b"Content-Type": [b"application/xml"], b"Vary": [b"Accept-Encoding"],'
+        ' b"X-Content-Type-Options": [b"nosniff"], b"X-Frame-Options": [b"sameorigin"]}\'}}'
     )
 
     _build_and_run_docker()

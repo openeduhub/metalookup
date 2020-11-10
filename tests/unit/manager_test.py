@@ -71,9 +71,7 @@ def test_handle_content(manager: Manager, mocker):
     assert manager._preprocess_header.call_count == 0
     assert manager._extract_meta_data.call_count == 0
 
-    request = {
-        "some_uuid": {"content": {"html": empty_html, "headers": empty_header}}
-    }
+    request = {"some_uuid": {"html": empty_html, "headers": empty_header}}
 
     manager.manager_to_api_queue = mocker.MagicMock()
     manager.handle_content(request)

@@ -199,10 +199,9 @@ class Manager:
         self._logger.debug(f"request: {request}")
         for uuid, message in request.items():
             self._logger.debug(f"message: {message}")
-            content = message[MESSAGE_CONTENT]
             # TODO A lot of information needs to be known here
-            html_content = content[MESSAGE_HTML]
-            header_content = self._preprocess_header(content[MESSAGE_HEADERS])
+            html_content = message[MESSAGE_HTML]
+            header_content = self._preprocess_header(message[MESSAGE_HEADERS])
 
             starting_extraction = get_utc_now()
 

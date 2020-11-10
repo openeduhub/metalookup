@@ -1,18 +1,34 @@
+# Install
 
-# 
+You will need poetry and python3.9:
+```shell script
+sudo apt-get install python3.9     
+python3.9 -m pip3 install poetry
+```
+
+# Launching the container
+
+1. Start the container by executing `run.sh` from the main folder, not from `src`
+2. The container can be reached on `http://0.0.0.0:5057`
+
+# Accessing the Swagger UI
+
+The Swagger UI of FastApi can be access by:
+- `http://0.0.0.0:5057/redoc`
+- or alternatively `http://0.0.0.0:5057/doc`
 
 # Testing REST
 
-1. Start the container `run.sh`
+1. Start the container
 2. Execute:
     ```shell script
     curl --location --request POST '0.0.0.0:5057/extract_meta' \
     --header 'Content-Type: application/json' \
-    --data-raw '{"url": "here", "content": "cool_content123"}'
+    --data-raw '{"url": "here", "html": "cool_content123", "headers": ""}'
     ```
 3. You should get
     ```shell script
-   {"url":"here","meta":{"content_lenght":15}}%     
+   {"url":"here","meta":{...}}     
     ```
 
 # Pre commit
