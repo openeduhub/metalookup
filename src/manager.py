@@ -10,6 +10,7 @@ import uvicorn
 
 from app.api import app
 from app.communication import ProcessToDaemonCommunication
+from features.extract_from_document import ExtractFromFiles
 from features.extract_links import ExtractLinks
 from features.html_based import (
     Advertisement,
@@ -71,6 +72,7 @@ class Manager:
             Advertisement,
             EasyPrivacy,
             ExtractLinks,
+            ExtractFromFiles,
             IETracker,
             Cookies,
             FanboyAnnoyance,
