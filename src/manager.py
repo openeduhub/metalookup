@@ -29,7 +29,7 @@ from features.html_based import (
     PopUp,
 )
 from features.metadata_base import MetadataBase
-from lib.config import (
+from lib.constants import (
     LOGFILE_MANAGER,
     MESSAGE_CONTENT,
     MESSAGE_HEADERS,

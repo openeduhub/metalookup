@@ -2,7 +2,8 @@ import os
 
 from bs4 import BeautifulSoup
 
-from features.metadata_base import MetadataBase
+from features.metadata_base import MetadataBase, MetadataData
+from lib.constants import VALUES
 
 
 class ExtractLinks(MetadataBase):
@@ -221,8 +222,8 @@ class ExtractLinks(MetadataBase):
             if extension.replace(".", "") in self.malicious_extensions
         ]
 
-    def _start(self, html_content: str, header: dict) -> dict:
-        soup = self._create_html_soup(html_content)
+    def _start(self, metadata: MetadataData) -> dict:
+        soup = self._create_html_soup(metadata.html)
 
         raw_links = self._extract_raw_links(soup)
         image_links = self.__extract_images(soup)
@@ -230,8 +231,8 @@ class ExtractLinks(MetadataBase):
         malicious_extensions = self.__extract_malicious_extensions(extensions)
 
         return {
+            VALUES: raw_links,
             "images": image_links,
             "extensions": extensions,
-            "raw_links": raw_links,
             "malicious_extensions": malicious_extensions,
         }

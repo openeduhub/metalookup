@@ -1,7 +1,7 @@
 import adblockparser
 import pytest
 
-from features.metadata_base import MetadataBase
+from features.metadata_base import MetadataBase, MetadataData
 
 
 @pytest.fixture
@@ -33,7 +33,7 @@ def test_init(metadatabase: MetadataBase, mocker):
 
 def test_start(metadatabase: MetadataBase, mocker):
     html_content = "html_content"
-    header = "header"
+    header = {"header": "empty_header"}
     metadatabase.key = "test_key"
     start_spy = mocker.spy(metadatabase, "_start")
     values = metadatabase.start(html_content=html_content, header=header)
@@ -51,14 +51,12 @@ def test_start(metadatabase: MetadataBase, mocker):
         assert values[metadatabase.key]["tag_list_expires"] == 0
     assert start_spy.call_count == 1
     assert start_spy.call_args_list[0][1] == {
-        html_content: html_content,
-        header: header,
+        "metadata": MetadataData(html=html_content, values=[], headers=header)
     }
 
     _ = metadatabase.start(html_content=html_content)
     assert start_spy.call_args_list[1][1] == {
-        html_content: html_content,
-        header: {},
+        "metadata": MetadataData(html=html_content, values=[], headers={})
     }
 
 
@@ -76,16 +74,18 @@ def test_under_start(metadatabase: MetadataBase, mocker):
     work_html_content_spy = mocker.spy(metadatabase, "_work_html_content")
 
     metadatabase.evaluate_header = False
-    values = metadatabase._start(
-        html_content=html_content, header=processed_header
+    metadata = MetadataData(
+        html=html_content, values=[], headers=processed_header
     )
+
+    values = metadatabase._start(metadata=metadata)
 
     assert isinstance(values, dict)
     assert work_header_spy.call_count == 0
     assert work_html_content_spy.call_count == 1
 
     metadatabase.evaluate_header = True
-    _ = metadatabase._start(html_content=html_content, header=processed_header)
+    _ = metadatabase._start(metadata=metadata)
     assert work_header_spy.call_count == 1
     assert work_html_content_spy.call_count == 1
 

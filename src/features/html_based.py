@@ -1,4 +1,4 @@
-from features.metadata_base import MetadataBase
+from features.metadata_base import MetadataBase, ProbabilityDeterminationMethod
 
 
 class Advertisement(MetadataBase):
@@ -20,6 +20,10 @@ class Advertisement(MetadataBase):
         "https://github.com/easylist/easylist/blob/master/easylist/easylist_thirdparty.txt",
         "https://github.com/easylist/easylist/blob/master/easylist/easylist_thirdparty_popup.txt",
     ]
+    decision_threshold = 0
+    probability_determination_method = (
+        ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
+    )
 
 
 class EasyPrivacy(MetadataBase):
@@ -35,12 +39,14 @@ class EasyPrivacy(MetadataBase):
         "https://github.com/easylist/easylist/blob/master/easyprivacy/easyprivacy_thirdparty.txt",
         "https://github.com/easylist/easylist/blob/master/easyprivacy/easyprivacy_thirdparty_international.txt",
     ]
+    decision_threshold = 0
 
 
 class IETracker(MetadataBase):
     url: str = "https://easylist-downloads.adblockplus.org/easyprivacy.tpl"
     key: str = "internet_explorer_tracker"
     comment_symbol = "#"
+    decision_threshold = 0
 
 
 class Cookies(MetadataBase):
@@ -56,6 +62,7 @@ class Cookies(MetadataBase):
         "https://github.com/easylist/easylist/blob/master/easylist_cookie/easylist_cookie_specific_hide.txt",
         "https://github.com/easylist/easylist/blob/master/easylist_cookie/easylist_cookie_thirdparty.txt",
     ]
+    decision_threshold = 0
 
 
 class FanboyAnnoyance(MetadataBase):
@@ -69,6 +76,10 @@ class FanboyAnnoyance(MetadataBase):
         "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_annoyance_specific_block.txt",
         "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_annoyance_thirdparty.txt",
     ]
+    decision_threshold = 0
+    probability_determination_method = (
+        ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
+    )
 
 
 class FanboyNotification(MetadataBase):
@@ -81,6 +92,10 @@ class FanboyNotification(MetadataBase):
         "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_notifications_specific_hide.txt",
         "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_notifications_thirdparty.txt",
     ]
+    decision_threshold = 0
+    probability_determination_method = (
+        ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
+    )
 
 
 class FanboySocialMedia(MetadataBase):
@@ -95,6 +110,7 @@ class FanboySocialMedia(MetadataBase):
         "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_social_specific_hide.txt",
         "https://github.com/easylist/easylist/blob/master/fanboy-addon/fanboy_social_thirdparty.txt",
     ]
+    decision_threshold = 0
 
 
 class AntiAdBlock(MetadataBase):
@@ -104,6 +120,7 @@ class AntiAdBlock(MetadataBase):
         "https://github.com/easylist/antiadblockfilters/blob/master/antiadblockfilters/antiadblock_english.txt",
     ]
     key: str = "anti_adblock"
+    decision_threshold = 0
 
 
 class EasylistGermany(MetadataBase):
@@ -124,6 +141,7 @@ class EasylistGermany(MetadataBase):
         "https://github.com/easylist/easylistgermany/blob/master/easylistgermany/easylistgermany_thirdparty.txt",
         "https://github.com/easylist/easylistgermany/blob/master/easylistgermany/easylistgermany_thirdparty_popup.txt",
     ]
+    decision_threshold = 0
 
 
 class EasylistAdult(MetadataBase):
@@ -138,11 +156,13 @@ class EasylistAdult(MetadataBase):
         "https://github.com/easylist/easylist/blob/master/easylist_adult/adult_thirdparty.txt",
         "https://github.com/easylist/easylist/blob/master/easylist_adult/adult_thirdparty_popup.txt",
     ]
+    decision_threshold = 0
 
 
 class Paywalls(MetadataBase):
     tag_list = ["paywall", "paywalluser"]
     key: str = "paywall"
+    decision_threshold = 0
 
 
 class ContentSecurityPolicy(MetadataBase):
@@ -154,6 +174,7 @@ class IFrameEmbeddable(MetadataBase):
     tag_list = ["X-Frame-Options"]
     key: str = "iframe_embeddable"
     evaluate_header = True
+    decision_threshold = 0
 
 
 class PopUp(MetadataBase):
@@ -166,3 +187,4 @@ class PopUp(MetadataBase):
         "interstitial",
         "Interstitial",
     ]
+    decision_threshold = 0

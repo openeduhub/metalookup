@@ -4,7 +4,14 @@ from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
 from app.communication import ProcessToDaemonCommunication
-from lib.config import MESSAGE_HEADERS, MESSAGE_HTML, MESSAGE_URL
+from lib.constants import (
+    DECISION,
+    MESSAGE_HEADERS,
+    MESSAGE_HTML,
+    MESSAGE_URL,
+    PROBABILITY,
+    VALUES,
+)
 from lib.timing import get_utc_now
 
 
@@ -96,13 +103,13 @@ def _convert_dict_to_output_model(meta):
     out = ExtractorTags()
     extractor_keys = ExtractorTags.__fields__.keys()
     for key in extractor_keys:
-        if key in meta.keys() and "values" in meta[key]:
+        if key in meta.keys() and VALUES in meta[key]:
             out.__setattr__(
                 key,
                 MetadataTags(
-                    value=meta[key]["values"],
-                    probability=-1,
-                    decision=False,
+                    value=meta[key][VALUES],
+                    probability=meta[key][PROBABILITY],
+                    decision=meta[key][DECISION],
                 ),
             )
     return out
