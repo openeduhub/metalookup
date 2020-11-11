@@ -51,7 +51,7 @@ class ListTags(BaseModel):
 class ExtractorTags(BaseModel):
     advertisement: Optional[MetadataTags]
     easy_privacy: Optional[MetadataTags]
-    extracted_links: Optional[MetadataTags]
+    malicious_extensions: Optional[MetadataTags]
     extract_from_files: Optional[MetadataTags]
     internet_explorer_tracker: Optional[MetadataTags]
     cookies: Optional[MetadataTags]

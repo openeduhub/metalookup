@@ -2,13 +2,12 @@ import os
 
 from bs4 import BeautifulSoup
 
-from features.metadata_base import MetadataBase, MetadataData
+from features.metadata_base import MetadataBase
+from features.website_manager import WebsiteData
 from lib.constants import VALUES
 
 
-class ExtractLinks(MetadataBase):
-    key: str = "extracted_links"
-
+class MaliciousExtensions(MetadataBase):
     # Based on: https://www.file-extensions.org/filetype/extension/name/dangerous-malicious-files
     #           https://www.howtogeek.com/137270/50-file-extensions-that-are-potentially-dangerous-on-windows/
     #           https://sensorstechforum.com/file-types-used-malware-2019/
@@ -203,36 +202,10 @@ class ExtractLinks(MetadataBase):
         "\u202e",
     ]
 
-    @staticmethod
-    def __extract_extensions(links: list):
-        file_extensions = [os.path.splitext(link)[-1] for link in links]
-        file_extensions = [x for x in list(set(file_extensions)) if x != ""]
-        return file_extensions
-
-    @staticmethod
-    def __extract_images(soup: BeautifulSoup) -> list:
-        # TODO: We only gather the url here. There is more information stored here!
-        image_links = [image.attrs.get("src") for image in soup.findAll("img")]
-        return image_links
-
-    def __extract_malicious_extensions(self, extensions: list) -> list:
-        return [
+    def _start(self, website_data: WebsiteData) -> dict:
+        malicious_extensions = [
             extension
-            for extension in extensions
+            for extension in website_data.extensions
             if extension.replace(".", "") in self.malicious_extensions
         ]
-
-    def _start(self, metadata: MetadataData) -> dict:
-        soup = self._create_html_soup(metadata.html)
-
-        raw_links = self._extract_raw_links(soup)
-        image_links = self.__extract_images(soup)
-        extensions = self.__extract_extensions(raw_links)
-        malicious_extensions = self.__extract_malicious_extensions(extensions)
-
-        return {
-            VALUES: raw_links,
-            "images": image_links,
-            "extensions": extensions,
-            "malicious_extensions": malicious_extensions,
-        }
+        return {VALUES: malicious_extensions}

@@ -61,33 +61,30 @@ def test_handle_content(manager: Manager, mocker):
 
     empty_header = "empty_header"
     empty_html = "empty_html"
-    manager._preprocess_header = mocker.MagicMock()
-    manager._preprocess_header.return_value = empty_header
 
-    manager._extract_meta_data = mocker.MagicMock()
+    with mock.patch("manager.WebsiteManager") as mocked_website_manager:
+        manager._extract_meta_data = mocker.MagicMock()
 
-    manager.handle_content(request)
+        manager.handle_content(request)
 
-    assert manager._preprocess_header.call_count == 0
-    assert manager._extract_meta_data.call_count == 0
+        assert manager._extract_meta_data.call_count == 0
+        assert (
+            mocked_website_manager.get_instance().load_raw_data.call_count == 0
+        )
+        assert mocked_website_manager.get_instance().reset.call_count == 0
 
-    request = {"some_uuid": {"html": empty_html, "headers": empty_header}}
+        request = {"some_uuid": {"html": empty_html, "headers": empty_header}}
 
-    manager.manager_to_api_queue = mocker.MagicMock()
-    manager.handle_content(request)
+        manager.manager_to_api_queue = mocker.MagicMock()
+        manager.handle_content(request)
 
-    assert manager._preprocess_header.call_count == 1
-    assert manager._extract_meta_data.call_count == 1
+        assert manager._extract_meta_data.call_count == 1
+        assert (
+            mocked_website_manager.get_instance().load_raw_data.call_count == 1
+        )
+        assert mocked_website_manager.get_instance().reset.call_count == 1
 
-    is_extract_meta_data_called_with_empty_html = (
-        manager._extract_meta_data.call_args_list[0][0][0] == empty_html
-    )
-    is_extract_meta_data_called_with_empty_header = (
-        manager._extract_meta_data.call_args_list[0][0][1] == empty_header
-    )
-    is_preprocess_header_called_with_headers = (
-        manager._preprocess_header.call_args_list[0][0][0] == empty_header
-    )
-    assert is_preprocess_header_called_with_headers
-    assert is_extract_meta_data_called_with_empty_html
-    assert is_extract_meta_data_called_with_empty_header
+        is_extract_meta_data_called_with_empty_html = (
+            manager._extract_meta_data.call_args_list[0][0] == ()
+        )
+        assert is_extract_meta_data_called_with_empty_html

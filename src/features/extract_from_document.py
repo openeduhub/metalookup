@@ -6,7 +6,8 @@ from urllib.parse import urlparse
 import requests
 from bs4 import BeautifulSoup
 
-from features.metadata_base import MetadataBase, MetadataData
+from features.metadata_base import MetadataBase
+from features.website_manager import WebsiteData
 from lib.constants import VALUES
 
 
@@ -72,21 +73,18 @@ class ExtractFromFiles(MetadataBase):
 
         return values
 
-    def _start(self, metadata: MetadataData) -> dict:
-        soup = self._create_html_soup(metadata.html)
+    def _start(self, website_data: WebsiteData) -> dict:
 
-        raw_links = self._extract_raw_links(soup)
-
-        file_extensions = [os.path.splitext(link)[-1] for link in raw_links]
+        file_extensions = [
+            os.path.splitext(link)[-1] for link in website_data.raw_links
+        ]
 
         docx_files = [
             file
-            for file, extension in zip(raw_links, file_extensions)
+            for file, extension in zip(website_data.raw_links, file_extensions)
             if extension == ".docx"
         ]
 
         values = self._work_docx(docx_files=docx_files)
 
-        content = {**values}
-
-        return content
+        return {**values}

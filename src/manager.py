@@ -1,7 +1,7 @@
-import json
 import logging
 import multiprocessing
 import os
+import signal
 import time
 from logging import handlers
 from queue import Empty
@@ -11,7 +11,6 @@ import uvicorn
 from app.api import app
 from app.communication import ProcessToDaemonCommunication
 from features.extract_from_document import ExtractFromFiles
-from features.extract_links import ExtractLinks
 from features.html_based import (
     Advertisement,
     AntiAdBlock,
@@ -28,13 +27,10 @@ from features.html_based import (
     Paywalls,
     PopUp,
 )
+from features.malicious_extensions import MaliciousExtensions
 from features.metadata_base import MetadataBase
-from lib.constants import (
-    LOGFILE_MANAGER,
-    MESSAGE_CONTENT,
-    MESSAGE_HEADERS,
-    MESSAGE_HTML,
-)
+from features.website_manager import WebsiteManager
+from lib.constants import LOGFILE_MANAGER, MESSAGE_HEADERS, MESSAGE_HTML
 from lib.settings import API_PORT, LOG_LEVEL, LOG_PATH
 from lib.timing import get_utc_now
 
@@ -71,7 +67,7 @@ class Manager:
         extractors = [
             Advertisement,
             EasyPrivacy,
-            ExtractLinks,
+            MaliciousExtensions,
             ExtractFromFiles,
             IETracker,
             Cookies,
@@ -136,6 +132,13 @@ class Manager:
         self._logger.addHandler(fh)
         self._logger.addHandler(error_handler)
 
+    def setup(self):
+        for metadata_extractor in self.metadata_extractors:
+            metadata_extractor: MetadataBase
+            metadata_extractor.setup()
+
+    # =========== LOOP ============
+
     def get_api_request(self):
         if self.api_to_manager_queue is not None:
             try:
@@ -147,80 +150,59 @@ class Manager:
             except Empty:
                 pass
 
-    def setup(self):
-        for metadata_extractor in self.metadata_extractors:
-            metadata_extractor: MetadataBase
-            metadata_extractor.setup()
-
-    def _extract_meta_data(self, html_content: str, headers: dict):
-        data = {}
-        for metadata_extractor in self.metadata_extractors:
-            extracted_metadata = metadata_extractor.start(
-                html_content, headers
-            )
-            data.update(extracted_metadata)
-
-            self._logger.debug(f"Resulting data: {data}")
-        return data
-
-    # =========== LOOP ============
     def run(self):
+        signal.signal(signal.SIGINT, self._graceful_shutdown)
+        signal.signal(signal.SIGTERM, self._graceful_shutdown)
 
         while self.run_loop:
             self.get_api_request()
             self._logger.info(f"Current time: {get_utc_now()}")
             time.sleep(1)
 
-    @staticmethod
-    def _preprocess_header(header: str) -> dict:
-        header = (
-            header.replace("b'", '"')
-            .replace("/'", '"')
-            .replace("'", '"')
-            .replace('""', '"')
-            .replace('/"', "/")
-        )
+    def _extract_meta_data(self):
+        data = {}
+        for metadata_extractor in self.metadata_extractors:
+            extracted_metadata = metadata_extractor.start()
+            data.update(extracted_metadata)
 
-        idx = header.find('b"')
-        if idx >= 0 and header[idx - 1] == "[":
-            bracket_idx = header[idx:].find("]")
-            header = (
-                header[:idx]
-                + '"'
-                + header[idx + 2 : idx + bracket_idx - 2].replace('"', " ")
-                + header[idx + bracket_idx - 1 :]
-            )
-
-        header = json.loads(header)
-        return header
+            self._logger.debug(f"Resulting data: {data}")
+        return data
 
     def handle_content(self, request):
 
         self._logger.debug(f"request: {request}")
         for uuid, message in request.items():
             self._logger.debug(f"message: {message}")
-            # TODO A lot of information needs to be known here
-            html_content = message[MESSAGE_HTML]
-            header_content = self._preprocess_header(message[MESSAGE_HEADERS])
+
+            website_manager = WebsiteManager.get_instance()
+            website_manager.load_raw_data(
+                html_content=message[MESSAGE_HTML],
+                raw_header=message[MESSAGE_HEADERS],
+            )
 
             starting_extraction = get_utc_now()
-
             try:
-                meta_data = self._extract_meta_data(
-                    html_content, header_content
-                )
+                extracted_meta_data = self._extract_meta_data()
             except Exception as e:
                 self._logger.error(
                     f"Extracting metadata raised: '{e.args}'", exc_info=True
                 )
-                meta_data = {}
+                extracted_meta_data = {}
 
-            meta_data.update(
-                {"time_for_extraction": get_utc_now() - starting_extraction}
+            extracted_meta_data.update(
+                {
+                    "time_for_extraction": get_utc_now() - starting_extraction,
+                    **website_manager.get_website_data_to_log(),
+                }
             )
 
-            response = meta_data
+            response = extracted_meta_data
+            website_manager.reset()
+
             self.manager_to_api_queue.put({uuid: response})
+
+    def _graceful_shutdown(self, signum=None, frame=None):
+        self.run_loop = False
 
 
 def api_server(queue, return_queue):

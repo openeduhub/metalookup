@@ -1,21 +1,14 @@
 import re
 from collections import OrderedDict
-from dataclasses import dataclass, field
 from enum import Enum
 
 import adblockparser
 import requests
 from bs4 import BeautifulSoup
 
+from features.website_manager import WebsiteData, WebsiteManager
 from lib.constants import DECISION, PROBABILITY, VALUES
 from lib.timing import get_utc_now
-
-
-@dataclass
-class MetadataData:
-    html: str
-    values: list = field(default_factory=list)
-    headers: dict = field(default_factory=dict)
 
 
 class ProbabilityDeterminationMethod(Enum):
@@ -45,31 +38,32 @@ class MetadataBase:
                 r"(?<!^)(?=[A-Z])", "_", self.__class__.__name__
             ).lower()
 
-    def _get_ratio_of_elements(self, values: list, html_content: str) -> float:
-        soup = self._create_html_soup(html_content)
-        raw_links = self._extract_raw_links(soup)
+    def _get_ratio_of_elements(self, website_data: WebsiteData) -> float:
+        values = website_data.values
 
-        if values and len(raw_links) > 0:
-            ratio = len(values) / len(raw_links)
+        if values and len(website_data.raw_links) > 0:
+            ratio = len(values) / len(website_data.raw_links)
         else:
             ratio = 0
         return round(ratio, 2)
 
-    def _calculate_probability(self, metadata: MetadataData) -> float:
+    def _calculate_probability(self, website_data: WebsiteData) -> float:
         probability = -1
         if (
             self.probability_determination_method
             == ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
         ):
             probability = self._get_ratio_of_elements(
-                values=metadata.values, html_content=metadata.html
+                website_data=website_data
             )
         elif (
             self.probability_determination_method
             == ProbabilityDeterminationMethod.SINGLE_OCCURRENCE
         ):
             probability = (
-                1 if (metadata.values and len(metadata.values) > 0) else 0
+                1
+                if (website_data.values and len(website_data.values) > 0)
+                else 0
             )
 
         return probability
@@ -83,19 +77,18 @@ class MetadataBase:
             decision = False
         return decision
 
-    def start(self, html_content: str = "", header=None) -> dict:
-        metadata = MetadataData(html=html_content)
-        if header is None:
-            header = {}
-        metadata.headers = header
-
+    def start(self) -> dict:
         self._logger.info(f"Starting {self.__class__.__name__}")
         before = get_utc_now()
-        values = self._start(metadata=metadata)
 
-        metadata.values = values[VALUES]
+        website_manager = WebsiteManager.get_instance()
+        website_data = website_manager.website_data
 
-        probability = self._calculate_probability(metadata=metadata)
+        values = self._start(website_data=website_data)
+
+        website_data.values = values[VALUES]
+
+        probability = self._calculate_probability(website_data=website_data)
         decision = self._decide(probability=probability)
 
         data = {
@@ -127,38 +120,33 @@ class MetadataBase:
         return values
 
     @staticmethod
-    def _create_html_soup(html_content: str) -> BeautifulSoup:
-        return BeautifulSoup(html_content, "html.parser")
-
-    @staticmethod
     def _extract_raw_links(soup: BeautifulSoup) -> list:
         return list({a["href"] for a in soup.find_all(href=True)})
 
-    def _work_html_content(self, html_content) -> list:
+    def _work_html_content(self, website_data: WebsiteData) -> list:
         if self.tag_list:
             if self.url.find("easylist") >= 0:
-                soup = self._create_html_soup(html_content)
-                raw_links = self._extract_raw_links(soup)
-
                 rules = adblockparser.AdblockRules(self.tag_list)
                 values = []
-                for url in raw_links:
+                for url in website_data.raw_links:
                     is_blocked = rules.should_block(url)
                     if is_blocked:
                         values.append(url)
             else:
                 values = [
-                    ele for ele in self.tag_list if html_content.find(ele) >= 0
+                    ele
+                    for ele in self.tag_list
+                    if website_data.html.find(ele) >= 0
                 ]
         else:
             values = []
         return values
 
-    def _start(self, metadata: MetadataData) -> dict:
+    def _start(self, website_data: WebsiteData) -> dict:
         if self.evaluate_header:
-            values = self._work_header(metadata.headers)
+            values = self._work_header(website_data.headers)
         else:
-            values = self._work_html_content(metadata.html)
+            values = self._work_html_content(website_data)
         return {VALUES: values}
 
     def _download_multiple_tag_lists(self):

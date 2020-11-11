@@ -1,7 +1,10 @@
+from unittest import mock
+
 import adblockparser
 import pytest
 
-from features.metadata_base import MetadataBase, MetadataData
+from features.metadata_base import MetadataBase
+from features.website_manager import WebsiteData
 
 
 @pytest.fixture
@@ -36,7 +39,7 @@ def test_start(metadatabase: MetadataBase, mocker):
     header = {"header": "empty_header"}
     metadatabase.key = "test_key"
     start_spy = mocker.spy(metadatabase, "_start")
-    values = metadatabase.start(html_content=html_content, header=header)
+    values = metadatabase.start()
 
     values_has_only_one_key = len(values.keys()) == 1
 
@@ -51,13 +54,23 @@ def test_start(metadatabase: MetadataBase, mocker):
         assert values[metadatabase.key]["tag_list_expires"] == 0
     assert start_spy.call_count == 1
     assert start_spy.call_args_list[0][1] == {
-        "metadata": MetadataData(html=html_content, values=[], headers=header)
+        "website_data": WebsiteData(
+            html="", values=[], headers={}, raw_header=""
+        )
     }
 
-    _ = metadatabase.start(html_content=html_content)
-    assert start_spy.call_args_list[1][1] == {
-        "metadata": MetadataData(html=html_content, values=[], headers={})
-    }
+    with mock.patch(
+        "features.metadata_base.WebsiteManager"
+    ) as mocked_website_manager:
+        mocked_website_manager.get_instance().website_data = WebsiteData(
+            html=html_content, raw_header="", headers=header
+        )
+        _ = metadatabase.start()
+        assert start_spy.call_args_list[1][1] == {
+            "website_data": WebsiteData(
+                html=html_content, values=[], headers=header
+            )
+        }
 
 
 """
@@ -74,18 +87,18 @@ def test_under_start(metadatabase: MetadataBase, mocker):
     work_html_content_spy = mocker.spy(metadatabase, "_work_html_content")
 
     metadatabase.evaluate_header = False
-    metadata = MetadataData(
+    website_data = WebsiteData(
         html=html_content, values=[], headers=processed_header
     )
 
-    values = metadatabase._start(metadata=metadata)
+    values = metadatabase._start(website_data=website_data)
 
     assert isinstance(values, dict)
     assert work_header_spy.call_count == 0
     assert work_html_content_spy.call_count == 1
 
     metadatabase.evaluate_header = True
-    _ = metadatabase._start(metadata=metadata)
+    _ = metadatabase._start(website_data=website_data)
     assert work_header_spy.call_count == 1
     assert work_html_content_spy.call_count == 1
 
