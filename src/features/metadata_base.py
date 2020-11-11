@@ -38,11 +38,10 @@ class MetadataBase:
                 r"(?<!^)(?=[A-Z])", "_", self.__class__.__name__
             ).lower()
 
-    def _get_ratio_of_elements(self, website_data: WebsiteData) -> float:
-        values = website_data.values
-
-        if values and len(website_data.raw_links) > 0:
-            ratio = len(values) / len(website_data.raw_links)
+    @staticmethod
+    def _get_ratio_of_elements(website_data: WebsiteData) -> float:
+        if website_data.values and len(website_data.raw_links) > 0:
+            ratio = len(website_data.values) / len(website_data.raw_links)
         else:
             ratio = 0
         return round(ratio, 2)
