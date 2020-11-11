@@ -1,3 +1,4 @@
+import json
 from typing import Optional
 
 from fastapi import FastAPI
@@ -6,6 +7,7 @@ from pydantic import BaseModel, Field
 from app.communication import ProcessToDaemonCommunication
 from lib.constants import (
     DECISION,
+    MESSAGE_ALLOW_LIST,
     MESSAGE_HEADERS,
     MESSAGE_HTML,
     MESSAGE_URL,
@@ -30,22 +32,22 @@ class MetadataTags(BaseModel):
 
 
 class ListTags(BaseModel):
-    advertisement: bool = False
-    easy_privacy: bool = False
-    extracted_links: bool = False
-    extract_from_files: bool = False
-    internet_explorer_tracker: bool = False
-    cookies: bool = False
-    fanboy_annoyance: bool = False
-    fanboy_notification: bool = False
-    fanboy_social_media: bool = False
-    anti_adblock: bool = False
-    easylist_germany: bool = False
-    easylist_adult: bool = False
-    paywall: bool = False
-    content_security_policy: bool = False
-    iframe_embeddable: bool = False
-    pop_up: bool = False
+    advertisement: Optional[bool] = True
+    easy_privacy: Optional[bool] = True
+    extracted_links: Optional[bool] = True
+    extract_from_files: Optional[bool] = True
+    internet_explorer_tracker: Optional[bool] = True
+    cookies: Optional[bool] = True
+    fanboy_annoyance: Optional[bool] = True
+    fanboy_notification: Optional[bool] = True
+    fanboy_social_media: Optional[bool] = True
+    anti_adblock: Optional[bool] = True
+    easylist_germany: Optional[bool] = True
+    easylist_adult: Optional[bool] = True
+    paywall: Optional[bool] = True
+    content_security_policy: Optional[bool] = True
+    iframe_embeddable: Optional[bool] = True
+    pop_up: Optional[bool] = True
 
 
 class ExtractorTags(BaseModel):
@@ -115,14 +117,22 @@ def _convert_dict_to_output_model(meta):
     return out
 
 
+def _convert_allow_list_to_dict(allow_list: ListTags) -> dict:
+    return json.loads(allow_list.json())
+
+
 @app.post("/extract_meta", response_model=Output)
 def extract_meta(input_data: Input):
     starting_extraction = get_utc_now()
+
+    allowance = _convert_allow_list_to_dict(input_data.allow_list)
+
     uuid = app.api_queue.send_message(
         {
             MESSAGE_URL: input_data.url,
             MESSAGE_HTML: input_data.html,
             MESSAGE_HEADERS: input_data.headers,
+            MESSAGE_ALLOW_LIST: allowance,
         }
     )
 

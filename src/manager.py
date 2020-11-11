@@ -30,7 +30,12 @@ from features.html_based import (
 from features.malicious_extensions import MaliciousExtensions
 from features.metadata_base import MetadataBase
 from features.website_manager import WebsiteManager
-from lib.constants import LOGFILE_MANAGER, MESSAGE_HEADERS, MESSAGE_HTML
+from lib.constants import (
+    LOGFILE_MANAGER,
+    MESSAGE_ALLOW_LIST,
+    MESSAGE_HEADERS,
+    MESSAGE_HTML,
+)
 from lib.settings import API_PORT, LOG_LEVEL, LOG_PATH
 from lib.timing import get_utc_now
 
@@ -159,13 +164,14 @@ class Manager:
             self._logger.info(f"Current time: {get_utc_now()}")
             time.sleep(1)
 
-    def _extract_meta_data(self):
+    def _extract_meta_data(self, allow_list: dict) -> dict:
         data = {}
         for metadata_extractor in self.metadata_extractors:
-            extracted_metadata = metadata_extractor.start()
-            data.update(extracted_metadata)
+            if allow_list[metadata_extractor.key]:
+                extracted_metadata = metadata_extractor.start()
+                data.update(extracted_metadata)
 
-            self._logger.debug(f"Resulting data: {data}")
+                self._logger.debug(f"Resulting data: {data}")
         return data
 
     def handle_content(self, request):
@@ -182,7 +188,9 @@ class Manager:
 
             starting_extraction = get_utc_now()
             try:
-                extracted_meta_data = self._extract_meta_data()
+                extracted_meta_data = self._extract_meta_data(
+                    message[MESSAGE_ALLOW_LIST]
+                )
             except Exception as e:
                 self._logger.error(
                     f"Extracting metadata raised: '{e.args}'", exc_info=True

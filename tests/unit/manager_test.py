@@ -73,7 +73,14 @@ def test_handle_content(manager: Manager, mocker):
         )
         assert mocked_website_manager.get_instance().reset.call_count == 0
 
-        request = {"some_uuid": {"html": empty_html, "headers": empty_header}}
+        allow_list = {}
+        request = {
+            "some_uuid": {
+                "html": empty_html,
+                "headers": empty_header,
+                "allow_list": allow_list,
+            }
+        }
 
         manager.manager_to_api_queue = mocker.MagicMock()
         manager.handle_content(request)
@@ -85,6 +92,6 @@ def test_handle_content(manager: Manager, mocker):
         assert mocked_website_manager.get_instance().reset.call_count == 1
 
         is_extract_meta_data_called_with_empty_html = (
-            manager._extract_meta_data.call_args_list[0][0] == ()
+            manager._extract_meta_data.call_args_list[0][0][0] == allow_list
         )
         assert is_extract_meta_data_called_with_empty_html
