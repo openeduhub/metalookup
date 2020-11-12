@@ -52,22 +52,22 @@ class ListTags(BaseModel):
 
 
 class ExtractorTags(BaseModel):
-    advertisement: Optional[MetadataTags]
-    easy_privacy: Optional[MetadataTags]
-    malicious_extensions: Optional[MetadataTags]
-    extract_from_files: Optional[MetadataTags]
-    internet_explorer_tracker: Optional[MetadataTags]
-    cookies: Optional[MetadataTags]
-    fanboy_annoyance: Optional[MetadataTags]
-    fanboy_notification: Optional[MetadataTags]
-    fanboy_social_media: Optional[MetadataTags]
-    anti_adblock: Optional[MetadataTags]
-    easylist_germany: Optional[MetadataTags]
-    easylist_adult: Optional[MetadataTags]
-    paywall: Optional[MetadataTags]
-    content_security_policy: Optional[MetadataTags]
-    iframe_embeddable: Optional[MetadataTags]
-    pop_up: Optional[MetadataTags]
+    advertisement: MetadataTags = Field(default=None)
+    easy_privacy: MetadataTags = Field(default=None)
+    malicious_extensions: MetadataTags = Field(default=None)
+    extract_from_files: MetadataTags = Field(default=None)
+    internet_explorer_tracker: MetadataTags = Field(default=None)
+    cookies: MetadataTags = Field(default=None)
+    fanboy_annoyance: MetadataTags = Field(default=None)
+    fanboy_notification: MetadataTags = Field(default=None)
+    fanboy_social_media: MetadataTags = Field(default=None)
+    anti_adblock: MetadataTags = Field(default=None)
+    easylist_germany: MetadataTags = Field(default=None)
+    easylist_adult: MetadataTags = Field(default=None)
+    paywall: MetadataTags = Field(default=None)
+    content_security_policy: MetadataTags = Field(default=None)
+    iframe_embeddable: MetadataTags = Field(default=None)
+    pop_up: MetadataTags = Field(default=None)
 
 
 class Input(BaseModel):
@@ -96,16 +96,20 @@ class Output(BaseModel):
         default=None,
         description="A description of the exception which caused the extraction to fail.",
     )
+    time_until_complete: float = Field(
+        default=-1,
+        description="The time needed from starting the extraction"
+        " until sending the resulting meta data out.",
+    )
 
 
 app = FastAPI(title="Metadata Extractor", version="0.1")
 app.api_queue: ProcessToDaemonCommunication
 
 
-def _convert_dict_to_output_model(meta):
+def _convert_dict_to_output_model(meta) -> ExtractorTags:
     out = ExtractorTags()
-    extractor_keys = ExtractorTags.__fields__.keys()
-    for key in extractor_keys:
+    for key in ExtractorTags.__fields__.keys():
         if key in meta.keys() and VALUES in meta[key]:
             out.__setattr__(
                 key,
@@ -140,21 +144,23 @@ def extract_meta(input_data: Input):
     meta_data: dict = app.api_queue.get_message(uuid)
 
     if meta_data:
-        meta_data.update(
-            {"time_until_complete": get_utc_now() - starting_extraction}
-        )
-        # TODO: Is this needed?
-        # out = _convert_dict_to_output_model(meta_data)
+        extractor_tags = _convert_dict_to_output_model(meta_data)
 
         if MESSAGE_EXCEPTION in meta_data.keys():
             exception = meta_data[MESSAGE_EXCEPTION]
         else:
             exception = None
 
-        out = Output(url=input_data.url, meta=meta_data, exception=exception)
     else:
-        message = "No response from metadata extractor."
-        out = Output(url=input_data.url, exception=message)
+        extractor_tags = None
+        exception = "No response from metadata extractor."
+
+    out = Output(
+        url=input_data.url,
+        meta=extractor_tags,
+        exception=exception,
+        time_until_complete=get_utc_now() - starting_extraction,
+    )
 
     return out
 
