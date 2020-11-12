@@ -1,6 +1,8 @@
+import os
 import re
 from collections import OrderedDict
 from enum import Enum
+from urllib.parse import urlparse
 
 import adblockparser
 import requests
@@ -8,6 +10,7 @@ from bs4 import BeautifulSoup
 
 from features.website_manager import WebsiteData, WebsiteManager
 from lib.constants import DECISION, PROBABILITY, VALUES
+from lib.settings import USE_LOCAL_IF_POSSIBLE
 from lib.timing import get_utc_now
 
 
@@ -156,13 +159,25 @@ class MetadataBase:
             complete_tag_list.append(self.tag_list)
 
     def _download_tag_list(self) -> None:
-        result = requests.get(self.url)
-        if result.status_code == 200:
-            self.tag_list = result.text.splitlines()
+        taglist_path = "tag_lists/"
+        if not os.path.isdir(taglist_path):
+            os.mkdir(taglist_path)
+
+        filename = os.path.basename(urlparse(self.url).path)
+        if USE_LOCAL_IF_POSSIBLE and os.path.isfile(taglist_path + filename):
+            with open(taglist_path + filename, "r") as file:
+                self.tag_list = file.read().splitlines()
         else:
-            self._logger.warning(
-                f"Downloading tag list from '{self.url}' yielded status code '{result.status_code}'."
-            )
+            result = requests.get(self.url)
+            if result.status_code == 200:
+                self.tag_list = result.text.splitlines()
+                if USE_LOCAL_IF_POSSIBLE:
+                    with open(taglist_path + filename, "w+") as file:
+                        file.write(result.text)
+            else:
+                self._logger.warning(
+                    f"Downloading tag list from '{self.url}' yielded status code '{result.status_code}'."
+                )
 
     def _extract_date_from_list(self):
         expires_expression = re.compile(

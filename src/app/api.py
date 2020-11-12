@@ -35,6 +35,7 @@ class MetadataTags(BaseModel):
 class ListTags(BaseModel):
     advertisement: Optional[bool] = True
     easy_privacy: Optional[bool] = True
+    malicious_extensions: Optional[bool] = True
     extracted_links: Optional[bool] = True
     extract_from_files: Optional[bool] = True
     internet_explorer_tracker: Optional[bool] = True
@@ -114,7 +115,7 @@ def _convert_dict_to_output_model(meta) -> ExtractorTags:
             out.__setattr__(
                 key,
                 MetadataTags(
-                    value=meta[key][VALUES],
+                    values=meta[key][VALUES],
                     probability=meta[key][PROBABILITY],
                     decision=meta[key][DECISION],
                 ),
