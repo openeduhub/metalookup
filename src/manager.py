@@ -33,8 +33,10 @@ from features.website_manager import WebsiteManager
 from lib.constants import (
     LOGFILE_MANAGER,
     MESSAGE_ALLOW_LIST,
+    MESSAGE_EXCEPTION,
     MESSAGE_HEADERS,
     MESSAGE_HTML,
+    MESSAGE_META,
 )
 from lib.settings import API_PORT, LOG_LEVEL, LOG_PATH
 from lib.timing import get_utc_now
@@ -180,32 +182,40 @@ class Manager:
         for uuid, message in request.items():
             self._logger.debug(f"message: {message}")
 
-            website_manager = WebsiteManager.get_instance()
-            website_manager.load_raw_data(
-                html_content=message[MESSAGE_HTML],
-                raw_header=message[MESSAGE_HEADERS],
-            )
-
-            starting_extraction = get_utc_now()
-            try:
-                extracted_meta_data = self._extract_meta_data(
-                    message[MESSAGE_ALLOW_LIST]
-                )
-            except Exception as e:
-                self._logger.error(
-                    f"Extracting metadata raised: '{e.args}'", exc_info=True
-                )
-                extracted_meta_data = {}
-
-            extracted_meta_data.update(
-                {
-                    "time_for_extraction": get_utc_now() - starting_extraction,
-                    **website_manager.get_website_data_to_log(),
+            if message[MESSAGE_HTML] == "":
+                response = {
+                    MESSAGE_META: {},
+                    MESSAGE_EXCEPTION: "No html data given and no stand-alone scraper built in yet.",
                 }
-            )
+            else:
+                website_manager = WebsiteManager.get_instance()
+                website_manager.load_raw_data(
+                    html_content=message[MESSAGE_HTML],
+                    raw_header=message[MESSAGE_HEADERS],
+                )
 
-            response = extracted_meta_data
-            website_manager.reset()
+                starting_extraction = get_utc_now()
+                try:
+                    extracted_meta_data = self._extract_meta_data(
+                        message[MESSAGE_ALLOW_LIST]
+                    )
+                except Exception as e:
+                    self._logger.error(
+                        f"Extracting metadata raised: '{e.args}'",
+                        exc_info=True,
+                    )
+                    extracted_meta_data = {}
+
+                extracted_meta_data.update(
+                    {
+                        "time_for_extraction": get_utc_now()
+                        - starting_extraction,
+                        **website_manager.get_website_data_to_log(),
+                    }
+                )
+
+                response = extracted_meta_data
+                website_manager.reset()
 
             self.manager_to_api_queue.put({uuid: response})
 

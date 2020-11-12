@@ -8,6 +8,7 @@ from app.communication import ProcessToDaemonCommunication
 from lib.constants import (
     DECISION,
     MESSAGE_ALLOW_LIST,
+    MESSAGE_EXCEPTION,
     MESSAGE_HEADERS,
     MESSAGE_HTML,
     MESSAGE_URL,
@@ -71,14 +72,14 @@ class ExtractorTags(BaseModel):
 
 class Input(BaseModel):
     url: str = Field(..., description="The base url of the scraped website.")
-    html: str = Field(
-        ..., description="Everything scraped from the website as text."
+    html: Optional[str] = Field(
+        default="", description="Everything scraped from the website as text."
     )
-    headers: str = Field(
-        ..., description="The response header interpretable as dict."
+    headers: Optional[str] = Field(
+        default="", description="The response header interpretable as dict."
     )
     allow_list: Optional[ListTags] = Field(
-        default=None,
+        default=ListTags(),
         description="A list of key:bool pairs. "
         "Any metadata key == True will be extracted. "
         "If this list is not given, all values will be extracted.",
@@ -142,9 +143,15 @@ def extract_meta(input_data: Input):
         meta_data.update(
             {"time_until_complete": get_utc_now() - starting_extraction}
         )
-        _convert_dict_to_output_model(meta_data)
+        # TODO: Is this needed?
+        # out = _convert_dict_to_output_model(meta_data)
 
-        out = Output(url=input_data.url, meta=meta_data)
+        if MESSAGE_EXCEPTION in meta_data.keys():
+            exception = meta_data[MESSAGE_EXCEPTION]
+        else:
+            exception = None
+
+        out = Output(url=input_data.url, meta=meta_data, exception=exception)
     else:
         message = "No response from metadata extractor."
         out = Output(url=input_data.url, exception=message)
