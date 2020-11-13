@@ -2,7 +2,6 @@ from unittest import mock
 
 import pytest
 
-from lib.logger import create_logger
 from manager import Manager
 
 
@@ -28,7 +27,6 @@ def test_init(manager: Manager, mocker):
     assert manager._logger.call_count == 0
     assert manager._create_api.call_count == 1
     assert run_spy.call_count == 0
-    # assert len(manager.metadata_extractors) == 16
     assert manager.run_loop
 
 

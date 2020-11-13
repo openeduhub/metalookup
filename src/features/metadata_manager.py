@@ -35,7 +35,6 @@ class MetadataManager:
 
     def __init__(self):
         self._logger = create_logger()
-        print("Started metadata")
 
     def _create_extractors(self) -> None:
 
