@@ -61,6 +61,7 @@ def test_handle_content(manager: Manager, mocker):
 
     empty_header = "empty_header"
     empty_html = "empty_html"
+    empty_url = "empty_url"
 
     with mock.patch("manager.WebsiteManager") as mocked_website_manager:
         manager._extract_meta_data = mocker.MagicMock()
@@ -79,6 +80,7 @@ def test_handle_content(manager: Manager, mocker):
                 "html": empty_html,
                 "headers": empty_header,
                 "allow_list": allow_list,
+                "url": empty_url,
             }
         }
 

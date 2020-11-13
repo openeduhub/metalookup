@@ -10,6 +10,7 @@ import uvicorn
 
 from app.api import app
 from app.communication import ProcessToDaemonCommunication
+from config_manager import ConfigManager
 from features.extract_from_document import ExtractFromFiles
 from features.html_based import (
     Advertisement,
@@ -37,6 +38,7 @@ from lib.constants import (
     MESSAGE_HEADERS,
     MESSAGE_HTML,
     MESSAGE_META,
+    MESSAGE_URL,
 )
 from lib.settings import API_PORT, LOG_LEVEL, LOG_PATH
 from lib.timing import get_utc_now
@@ -166,13 +168,27 @@ class Manager:
             self._logger.info(f"Current time: {get_utc_now()}")
             time.sleep(1)
 
-    def _extract_meta_data(self, allow_list: dict) -> dict:
+    def _extract_meta_data(
+        self, allow_list: dict, config_manager: ConfigManager
+    ) -> dict:
         data = {}
         for metadata_extractor in self.metadata_extractors:
             if allow_list[metadata_extractor.key]:
-                extracted_metadata = metadata_extractor.start()
-                data.update(extracted_metadata)
+                if (
+                    config_manager.is_host_predefined()
+                    and config_manager.is_metadata_predefined(
+                        metadata_extractor.key
+                    )
+                ):
+                    extracted_metadata = (
+                        config_manager.get_predefined_metadata(
+                            metadata_extractor.key
+                        )
+                    )
+                else:
+                    extracted_metadata = metadata_extractor.start()
 
+                data.update(extracted_metadata)
                 self._logger.debug(f"Resulting data: {data}")
         return data
 
@@ -190,14 +206,20 @@ class Manager:
             else:
                 website_manager = WebsiteManager.get_instance()
                 website_manager.load_raw_data(
+                    url=message[MESSAGE_URL],
                     html_content=message[MESSAGE_HTML],
                     raw_header=message[MESSAGE_HEADERS],
+                )
+
+                config_manager = ConfigManager.get_instance()
+                config_manager.top_level_domain = (
+                    website_manager.website_data.top_level_domain
                 )
 
                 starting_extraction = get_utc_now()
                 try:
                     extracted_meta_data = self._extract_meta_data(
-                        message[MESSAGE_ALLOW_LIST]
+                        message[MESSAGE_ALLOW_LIST], config_manager
                     )
                 except Exception as e:
                     self._logger.error(

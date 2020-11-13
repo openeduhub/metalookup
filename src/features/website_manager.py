@@ -1,8 +1,10 @@
 import json
 import os
 from dataclasses import dataclass, field
+from typing import Optional
 
 from bs4 import BeautifulSoup
+from tldextract import tldextract
 
 
 @dataclass
@@ -15,6 +17,8 @@ class WebsiteData:
     raw_links: list = field(default_factory=list)
     image_links: list = field(default_factory=list)
     extensions: list = field(default_factory=list)
+    url: str = field(default_factory=str)
+    top_level_domain: Optional[tldextract.TLD_EXTRACTOR] = None
 
 
 class Singleton:
@@ -48,6 +52,7 @@ class WebsiteManager:
 
     def load_raw_data(
         self,
+        url: str = "",
         html_content: str = "",
         raw_header: str = "",
         headers: dict = None,
@@ -57,6 +62,10 @@ class WebsiteManager:
 
         if self.website_data.headers == {}:
             self.website_data.headers = headers
+
+        if self.website_data.url == "":
+            self.website_data.url = url
+            self._extract_host_name()
 
         if self.website_data.raw_header == "":
             self.website_data.raw_header = raw_header
@@ -70,6 +79,11 @@ class WebsiteManager:
             self._extract_raw_links()
             self._extract_images()
             self._extract_extensions()
+
+    def _extract_host_name(self):
+        self.website_data.top_level_domain = tldextract.extract(
+            self.website_data.url
+        ).domain
 
     def _create_html_soup(self):
         self.website_data.soup = BeautifulSoup(
