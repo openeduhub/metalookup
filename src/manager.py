@@ -40,6 +40,21 @@ class Manager:
         api_process.start()
 
     # =========== LOOP ============
+    def handle_content(self, request):
+
+        self._logger.debug(f"request: {request}")
+        for uuid, message in request.items():
+            self._logger.debug(f"message: {message}")
+
+            if message[MESSAGE_HTML] == "":
+                response = {
+                    MESSAGE_META: {},
+                    MESSAGE_EXCEPTION: "No html data given and no stand-alone scraper built in yet.",
+                }
+            else:
+                response = self.metadata_manager.start(message=message)
+
+            self.manager_to_api_queue.put({uuid: response})
 
     def get_api_request(self):
         if self.api_to_manager_queue is not None:
@@ -60,22 +75,6 @@ class Manager:
             self.get_api_request()
             self._logger.info(f"Current time: {get_utc_now()}")
             time.sleep(1)
-
-    def handle_content(self, request):
-
-        self._logger.debug(f"request: {request}")
-        for uuid, message in request.items():
-            self._logger.debug(f"message: {message}")
-
-            if message[MESSAGE_HTML] == "":
-                response = {
-                    MESSAGE_META: {},
-                    MESSAGE_EXCEPTION: "No html data given and no stand-alone scraper built in yet.",
-                }
-            else:
-                response = self.metadata_manager.start(message=message)
-
-            self.manager_to_api_queue.put({uuid: response})
 
     def _graceful_shutdown(self, signum=None, frame=None):
         self.run_loop = False

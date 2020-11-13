@@ -37,7 +37,7 @@ class MetadataManager:
         self._logger = create_logger()
         print("Started metadata")
 
-    def _create_extractors(self):
+    def _create_extractors(self) -> None:
 
         extractors = [
             Advertisement,
@@ -61,12 +61,12 @@ class MetadataManager:
         for extractor in extractors:
             self.metadata_extractors.append(extractor(self._logger))
 
-    def _setup_extractors(self):
+    def _setup_extractors(self) -> None:
         for metadata_extractor in self.metadata_extractors:
             metadata_extractor: MetadataBase
             metadata_extractor.setup()
 
-    def setup(self):
+    def setup(self) -> None:
         self._create_extractors()
         self._setup_extractors()
 
