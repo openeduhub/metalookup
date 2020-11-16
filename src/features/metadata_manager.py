@@ -15,6 +15,7 @@ from features.html_based import (
     IFrameEmbeddable,
     Paywalls,
     PopUp,
+    RegWall,
 )
 from features.malicious_extensions import MaliciousExtensions
 from features.metadata_base import MetadataBase
@@ -55,6 +56,7 @@ class MetadataManager:
             ContentSecurityPolicy,
             IFrameEmbeddable,
             PopUp,
+            RegWall,
         ]
 
         for extractor in extractors:

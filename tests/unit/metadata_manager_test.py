@@ -36,4 +36,4 @@ def test_setup(metadata_manager: MetadataManager, mocker):
     metadata_manager._setup_extractors = mocker.MagicMock()
     metadata_manager.setup()
 
-    assert len(metadata_manager.metadata_extractors) == 16
+    assert len(metadata_manager.metadata_extractors) == 17
