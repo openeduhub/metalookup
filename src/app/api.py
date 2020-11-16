@@ -50,6 +50,8 @@ class ListTags(BaseModel):
     content_security_policy: Optional[bool] = True
     iframe_embeddable: Optional[bool] = True
     pop_up: Optional[bool] = True
+    reg_wall: Optional[bool] = True
+    log_in_out: Optional[bool] = True
 
 
 class ExtractorTags(BaseModel):
@@ -69,6 +71,8 @@ class ExtractorTags(BaseModel):
     content_security_policy: MetadataTags = Field(default=None)
     iframe_embeddable: MetadataTags = Field(default=None)
     pop_up: MetadataTags = Field(default=None)
+    reg_wall: MetadataTags = Field(default=None)
+    log_in_out: MetadataTags = Field(default=None)
 
 
 class Input(BaseModel):

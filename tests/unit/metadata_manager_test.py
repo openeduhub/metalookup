@@ -1,15 +1,12 @@
 from logging import Logger
-from unittest import mock
 
 import pytest
 
 from features.metadata_manager import MetadataManager
-from lib.logger import create_logger
-from manager import Manager
 
 
 @pytest.fixture
-def metadata_manager(mocker):
+def metadata_manager():
     manager = MetadataManager.get_instance()
     return manager
 
@@ -36,4 +33,4 @@ def test_setup(metadata_manager: MetadataManager, mocker):
     metadata_manager._setup_extractors = mocker.MagicMock()
     metadata_manager.setup()
 
-    assert len(metadata_manager.metadata_extractors) == 16
+    assert len(metadata_manager.metadata_extractors) == 18

@@ -188,3 +188,35 @@ class PopUp(MetadataBase):
         "Interstitial",
     ]
     decision_threshold = 0
+
+
+class RegWall(MetadataBase):
+    tag_list = [
+        "regwall",
+        "regiwall",
+        "Regwall",
+        "Regiwall",
+        "register",
+        "Register",
+        "registration",
+        "Registration",
+        "registerbtn",
+    ]
+
+
+class LogInOut(MetadataBase):
+    tag_list = [
+        "email",
+        "psw",
+        "Passwort",
+        "password",
+        "login",
+        "Login",
+        "logout",
+        "Logout",
+        "uname",
+        "username",
+        "submit",
+        "Submit",
+        "Username",
+    ]

@@ -13,8 +13,10 @@ from features.html_based import (
     FanboySocialMedia,
     IETracker,
     IFrameEmbeddable,
+    LogInOut,
     Paywalls,
     PopUp,
+    RegWall,
 )
 from features.malicious_extensions import MaliciousExtensions
 from features.metadata_base import MetadataBase
@@ -55,6 +57,8 @@ class MetadataManager:
             ContentSecurityPolicy,
             IFrameEmbeddable,
             PopUp,
+            RegWall,
+            LogInOut,
         ]
 
         for extractor in extractors:
