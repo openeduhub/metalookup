@@ -38,4 +38,4 @@ class Accessibility(MetadataBase):
                 f"Returns {result}"
             )
             score = None
-        return {VALUES: score}
+        return {VALUES: [score]}
