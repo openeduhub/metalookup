@@ -1,4 +1,4 @@
-import subprocess
+import json
 
 import requests
 
@@ -13,38 +13,14 @@ class Accessibility(MetadataBase):
             "https://www.googleapis.com/pagespeedonline/v5/runPagespeed",
             params={"url": f"{website_data.url}", "category": "ACCESSIBILITY"},
         )
-        values = process.content.decode().splitlines()
-        return {VALUES: values}
-
-
-"""
-
-{
-  "error": {
-    "code": 500,
-    "message": "Lighthouse returned error: ERRORED_DOCUMENT_REQUEST. Lighthouse was unable to reliably load the page you requested. Make sure you are testing the correct URL and that the server is properly responding to all requests. (Status code: 404)",
-    "errors": [
-      {
-        "message": "Lighthouse returned error: ERRORED_DOCUMENT_REQUEST. Lighthouse was unable to reliably load the page you requested. Make sure you are testing the correct URL and that the server is properly responding to all requests. (Status code: 404)",
-        "domain": "lighthouse",
-        "reason": "lighthouseError"
-      }
-    ]
-  }
-}
-
-{
-  "error": {
-    "code": 429,
-    "message": "Quota exceeded for quota group 'default' and limit 'Queries per 100 seconds' of service 'pagespeedonline.googleapis.com' for consumer 'project_number:583797351490'.",
-    "errors": [
-      {
-        "message": "Quota exceeded for quota group 'default' and limit 'Queries per 100 seconds' of service 'pagespeedonline.googleapis.com' for consumer 'project_number:583797351490'.",
-        "domain": "global",
-        "reason": "rateLimitExceeded"
-      }
-    ],
-    "status": "RESOURCE_EXHAUSTED"
-  }
-}
-"""
+        result = json.loads(process.content.decode())
+        if "error" in result.keys():
+            self._logger.error(
+                result["error"]["code"], result["error"]["message"]
+            )
+            score = None
+        else:
+            score = result["lighthouseResult"]["categories"]["accessibility"][
+                "score"
+            ]
+        return {VALUES: score}
