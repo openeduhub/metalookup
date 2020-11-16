@@ -15,8 +15,10 @@ DOCKER_TEST_HEADERS = {"Content-Type": "application/json"}
 def _build_and_run_docker():
     # Change to main project folder to have dockerfile etc. in scope
     current_dir = Path(os.getcwd())
-    new_dir = current_dir.parents[0]
     if "tests" in str(current_dir):
+        new_dir = current_dir.parents[0]
+        while "tests" in str(new_dir):
+            new_dir = new_dir.parent
         print(
             f"Changing working directory from '{current_dir}' to '{new_dir}'"
         )

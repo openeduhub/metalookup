@@ -57,15 +57,16 @@ class Manager:
             self.manager_to_api_queue.put({uuid: response})
 
     def get_api_request(self):
-        if self.api_to_manager_queue is not None:
-            try:
-                request = self.api_to_manager_queue.get(
-                    block=False, timeout=0.1
-                )
-                if isinstance(request, dict):
-                    self.handle_content(request)
-            except Empty:
-                pass
+        try:
+            request = self.api_to_manager_queue.get(block=False, timeout=0.1)
+            if isinstance(request, dict):
+                self.handle_content(request)
+        except Empty:
+            pass
+        except AttributeError:
+            self._logger.exception(
+                "Probably, api <-> manager queues are None."
+            )
 
     def run(self):
         signal.signal(signal.SIGINT, self._graceful_shutdown)
