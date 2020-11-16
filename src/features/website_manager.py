@@ -74,7 +74,7 @@ class WebsiteManager:
             self._preprocess_header()
 
         if html_content != "" and self.website_data.html == "":
-            self.website_data.html = html_content
+            self.website_data.html = html_content.lower()
             self._create_html_soup()
             self._extract_raw_links()
             self._extract_images()
@@ -111,7 +111,7 @@ class WebsiteManager:
         ]
 
     def _preprocess_header(self) -> None:
-        header: str = self.website_data.raw_header
+        header: str = self.website_data.raw_header.lower()
         header = (
             header.replace("b'", '"')
             .replace("/'", '"')
