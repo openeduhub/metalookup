@@ -1,4 +1,5 @@
 import json
+from json import JSONDecodeError
 
 import requests
 
@@ -13,14 +14,28 @@ class Accessibility(MetadataBase):
             "https://www.googleapis.com/pagespeedonline/v5/runPagespeed",
             params={"url": f"{website_data.url}", "category": "ACCESSIBILITY"},
         )
-        result = json.loads(process.content.decode())
-        if "error" in result.keys():
-            self._logger.error(
-                result["error"]["code"], result["error"]["message"]
+        try:
+            result = json.loads(process.content.decode())
+        except JSONDecodeError:
+            self._logger.exception(
+                f"JSONDecodeError error when accessing PageSpeedOnline result for {website_data.url}."
+            )
+            result = {}
+
+        try:
+            if "error" in result.keys():
+                self._logger.error(
+                    result["error"]["code"], result["error"]["message"]
+                )
+                score = None
+            else:
+                score = result["lighthouseResult"]["categories"][
+                    "accessibility"
+                ]["score"]
+        except KeyError:
+            self._logger.exception(
+                f"Key error when accessing PageSpeedOnline result for {website_data.url}. "
+                f"Returns {result}"
             )
             score = None
-        else:
-            score = result["lighthouseResult"]["categories"]["accessibility"][
-                "score"
-            ]
         return {VALUES: score}
