@@ -17,6 +17,7 @@ from lib.timing import get_utc_now
 class ProbabilityDeterminationMethod(Enum):
     NUMBER_OF_ELEMENTS = 1
     SINGLE_OCCURRENCE = 2
+    FIRST_VALUE = 3
 
 
 class MetadataBase:
@@ -67,6 +68,11 @@ class MetadataBase:
                 if (website_data.values and len(website_data.values) > 0)
                 else 0
             )
+        elif (
+            self.probability_determination_method
+            == ProbabilityDeterminationMethod.FIRST_VALUE
+        ):
+            probability = website_data.values[0]
 
         return probability
 
