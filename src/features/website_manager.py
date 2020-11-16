@@ -1,11 +1,9 @@
 import json
 import os
 from dataclasses import dataclass, field
-from typing import Optional
 
 from bs4 import BeautifulSoup
-from tldextract import tldextract
-from tldextract.tldextract import TLD_EXTRACTOR, TLDExtract
+from tldextract.tldextract import TLDExtract
 
 
 @dataclass
