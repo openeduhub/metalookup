@@ -113,7 +113,7 @@ class MetadataManager:
                 message[MESSAGE_ALLOW_LIST], config_manager
             )
         except Exception as e:
-            self._logger.error(
+            self._logger.exception(
                 f"Extracting metadata raised: '{e.args}'",
                 exc_info=True,
             )
