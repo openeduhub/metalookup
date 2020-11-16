@@ -62,7 +62,7 @@ class Manager:
             if isinstance(request, dict):
                 self.handle_content(request)
         except Empty:
-            pass
+            self._logger.debug("api_to_manager_queue was Empty.")
         except AttributeError:
             self._logger.exception(
                 "Probably, api <-> manager queues are None."
