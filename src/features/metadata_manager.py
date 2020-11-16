@@ -13,6 +13,7 @@ from features.html_based import (
     FanboySocialMedia,
     IETracker,
     IFrameEmbeddable,
+    LogInOut,
     Paywalls,
     PopUp,
     RegWall,
@@ -57,6 +58,7 @@ class MetadataManager:
             IFrameEmbeddable,
             PopUp,
             RegWall,
+            LogInOut,
         ]
 
         for extractor in extractors:

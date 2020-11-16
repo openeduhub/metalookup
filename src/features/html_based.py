@@ -202,4 +202,21 @@ class RegWall(MetadataBase):
         "Registration",
         "registerbtn",
     ]
-    decision_threshold = 0
+
+
+class LogInOut(MetadataBase):
+    tag_list = [
+        "email",
+        "psw",
+        "Passwort",
+        "password",
+        "login",
+        "Login",
+        "logout",
+        "Logout",
+        "uname",
+        "username",
+        "submit",
+        "Submit",
+        "Username",
+    ]
