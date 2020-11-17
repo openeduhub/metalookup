@@ -49,7 +49,7 @@ class IETracker(MetadataBase):
     decision_threshold = 0
 
 
-class Cookies(MetadataBase):
+class CookiesInHtml(MetadataBase):
     urls = [
         "https://easylist-downloads.adblockplus.org/easylist-cookie.txt",
         "https://github.com/easylist/easylist/blob/master/easylist_cookie/easylist_cookie_allowlist.txt",
