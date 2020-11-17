@@ -68,8 +68,6 @@ class WebsiteManager:
 
         if self.website_data.raw_header == "":
             self.website_data.raw_header = message[MESSAGE_HEADERS]
-
-        if self.website_data.raw_header != "":
             self._preprocess_header()
 
         if message[MESSAGE_HTML] != "" and self.website_data.html == "":
@@ -137,9 +135,6 @@ class WebsiteManager:
         self.website_data.headers = header
 
     def _load_har(self, har: str) -> None:
-        if har.find("'") != -1:
-            har = har.replace("'", "'")
-
         self.website_data.har = json.loads(har)
 
     def get_website_data_to_log(self) -> dict:
