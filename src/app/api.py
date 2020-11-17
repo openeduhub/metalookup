@@ -9,6 +9,7 @@ from lib.constants import (
     DECISION,
     MESSAGE_ALLOW_LIST,
     MESSAGE_EXCEPTION,
+    MESSAGE_HAR,
     MESSAGE_HEADERS,
     MESSAGE_HTML,
     MESSAGE_URL,
@@ -87,6 +88,9 @@ class Input(BaseModel):
     headers: Optional[str] = Field(
         default="", description="The response header interpretable as dict."
     )
+    har: Optional[str] = Field(
+        default="", description="The har object interpretable as json."
+    )
     allow_list: Optional[ListTags] = Field(
         default=ListTags(),
         description="A list of key:bool pairs. "
@@ -146,6 +150,7 @@ def extract_meta(input_data: Input):
             MESSAGE_URL: input_data.url,
             MESSAGE_HTML: input_data.html,
             MESSAGE_HEADERS: input_data.headers,
+            MESSAGE_HAR: input_data.har,
             MESSAGE_ALLOW_LIST: allowance,
         }
     )

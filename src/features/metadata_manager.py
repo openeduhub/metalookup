@@ -1,5 +1,6 @@
 from config_manager import ConfigManager
 from features.accessibility import Accessibility
+from features.cookies import Cookies
 from features.extract_from_document import ExtractFromFiles
 from features.html_based import (
     Advertisement,
@@ -56,6 +57,7 @@ class MetadataManager:
             RegWall,
             LogInOut,
             Accessibility,
+            Cookies,
         ]
 
         for extractor in extractors:
