@@ -138,9 +138,6 @@ class WebsiteManager:
 
     def _load_har(self, har: str) -> None:
         if har.find("'") != -1:
-            # idx = har.find("'")
-            # print("har find", idx)
-            # print(har[max(0, idx - 100):min(len(har) - 1, idx + 100)])
             har = har.replace("'", "'")
 
         self.website_data.har = json.loads(har)
