@@ -5,7 +5,7 @@ from features.html_based import (
     Advertisement,
     AntiAdBlock,
     ContentSecurityPolicy,
-    Cookies,
+    CookiesInHtml,
     EasylistAdult,
     EasylistGermany,
     EasyPrivacy,
@@ -22,12 +22,7 @@ from features.html_based import (
 from features.malicious_extensions import MaliciousExtensions
 from features.metadata_base import MetadataBase
 from features.website_manager import Singleton, WebsiteManager
-from lib.constants import (
-    MESSAGE_ALLOW_LIST,
-    MESSAGE_HEADERS,
-    MESSAGE_HTML,
-    MESSAGE_URL,
-)
+from lib.constants import MESSAGE_ALLOW_LIST
 from lib.logger import create_logger
 from lib.timing import get_utc_now
 
@@ -47,7 +42,7 @@ class MetadataManager:
             MaliciousExtensions,
             ExtractFromFiles,
             IETracker,
-            Cookies,
+            CookiesInHtml,
             FanboyAnnoyance,
             FanboyNotification,
             FanboySocialMedia,
@@ -102,11 +97,7 @@ class MetadataManager:
     def start(self, message: dict) -> dict:
 
         website_manager = WebsiteManager.get_instance()
-        website_manager.load_raw_data(
-            url=message[MESSAGE_URL],
-            html_content=message[MESSAGE_HTML],
-            raw_header=message[MESSAGE_HEADERS],
-        )
+        website_manager.load_raw_data(message=message)
 
         config_manager = ConfigManager.get_instance()
         config_manager.top_level_domain = (

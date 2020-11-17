@@ -39,6 +39,7 @@ class ListTags(BaseModel):
     extracted_links: Optional[bool] = True
     extract_from_files: Optional[bool] = True
     internet_explorer_tracker: Optional[bool] = True
+    cookies_in_html: Optional[bool] = True
     cookies: Optional[bool] = True
     fanboy_annoyance: Optional[bool] = True
     fanboy_notification: Optional[bool] = True
@@ -61,6 +62,7 @@ class ExtractorTags(BaseModel):
     malicious_extensions: MetadataTags = Field(default=None)
     extract_from_files: MetadataTags = Field(default=None)
     internet_explorer_tracker: MetadataTags = Field(default=None)
+    cookies_in_html: MetadataTags = Field(default=None)
     cookies: MetadataTags = Field(default=None)
     fanboy_annoyance: MetadataTags = Field(default=None)
     fanboy_notification: MetadataTags = Field(default=None)

@@ -5,6 +5,13 @@ from dataclasses import dataclass, field
 from bs4 import BeautifulSoup
 from tldextract.tldextract import TLDExtract
 
+from lib.constants import (
+    MESSAGE_HAR,
+    MESSAGE_HEADERS,
+    MESSAGE_HTML,
+    MESSAGE_URL,
+)
+
 
 @dataclass
 class WebsiteData:
@@ -18,6 +25,8 @@ class WebsiteData:
     extensions: list = field(default_factory=list)
     url: str = field(default_factory=str)
     top_level_domain: str = field(default_factory=str)
+    har: dict = field(default_factory=dict)
+    cookies: list = field(default_factory=list)
 
 
 class Singleton:
@@ -49,35 +58,29 @@ class WebsiteManager:
 
         self.website_data = WebsiteData()
 
-    def load_raw_data(
-        self,
-        url: str = "",
-        html_content: str = "",
-        raw_header: str = "",
-        headers: dict = None,
-    ) -> None:
-        if headers is None:
-            headers = {}
-
-        if self.website_data.headers == {}:
-            self.website_data.headers = headers
+    def load_raw_data(self, message: dict = None) -> None:
+        if message is None:
+            message = {}
 
         if self.website_data.url == "":
-            self.website_data.url = url
+            self.website_data.url = message[MESSAGE_URL]
             self._extract_host_name()
 
         if self.website_data.raw_header == "":
-            self.website_data.raw_header = raw_header
+            self.website_data.raw_header = message[MESSAGE_HEADERS]
 
-        if raw_header != "":
+        if self.website_data.raw_header != "":
             self._preprocess_header()
 
-        if html_content != "" and self.website_data.html == "":
-            self.website_data.html = html_content.lower()
+        if message[MESSAGE_HTML] != "" and self.website_data.html == "":
+            self.website_data.html = message[MESSAGE_HTML].lower()
             self._create_html_soup()
             self._extract_raw_links()
             self._extract_images()
             self._extract_extensions()
+
+        if message[MESSAGE_HAR] != "" and not self.website_data.har:
+            self._load_har(message[MESSAGE_HAR])
 
     def _extract_host_name(self):
         extractor = TLDExtract(cache_dir=False)
@@ -132,6 +135,15 @@ class WebsiteManager:
 
         header = json.loads(header)
         self.website_data.headers = header
+
+    def _load_har(self, har: str) -> None:
+        if har.find("'") != -1:
+            har = har.replace('"', '\\"').replace("'", '"')
+            har = har.replace(" True,", ' "True",').replace(
+                " False,", ' "False",'
+            )
+
+        self.website_data.har = json.loads(har)
 
     def get_website_data_to_log(self) -> dict:
         data = {}
