@@ -1,6 +1,8 @@
 import json
 
-RESULT_FILE_PATH = "../local_tools/tester/result.json"
+RESULT_FILE_PATH = (
+    "/home/rcc/projects/WLO/oeh-search-meta/developer_tools/result.json"
+)
 
 
 def evaluator():
@@ -9,15 +11,30 @@ def evaluator():
 
     evaluated_files = list(data.keys())
     found_cookies = []
+    found_cookies_in_html = []
     total_time = 0
 
-    print(evaluated_files)
     for url, values in data.items():
-        for cookie in values["cookies"]["values"]:
-            found_cookies.append(cookie["name"])
+        if values["meta"]:
+            if "cookies" in values["meta"] and values["meta"]["cookies"]:
+                for cookie in values["meta"]["cookies"]["values"]:
+                    found_cookies.append(cookie["name"])
+            elif (
+                "cookies_in_html" in values["meta"]
+                and values["meta"]["cookies_in_html"]
+            ):
+                for cookie in values["meta"]["cookies_in_html"]["values"]:
+                    found_cookies_in_html.append(cookie["name"])
+
         total_time += values["time_for_extraction"]
-    print("Uniquie cookies: ", set(found_cookies))
-    print("Total extraction time: ", total_time, "s")
+
+    print("summary".center(80, "-"))
+    print("Number of evaluated files: ", len(evaluated_files))
+    print("Uniquie cookies from splash: ", set(found_cookies))
+    print("Uniquie cookies from html/easylist: ", set(found_cookies_in_html))
+    print(
+        f"Total extraction time: {total_time}s or {total_time / len(evaluated_files)}s per file."
+    )
 
 
 if __name__ == "__main__":

@@ -12,38 +12,28 @@ from lib.constants import (
 )
 from lib.timing import get_utc_now
 
-WANT_ALL_SCRAPED_WEBSITES = True
 
+def load_file_list():
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    path = "/".join(dir_path.split("/")[:-1])
+    data_path = path + "/scraped"
 
-def load_test_html():
-    # FIXME: Remove this!!!
-    if WANT_ALL_SCRAPED_WEBSITES:
-        data_path = "/home/rcc/projects/WLO/oeh-search-etl/scraped"
-    else:
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        path = "/".join(dir_path.split("/")[:-1])
-        data_path = path + "/testsuite/scraped"
-
-    logs = [
+    files = [
         f
         for f in os.listdir(data_path)
         if os.path.isfile(os.path.join(data_path, f)) and ".log" in f
     ]
+    return files, data_path
 
+
+def load_scraped_data(logs: list, data_path: str):
     for log in logs:
-        print(log.center(40, "-"))
         with open(data_path + "/" + log, "r") as file:
             raw = json.load(file)
-
-        html_content = raw["html"]
-        headers = raw["headers"]
-        raw_url = raw["url"]
-        raw_cookies = raw["cookies"]
-        har = raw["har"]
-        yield raw_url, html_content, headers, raw_cookies, har
+        yield raw
 
 
-if __name__ == "__main__":
+def rester():
     allow_list = {
         "advertisement": True,
         "easy_privacy": True,
@@ -78,18 +68,20 @@ if __name__ == "__main__":
     except FileNotFoundError:
         pass
 
-    for url, raw_html, header, raw_cookies, har in load_test_html():
+    logs, file_path = load_file_list()
+    for counter, raw in enumerate(load_scraped_data(logs, file_path)):
+        print(f"Working file {counter + 1} of {len(logs)}".center(80, "-"))
+
         starting_extraction = get_utc_now()
 
         headers = {"Content-Type": "application/json"}
 
-        # FIXME HTTP Code 422
         payload = {
-            MESSAGE_HTML: raw_html,
-            MESSAGE_HEADERS: header,
-            MESSAGE_URL: url,
+            MESSAGE_HTML: raw["html"],
+            MESSAGE_HEADERS: raw["headers"],
+            MESSAGE_URL: raw["url"],
             MESSAGE_ALLOW_LIST: allow_list,
-            MESSAGE_HAR: har,
+            MESSAGE_HAR: raw["har"],
         }
         response = requests.request(
             "POST", extractor_url, headers=headers, data=json.dumps(payload)
@@ -100,11 +92,11 @@ if __name__ == "__main__":
             {"time_for_extraction": get_utc_now() - starting_extraction}
         )
 
-        result.update({url: output})
+        result.update({raw["url"]: output})
 
         with open("result.json", "w") as fp:
             json.dump(result, fp)
 
-        # print(output)
-        # print(output.keys())
-        # print("meta: ", output["meta"])
+
+if __name__ == "__main__":
+    rester()
