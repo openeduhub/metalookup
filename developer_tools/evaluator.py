@@ -1,4 +1,5 @@
 import json
+import statistics
 
 RESULT_FILE_PATH = (
     "/home/rcc/projects/WLO/oeh-search-meta/developer_tools/result.json"
@@ -12,7 +13,7 @@ def evaluator():
     evaluated_files = list(data.keys())
     found_cookies = []
     found_cookies_in_html = []
-    total_time = 0
+    total_time = []
 
     for url, values in data.items():
         if values["meta"]:
@@ -26,15 +27,23 @@ def evaluator():
                 for cookie in values["meta"]["cookies_in_html"]["values"]:
                     found_cookies_in_html.append(cookie["name"])
 
-        total_time += values["time_for_extraction"]
+        total_time.append(values["time_for_extraction"])
 
     print("summary".center(80, "-"))
     print("Number of evaluated files: ", len(evaluated_files))
     print("Uniquie cookies from splash: ", set(found_cookies))
     print("Uniquie cookies from html/easylist: ", set(found_cookies_in_html))
-    print(
-        f"Total extraction time: {total_time}s or {total_time / len(evaluated_files)}s per file."
-    )
+
+    if len(total_time) >= 2:
+        print(
+            f"Total extraction time: {sum(total_time)}s or "
+            f"{sum(total_time) / len(evaluated_files)}"
+            f"+-{statistics.stdev(total_time) / len(evaluated_files)}s per file."
+        )
+    else:
+        print(
+            f"Total extraction time: {sum(total_time)}s or {sum(total_time) / len(evaluated_files)}s per file."
+        )
 
 
 if __name__ == "__main__":
