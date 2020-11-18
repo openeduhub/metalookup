@@ -1,48 +1,98 @@
 import json
+import os
 import statistics
+
+import pandas as pd
+
+DATAFRAME = "data.csv"
 
 RESULT_FILE_PATH = (
     "/home/rcc/projects/WLO/oeh-search-meta/developer_tools/result.json"
 )
 
 
-def evaluator():
+def load_raw_data_and_save_to_dataframe():
     with open(RESULT_FILE_PATH) as file:
-        data = json.loads(file.read())
+        raw_data = json.loads(file.read())
 
-    evaluated_files = list(data.keys())
-    found_cookies = []
-    found_cookies_in_html = []
-    total_time = []
+    meta_feature_keys = [
+        "advertisement",
+        "easy_privacy",
+        "malicious_extensions",
+        "extracted_links",
+        "extract_from_files",
+        "internet_explorer_tracker",
+        "cookies_in_html",
+        "fanboy_annoyance",
+        "fanboy_notification",
+        "fanboy_social_media",
+        "anti_adblock",
+        "easylist_germany",
+        "easylist_adult",
+        "paywall",
+        "content_security_policy",
+        "iframe_embeddable",
+        "pop_up",
+        "reg_wall",
+        "log_in_out",
+        "accessibility",
+        "cookies",
+    ]
+    row_names = ["values", "probability", "decision"]
+    col_names = []
 
-    for url, values in data.items():
-        if values["meta"]:
-            if "cookies" in values["meta"] and values["meta"]["cookies"]:
-                for cookie in values["meta"]["cookies"]["values"]:
-                    found_cookies.append(cookie["name"])
-            elif (
-                "cookies_in_html" in values["meta"]
-                and values["meta"]["cookies_in_html"]
+    for key in meta_feature_keys:
+        for row_name in row_names:
+            col_names.append(f"{key}.{row_name}")
+
+    col_names += ["time_until_complete", "time_for_extraction", "exception"]
+
+    print(col_names)
+
+    data = pd.DataFrame(columns=col_names)
+
+    for url, elements in raw_data.items():
+        row = []
+        for meta_key in meta_feature_keys:
+            if (
+                elements["meta"] is not None
+                and meta_key in elements["meta"].keys()
+                and elements["meta"][meta_key] is not None
             ):
-                for cookie in values["meta"]["cookies_in_html"]["values"]:
-                    found_cookies_in_html.append(cookie["name"])
+                for row_name in row_names:
+                    if row_name in elements["meta"][meta_key]:
+                        row.append(elements["meta"][meta_key][row_name])
+                    else:
+                        row.append(None)
+            else:
+                [row.append(None) for _ in row_names]
 
-        total_time.append(values["time_for_extraction"])
+        row.append(elements["time_until_complete"])
+        row.append(elements["time_for_extraction"])
+        row.append(elements["exception"])
+        # print(row)
+        data.loc[url] = row
 
-    print("summary".center(80, "-"))
-    print("Number of evaluated files: ", len(evaluated_files))
-    print("Uniquie cookies from splash: ", set(found_cookies))
-    print("Uniquie cookies from html/easylist: ", set(found_cookies_in_html))
+    data.to_csv(DATAFRAME)
 
-    if len(total_time) >= 2:
+
+def evaluator():
+    if not os.path.isfile(DATAFRAME):
+        print(f"{DATAFRAME} does not exist, reading raw data.")
+        load_raw_data_and_save_to_dataframe()
+
+    print(f"Loading data from {DATAFRAME}.")
+    df = pd.read_csv(DATAFRAME, index_col=0)
+
+    if len(df) > 0:
+        print("summary".center(80, "-"))
+        print("Number of evaluated files: ", len(df))
+
+        total_time = df["time_for_extraction"].sum()
         print(
-            f"Total extraction time: {sum(total_time)}s or "
-            f"{sum(total_time) / len(evaluated_files)}"
-            f"+-{statistics.stdev(total_time) / len(evaluated_files)}s per file."
-        )
-    else:
-        print(
-            f"Total extraction time: {sum(total_time)}s or {sum(total_time) / len(evaluated_files)}s per file."
+            f"Total extraction time: {total_time}s or "
+            f"{total_time / len(df)}"
+            f"+-{statistics.stdev(df['time_for_extraction']) / len(df)}s per file."
         )
 
 

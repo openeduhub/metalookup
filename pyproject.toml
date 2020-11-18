@@ -20,6 +20,7 @@ pre-commit = "^2.8.2"
 pytest = "^6.1.2"
 pytest-cov = "^2.10.1"
 pytest-mock = "^3.3.1"
+pandas = "^1.1.4"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
