@@ -59,4 +59,49 @@ class GDPR(MetadataBase):
             values += [f"no_{referrer_policy}"]
         values += website_data.headers.items()
 
+        # Font face
+        regex = re.compile(r"@font-face{.*?}")
+        matches = re.findall(regex, website_data.html)
+        url_regex = re.compile(r"url\((.*?)\)")
+        found_fonts = []
+        for match in matches:
+            url_matches = re.findall(url_regex, match)
+            for url_match in url_matches:
+                found_fonts.append(url_match)
+        values.append(found_fonts)
+
+        # Input fields
+        inputs = []
+        input_types = [
+            "input",
+            "button",
+            "checkbox",
+            "color",
+            "date",
+            "datetime-local",
+            "email",
+            "file",
+            "hidden",
+            "image",
+            "month",
+            "number",
+            "password",
+            "radio",
+            "range",
+            "reset",
+            "search",
+            "submit",
+            "tel",
+            "text",
+            "time",
+            "url",
+            "week",
+            "datetime",
+        ]
+        for input_type in input_types:
+            regex = re.compile(rf"<{input_type}(.*?)>")
+            matches = re.findall(regex, website_data.html)
+            inputs += [f"{input_type}{match}" for match in matches]
+        values.append(inputs)
+
         return {VALUES: values, "http_links": http_links}
