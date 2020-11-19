@@ -1,5 +1,6 @@
 import json
 import os
+from json.decoder import JSONDecodeError
 
 import requests
 
@@ -88,7 +89,12 @@ def rester():
             "POST", extractor_url, headers=headers, data=json.dumps(payload)
         )
 
-        output = json.loads(response.content)
+        try:
+            output = json.loads(response.content)
+        except JSONDecodeError as e:
+            print(response.content)
+            print(f"Exception: {e}, {e.args}")
+            output = {}
         output.update(
             {"time_for_extraction": get_utc_now() - starting_extraction}
         )

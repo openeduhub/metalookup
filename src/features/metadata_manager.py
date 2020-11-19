@@ -95,7 +95,7 @@ class MetadataManager:
                     extracted_metadata = metadata_extractor.start()
 
                 data.update(extracted_metadata)
-                self._logger.debug(f"Resulting data: {data}")
+                # self._logger.debug(f"Resulting data: {data}")
         return data
 
     def start(self, message: dict) -> dict:

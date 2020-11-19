@@ -37,18 +37,19 @@ class GDPR(MetadataBase):
         if hsts:
             values += ["hsts"]
             sts = website_data.headers[strict_transport_security]
-            if isinstance(sts, list) and len(sts) == 1:
-                sts = sts[0]
 
             for key in ["includesubdomains", "preload"]:
-                if key in sts:
+                matches = [element for element in sts if key in element]
+                if len(matches) > 0:
                     values += [key]
                 else:
                     values += [f"do_not_{key}"]
 
             regex = re.compile(r"max-age=(\d*)")
             try:
-                match = int(regex.match(sts).group(1))
+                match = min(
+                    [int(regex.match(element).group(1)) for element in sts]
+                )
                 if match > 10886400:
                     values += ["max-age"]
             except AttributeError:

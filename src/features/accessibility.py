@@ -35,7 +35,7 @@ class Accessibility(MetadataBase):
                 self._logger.error(
                     f"{result['error']['code']}: {result['error']['message']}"
                 )
-                score = float("NaN")
+                score = -1
             else:
                 score = result["lighthouseResult"]["categories"][
                     "accessibility"
@@ -45,5 +45,5 @@ class Accessibility(MetadataBase):
                 f"Key error when accessing PageSpeedOnline result for {website_data.url}. "
                 f"Returns {result}"
             )
-            score = float("NaN")
+            score = -1
         return {VALUES: [score]}

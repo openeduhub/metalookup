@@ -117,6 +117,7 @@ def evaluator():
             unique_values += [
                 element for element in row if element not in unique_values
             ]
+    print(unique_values)
 
 
 if __name__ == "__main__":
