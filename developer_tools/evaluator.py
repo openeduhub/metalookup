@@ -37,6 +37,7 @@ def load_raw_data_and_save_to_dataframe():
         "log_in_out",
         "accessibility",
         "cookies",
+        "g_d_p_r"
     ]
     row_names = ["values", "probability", "decision"]
     col_names = []
@@ -55,9 +56,9 @@ def load_raw_data_and_save_to_dataframe():
         row = []
         for meta_key in meta_feature_keys:
             if (
-                elements["meta"] is not None
-                and meta_key in elements["meta"].keys()
-                and elements["meta"][meta_key] is not None
+                    elements["meta"] is not None
+                    and meta_key in elements["meta"].keys()
+                    and elements["meta"][meta_key] is not None
             ):
                 for row_name in row_names:
                     if row_name in elements["meta"][meta_key]:
@@ -94,6 +95,13 @@ def evaluator():
             f"{total_time / len(df)}"
             f"+-{statistics.stdev(df['time_for_extraction']) / len(df)}s per file."
         )
+
+    # Get rows with none content
+    print("Failing evaluations".center(80, "-"))
+    rslt_df = df[df["advertisement.values"].isnull()]
+    print(f"Total urls with failing evaluation: {len(rslt_df)}")
+    for index, row in rslt_df.iterrows():
+        print(f"urls with failing evaluation: {index}")
 
 
 if __name__ == "__main__":

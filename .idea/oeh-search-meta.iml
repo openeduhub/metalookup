@@ -5,6 +5,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/.idea/sonarlint" />
       <excludeFolder url="file://$MODULE_DIR$/local_tools" />
+      <excludeFolder url="file://$MODULE_DIR$/logs" />
       <excludeFolder url="file://$MODULE_DIR$/scraped" />
       <excludeFolder url="file://$MODULE_DIR$/src/logs" />
       <excludeFolder url="file://$MODULE_DIR$/src/tag_lists" />
