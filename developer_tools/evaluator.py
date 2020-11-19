@@ -2,6 +2,7 @@ import json
 import os
 import statistics
 
+import numpy as np
 import pandas as pd
 
 DATAFRAME = "data.csv"
@@ -37,6 +38,7 @@ def load_raw_data_and_save_to_dataframe():
         "log_in_out",
         "accessibility",
         "cookies",
+        "g_d_p_r",
     ]
     row_names = ["values", "probability", "decision"]
     col_names = []
@@ -94,6 +96,27 @@ def evaluator():
             f"{total_time / len(df)}"
             f"+-{statistics.stdev(df['time_for_extraction']) / len(df)}s per file."
         )
+
+    # Get rows with none content
+    print("Failing evaluations".center(80, "-"))
+    rslt_df = df[df["advertisement.values"].isnull()]
+    print(f"Total urls with failing evaluation: {len(rslt_df)}")
+    for index, row in rslt_df.iterrows():
+        print(f"urls with failing evaluation: {index}")
+
+    gdpr_values = df["g_d_p_r.values"].unique()
+    unique_values = []
+    for row in gdpr_values:
+        if isinstance(row, str):
+            row = (
+                row.replace("'", "")
+                .replace("[", "")
+                .replace("]", "")
+                .split(", ")
+            )
+            unique_values += [
+                element for element in row if element not in unique_values
+            ]
 
 
 if __name__ == "__main__":

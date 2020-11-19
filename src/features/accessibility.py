@@ -33,9 +33,9 @@ class Accessibility(MetadataBase):
         try:
             if "error" in result.keys():
                 self._logger.error(
-                    result["error"]["code"], result["error"]["message"]
+                    result["error"]["code"] + " " + result["error"]["message"]
                 )
-                score = None
+                score = float("NaN")
             else:
                 score = result["lighthouseResult"]["categories"][
                     "accessibility"
@@ -45,5 +45,5 @@ class Accessibility(MetadataBase):
                 f"Key error when accessing PageSpeedOnline result for {website_data.url}. "
                 f"Returns {result}"
             )
-            score = None
+            score = float("NaN")
         return {VALUES: [score]}

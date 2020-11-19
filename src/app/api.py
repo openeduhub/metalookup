@@ -55,6 +55,7 @@ class ListTags(BaseModel):
     reg_wall: Optional[bool] = True
     log_in_out: Optional[bool] = True
     accessibility: Optional[bool] = True
+    g_d_p_r: Optional[bool] = True
 
 
 class ExtractorTags(BaseModel):
@@ -78,6 +79,7 @@ class ExtractorTags(BaseModel):
     reg_wall: MetadataTags = Field(default=None)
     log_in_out: MetadataTags = Field(default=None)
     accessibility: MetadataTags = Field(default=None)
+    g_d_p_r: MetadataTags = Field(default=None)
 
 
 class Input(BaseModel):
