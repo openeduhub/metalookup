@@ -56,9 +56,26 @@ class GDPR(MetadataBase):
         referrer_policy = "referrer-policy"
         rp = referrer_policy in website_data.headers.keys()
         if rp:
-            values = [referrer_policy]
+            values = [website_data.headers[referrer_policy]]
         else:
             values = [f"no_{referrer_policy}"]
+
+        regex = re.compile(r"referrerpolicy")
+        matches = re.findall(regex, website_data.html)
+
+        if len(matches) > 0:
+            values += [matches]
+        else:
+            values += ["no_referrerpolicy"]
+
+        regex = re.compile(r"<link rel=(.*?)href")
+        matches = re.findall(regex, website_data.html)
+
+        if len(matches) > 0:
+            values += [matches]
+        else:
+            values += ["no_link_rel"]
+
         return values
 
     def _font_face(self, website_data: WebsiteData) -> list:

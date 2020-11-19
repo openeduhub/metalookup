@@ -2,6 +2,7 @@ import json
 import os
 import statistics
 
+import numpy as np
 import pandas as pd
 
 DATAFRAME = "data.csv"
@@ -37,7 +38,7 @@ def load_raw_data_and_save_to_dataframe():
         "log_in_out",
         "accessibility",
         "cookies",
-        "g_d_p_r"
+        "g_d_p_r",
     ]
     row_names = ["values", "probability", "decision"]
     col_names = []
@@ -56,9 +57,9 @@ def load_raw_data_and_save_to_dataframe():
         row = []
         for meta_key in meta_feature_keys:
             if (
-                    elements["meta"] is not None
-                    and meta_key in elements["meta"].keys()
-                    and elements["meta"][meta_key] is not None
+                elements["meta"] is not None
+                and meta_key in elements["meta"].keys()
+                and elements["meta"][meta_key] is not None
             ):
                 for row_name in row_names:
                     if row_name in elements["meta"][meta_key]:
@@ -102,6 +103,20 @@ def evaluator():
     print(f"Total urls with failing evaluation: {len(rslt_df)}")
     for index, row in rslt_df.iterrows():
         print(f"urls with failing evaluation: {index}")
+
+    gdpr_values = df["g_d_p_r.values"].unique()
+    unique_values = []
+    for row in gdpr_values:
+        if isinstance(row, str):
+            row = (
+                row.replace("'", "")
+                .replace("[", "")
+                .replace("]", "")
+                .split(", ")
+            )
+            unique_values += [
+                element for element in row if element not in unique_values
+            ]
 
 
 if __name__ == "__main__":
