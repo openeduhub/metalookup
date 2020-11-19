@@ -71,6 +71,7 @@ def rester():
     logs, file_path = load_file_list()
     for counter, raw in enumerate(load_scraped_data(logs, file_path)):
         print(f"Working file {counter + 1} of {len(logs)}".center(80, "-"))
+        print(raw["url"])
 
         starting_extraction = get_utc_now()
 
@@ -96,6 +97,8 @@ def rester():
 
         with open("result.json", "w") as fp:
             json.dump(result, fp)
+
+        print(output)
 
 
 if __name__ == "__main__":

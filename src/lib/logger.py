@@ -8,7 +8,7 @@ from lib.settings import LOG_LEVEL, LOG_PATH
 
 
 def create_logger():
-    _logger = logging.getLogger(name=LOGFILE_MANAGER)
+    _logger = logging.getLogger(name=f"../{LOGFILE_MANAGER}")
 
     _logger.propagate = True
 

@@ -21,7 +21,12 @@ class GDPR(MetadataBase):
             True if https in url or http not in url else False
             for url in website_data.raw_links
         ]
-        http_links = website_data.raw_links[https_in_all_links.index(False)]
+        if False in https_in_all_links:
+            http_links = website_data.raw_links[
+                https_in_all_links.index(False)
+            ]
+        else:
+            http_links = []
         return value, http_links
 
     def _hsts(self, website_data: WebsiteData) -> list:

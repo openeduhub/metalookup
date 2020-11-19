@@ -33,7 +33,7 @@ class Accessibility(MetadataBase):
         try:
             if "error" in result.keys():
                 self._logger.error(
-                    result["error"]["code"] + " " + result["error"]["message"]
+                    f"{result['error']['code']}: {result['error']['message']}"
                 )
                 score = float("NaN")
             else:
