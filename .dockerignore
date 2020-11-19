@@ -2,3 +2,8 @@ local_tools
 */testsuite
 */logs
 setup.cfg
+scraped
+logs
+developer_tools
+.github
+.pytest_cache
