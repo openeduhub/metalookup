@@ -17,13 +17,14 @@ class GDPR(MetadataBase):
         https_in_url = https in website_data.url
         if https_in_url:
             values += ["https_in_url"]
+        else:
+            values += ["https_not_in_url"]
 
         https_in_all_links = [
             True if https in url or http not in url else False
             for url in website_data.raw_links
         ]
         http_links = website_data.raw_links[https_in_all_links.index(False)]
-        values += [http_links]
 
         strict_transport_security = "strict-transport-security"
         hsts = strict_transport_security in website_data.headers.keys()
@@ -37,6 +38,8 @@ class GDPR(MetadataBase):
             for key in ["includesubdomains", "preload"]:
                 if key in sts:
                     values += [key]
+                else:
+                    values += [f"do_not_{key}"]
 
             regex = re.compile(r"max-age=(\d*)")
             try:
@@ -44,6 +47,16 @@ class GDPR(MetadataBase):
                 if match > 10886400:
                     values += ["max-age"]
             except AttributeError:
-                pass
+                values += ["do_not_max-age"]
+        else:
+            values += ["no_hsts"]
 
-        return {VALUES: values}
+        referrer_policy = "referrer-policy"
+        rp = referrer_policy in website_data.headers.keys()
+        if rp:
+            values += [referrer_policy]
+        else:
+            values += [f"no_{referrer_policy}"]
+        values += website_data.headers.items()
+
+        return {VALUES: values, "http_links": http_links}
