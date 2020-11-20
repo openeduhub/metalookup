@@ -5,11 +5,22 @@ from lib.constants import VALUES
 
 class Cookies(MetadataBase):
     def _start(self, website_data: WebsiteData) -> dict:
-        cookies = []
+        raw_cookies = []
         data: list = website_data.har["log"]["entries"]
         for element in data:
-            cookies += element["response"]["cookies"]
-            cookies += element["request"]["cookies"]
-        cookies = [cookie for cookie in cookies if cookie]
+            raw_cookies += element["response"]["cookies"]
+            raw_cookies += element["request"]["cookies"]
+        raw_cookies = [cookie for cookie in raw_cookies if cookie]
 
+
+        cookies = []
+
+        for cookie in raw_cookies:
+            name = cookie["name"]
+            httpOnly = cookie["httpOnly"]
+            secure = cookie["secure"]
+            secure = cookie["secure"]
+            domain = cookie["domain"]
+            path = cookie["path"]
+            expires = cookie["expires"]
         return {VALUES: cookies}

@@ -161,6 +161,9 @@ def evaluator():
     )
     print(failed_evaluations)
 
+
+    print(df["cookies.values"].unique())
+
     (chart1 | chart2 | chart3).show()
 
 
