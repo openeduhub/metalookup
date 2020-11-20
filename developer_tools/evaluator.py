@@ -97,13 +97,13 @@ def evaluator():
             f"{total_time / len(df)}"
             f"+-{statistics.stdev(df['time_for_extraction']) / len(df)}s per file."
         )
+    failed_evaluations = {}
 
     # Get rows with none content
     print("Failing evaluations".center(80, "-"))
     rslt_df = df[df["advertisement.values"].isnull()]
     print(f"Total urls with failing evaluation: {len(rslt_df)}")
-    for index, row in rslt_df.iterrows():
-        print(f"urls with failing evaluation: {index}")
+    failed_evaluations.update({"nan_evaluation": rslt_df.index.values})
 
     print("Unique GDPR values".center(80, "-"))
     gdpr_values = df["g_d_p_r.values"].unique()
@@ -119,11 +119,11 @@ def evaluator():
             unique_values += [
                 element for element in row if element not in unique_values
             ]
-    print(unique_values)
+    print(f"Unique values in GDPR: {unique_values}")
 
     rslt_df = df[df["accessibility.probability"] < 0]
     print(f"Total urls with failing accessibility: {len(rslt_df)}")
-    print(rslt_df.index.values)
+    failed_evaluations.update({"negative_accessibility": rslt_df.index.values})
 
     source = df.loc[:, "time_for_extraction"]
 
@@ -159,8 +159,10 @@ def evaluator():
         )
         .interactive()
     )
+    print(failed_evaluations)
 
     (chart1 | chart2 | chart3).show()
+
 
 
 if __name__ == "__main__":
