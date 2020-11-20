@@ -2,7 +2,7 @@ import json
 import os
 import statistics
 
-import numpy as np
+import altair as alt
 import pandas as pd
 
 DATAFRAME = "data.csv"
@@ -85,6 +85,7 @@ def evaluator():
 
     print(f"Loading data from {DATAFRAME}.")
     df = pd.read_csv(DATAFRAME, index_col=0)
+    print(df.columns)
 
     if len(df) > 0:
         print("summary".center(80, "-"))
@@ -96,14 +97,15 @@ def evaluator():
             f"{total_time / len(df)}"
             f"+-{statistics.stdev(df['time_for_extraction']) / len(df)}s per file."
         )
+    failed_evaluations = {}
 
     # Get rows with none content
     print("Failing evaluations".center(80, "-"))
     rslt_df = df[df["advertisement.values"].isnull()]
     print(f"Total urls with failing evaluation: {len(rslt_df)}")
-    for index, row in rslt_df.iterrows():
-        print(f"urls with failing evaluation: {index}")
+    failed_evaluations.update({"nan_evaluation": rslt_df.index.values})
 
+    print("Unique GDPR values".center(80, "-"))
     gdpr_values = df["g_d_p_r.values"].unique()
     unique_values = []
     for row in gdpr_values:
@@ -117,7 +119,50 @@ def evaluator():
             unique_values += [
                 element for element in row if element not in unique_values
             ]
-    print(unique_values)
+    print(f"Unique values in GDPR: {unique_values}")
+
+    rslt_df = df[df["accessibility.probability"] < 0]
+    print(f"Total urls with failing accessibility: {len(rslt_df)}")
+    failed_evaluations.update({"negative_accessibility": rslt_df.index.values})
+
+    source = df.loc[:, "time_for_extraction"]
+
+    df.insert(0, "x", range(0, len(source)))
+    df.insert(0, "accessibility", df["accessibility.probability"])
+
+    chart1 = (
+        alt.Chart(df)
+        .mark_circle(size=60)
+        .encode(
+            x="x:Q",
+            y="accessibility:Q",
+        )
+        .interactive()
+    )
+
+    chart2 = (
+        alt.Chart(df, title="This is the Chart Title")
+        .mark_circle(size=60)
+        .encode(
+            x="x:Q",
+            y="time_for_extraction:Q",
+        )
+        .interactive()
+    )
+
+    chart3 = (
+        alt.Chart(df, title="This is the Chart Title")
+        .mark_circle(size=60)
+        .encode(
+            x="x:Q",
+            y="accessibility.probability:Q",
+        )
+        .interactive()
+    )
+    print(failed_evaluations)
+
+    (chart1 | chart2 | chart3).show()
+
 
 
 if __name__ == "__main__":
