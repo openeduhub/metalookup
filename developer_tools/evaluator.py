@@ -57,9 +57,9 @@ def load_raw_data_and_save_to_dataframe():
         row = []
         for meta_key in meta_feature_keys:
             if (
-                    elements["meta"] is not None
-                    and meta_key in elements["meta"].keys()
-                    and elements["meta"][meta_key] is not None
+                elements["meta"] is not None
+                and meta_key in elements["meta"].keys()
+                and elements["meta"][meta_key] is not None
             ):
                 for row_name in row_names:
                     if row_name in elements["meta"][meta_key]:
@@ -92,10 +92,16 @@ def evaluator():
         print("Number of evaluated files: ", len(df))
 
         total_time = df["time_for_extraction"].sum()
+
+        if len(df) > 1:
+            var = statistics.stdev(df["time_for_extraction"])
+        else:
+            var = 0
+
         print(
             f"Total extraction time: {total_time}s or "
             f"{total_time / len(df)}"
-            f"+-{statistics.stdev(df['time_for_extraction']) / len(df)}s per file."
+            f"+-{var / len(df)}s per file."
         )
     failed_evaluations = {}
 
@@ -112,9 +118,9 @@ def evaluator():
         if isinstance(row, str):
             row = (
                 row.replace("'", "")
-                    .replace("[", "")
-                    .replace("]", "")
-                    .split(", ")
+                .replace("[", "")
+                .replace("]", "")
+                .split(", ")
             )
             unique_values += [
                 element for element in row if element not in unique_values
@@ -132,32 +138,32 @@ def evaluator():
 
     chart1 = (
         alt.Chart(df)
-            .mark_circle(size=60)
-            .encode(
+        .mark_circle(size=60)
+        .encode(
             x="x:Q",
             y="accessibility:Q",
         )
-            .interactive()
+        .interactive()
     )
 
     chart2 = (
         alt.Chart(df, title="This is the Chart Title")
-            .mark_circle(size=60)
-            .encode(
+        .mark_circle(size=60)
+        .encode(
             x="x:Q",
             y="time_for_extraction:Q",
         )
-            .interactive()
+        .interactive()
     )
 
     chart3 = (
         alt.Chart(df, title="This is the Chart Title")
-            .mark_circle(size=60)
-            .encode(
+        .mark_circle(size=60)
+        .encode(
             x="x:Q",
             y="accessibility.probability:Q",
         )
-            .interactive()
+        .interactive()
     )
     print(failed_evaluations)
 
