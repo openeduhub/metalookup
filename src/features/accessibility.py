@@ -15,11 +15,18 @@ class Accessibility(MetadataBase):
     decision_threshold = 0.8
 
     def _start(self, website_data: WebsiteData) -> dict:
+        _categories = [
+            "accessibility",
+            "performance",
+            "seo",
+            "pwa",
+            "best-practices",
+        ]
         process = requests.get(
             "https://www.googleapis.com/pagespeedonline/v5/runPagespeed",
             params={
                 "url": f"{website_data.url}",
-                "category": "ACCESSIBILITY",
+                "category": _categories,
             },
         )
         try:
@@ -35,15 +42,18 @@ class Accessibility(MetadataBase):
                 self._logger.error(
                     f"{result['error']['code']}: {result['error']['message']}"
                 )
-                score = -1
+                score = [-1]
             else:
-                score = result["lighthouseResult"]["categories"][
-                    "accessibility"
-                ]["score"]
+                score = [
+                    result["lighthouseResult"]["categories"][score_key][
+                        "score"
+                    ]
+                    for score_key in _categories
+                ]
         except KeyError:
             self._logger.exception(
                 f"Key error when accessing PageSpeedOnline result for {website_data.url}. "
                 f"Returns {result}"
             )
-            score = -1
-        return {VALUES: [score]}
+            score = [-1]
+        return {VALUES: score}
