@@ -3,6 +3,8 @@ import queue
 from typing import Optional
 from uuid import UUID, uuid4
 
+from lib.settings import API_RETRIES
+
 
 class ProcessToDaemonCommunication:
     def __init__(
@@ -36,7 +38,7 @@ class ProcessToDaemonCommunication:
     def get_message(self, uuid: UUID) -> Optional[dict]:
         tries = 1  # TODO: possible growing dict with each failed attempt
         self._receive_message()
-        while uuid not in self._request_queue.keys() and tries <= 180:
+        while uuid not in self._request_queue.keys() and tries <= API_RETRIES:
             print(f"waited {tries} times for {uuid}")
             self._receive_message()
             tries += 1

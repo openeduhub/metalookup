@@ -4,6 +4,7 @@ from json.decoder import JSONDecodeError
 
 import requests
 
+from developer_tools.evaluator import RESULT_FILE_PATH
 from lib.constants import (
     MESSAGE_ALLOW_LIST,
     MESSAGE_HAR,
@@ -63,9 +64,8 @@ def rester():
 
     result = {}
 
-    result_filename = "result.json"
     try:
-        os.remove(result_filename)
+        os.remove(RESULT_FILE_PATH)
     except FileNotFoundError:
         pass
 
@@ -101,7 +101,7 @@ def rester():
 
         result.update({raw["url"]: output})
 
-        with open("result.json", "w") as fp:
+        with open(RESULT_FILE_PATH, "w") as fp:
             json.dump(result, fp)
 
         print(output)
