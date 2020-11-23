@@ -20,7 +20,6 @@ class Accessibility(MetadataBase):
             params={
                 "url": f"{website_data.url}",
                 "category": "ACCESSIBILITY",
-                "key": "AIzaSyCdJDuGP-rdtIid8kIm2-aaMQRNcgomyIM",
             },
         )
         try:
