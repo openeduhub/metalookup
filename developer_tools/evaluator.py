@@ -59,9 +59,9 @@ def load_raw_data_and_save_to_dataframe():
         row = []
         for meta_key in meta_feature_keys:
             if (
-                    elements[MESSAGE_META] is not None
-                    and meta_key in elements[MESSAGE_META].keys()
-                    and elements[MESSAGE_META][meta_key] is not None
+                elements[MESSAGE_META] is not None
+                and meta_key in elements[MESSAGE_META].keys()
+                and elements[MESSAGE_META][meta_key] is not None
             ):
                 for row_name in row_names:
                     if row_name in elements[MESSAGE_META][meta_key]:
@@ -120,9 +120,9 @@ def evaluator():
         if isinstance(row, str):
             row = (
                 row.replace("'", "")
-                    .replace("[", "")
-                    .replace("]", "")
-                    .split(", ")
+                .replace("[", "")
+                .replace("]", "")
+                .split(", ")
             )
             unique_values += [
                 element for element in row if element not in unique_values
@@ -154,11 +154,14 @@ def evaluator():
     # Extensions
     extract_from_files_values = "extract_from_files.values"
     links = df[df[extract_from_files_values].notnull()]
-    links.loc[:, extract_from_files_values] = links.loc[:, extract_from_files_values].apply(
-        lambda y: np.nan if y == [] else y)
+    links.loc[:, extract_from_files_values] = links.loc[
+        :, extract_from_files_values
+    ].apply(lambda y: np.nan if y == [] else y)
 
     file_extensions = [
-        os.path.splitext(link)[-1] if not (link == [] or isinstance(link, float)) else []
+        os.path.splitext(link)[-1]
+        if not (link == [] or isinstance(link, float))
+        else []
         for link in df.loc[:, extract_from_files_values]
     ]
     file_extensions = set([x for x in file_extensions if x != [] and x != ""])
@@ -170,26 +173,26 @@ def evaluator():
 
     chart1 = (
         alt.Chart(df)
-            .mark_circle(size=60)
-            .encode(x="x:Q", y="accessibility:Q", color=alt.Color("domain"))
-            .interactive()
-            .properties(width=fig_width, height=fig_height)
+        .mark_circle(size=60)
+        .encode(x="x:Q", y="accessibility:Q", color=alt.Color("domain"))
+        .interactive()
+        .properties(width=fig_width, height=fig_height)
     )
 
     chart2 = (
         alt.Chart(df, title="")
-            .mark_circle(size=60)
-            .encode(x="x:Q", y="time_for_extraction:Q", color=alt.Color("domain"))
-            .interactive()
-            .properties(width=fig_width, height=fig_height)
+        .mark_circle(size=60)
+        .encode(x="x:Q", y="time_for_extraction:Q", color=alt.Color("domain"))
+        .interactive()
+        .properties(width=fig_width, height=fig_height)
     )
 
     chart3 = (
         alt.Chart(df, title="")
-            .mark_circle(size=60)
-            .encode(x="x:Q", y="found_ads:Q", color=alt.Color("domain"))
-            .interactive()
-            .properties(width=fig_width, height=fig_height)
+        .mark_circle(size=60)
+        .encode(x="x:Q", y="found_ads:Q", color=alt.Color("domain"))
+        .interactive()
+        .properties(width=fig_width, height=fig_height)
     )
     (chart1 & chart3 | chart2).show()
 
