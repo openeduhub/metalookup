@@ -5,6 +5,8 @@ import statistics
 import altair as alt
 import pandas as pd
 
+from lib.constants import MESSAGE_META
+
 DATAFRAME = "data.csv"
 
 RESULT_FILE_PATH = "result.json"
@@ -55,13 +57,13 @@ def load_raw_data_and_save_to_dataframe():
         row = []
         for meta_key in meta_feature_keys:
             if (
-                elements["meta"] is not None
-                and meta_key in elements["meta"].keys()
-                and elements["meta"][meta_key] is not None
+                elements[MESSAGE_META] is not None
+                and meta_key in elements[MESSAGE_META].keys()
+                and elements[MESSAGE_META][meta_key] is not None
             ):
                 for row_name in row_names:
-                    if row_name in elements["meta"][meta_key]:
-                        row.append(elements["meta"][meta_key][row_name])
+                    if row_name in elements[MESSAGE_META][meta_key]:
+                        row.append(elements[MESSAGE_META][meta_key][row_name])
                     else:
                         row.append(None)
             else:
