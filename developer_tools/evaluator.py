@@ -3,6 +3,7 @@ import os
 import statistics
 
 import altair as alt
+import numpy as np
 import pandas as pd
 from tldextract import TLDExtract
 
@@ -150,6 +151,19 @@ def evaluator():
     )
     print(f"Unique top level domains: {df['domain'].unique()}")
 
+    # Extensions
+    extract_from_files_values = "extract_from_files.values"
+    links = df[df[extract_from_files_values].notnull()]
+    links.loc[:, extract_from_files_values] = links.loc[:, extract_from_files_values].apply(
+        lambda y: np.nan if y == [] else y)
+
+    file_extensions = [
+        os.path.splitext(link)[-1] if not (link == [] or isinstance(link, float)) else []
+        for link in df.loc[:, extract_from_files_values]
+    ]
+    file_extensions = set([x for x in file_extensions if x != [] and x != ""])
+    print(f"Unique {file_extensions}")
+
     # Plotting
     fig_width = 500
     fig_height = 400
@@ -173,7 +187,7 @@ def evaluator():
     chart3 = (
         alt.Chart(df, title="")
             .mark_circle(size=60)
-            .encode(x="x:Q", y="advertisement.probability:Q", color=alt.Color("domain"))
+            .encode(x="x:Q", y="found_ads:Q", color=alt.Color("domain"))
             .interactive()
             .properties(width=fig_width, height=fig_height)
     )
