@@ -15,3 +15,5 @@ src/app/__pycache__/
 .coverage
 Pipfile
 src/logs/*
+*.json
+*.csv
