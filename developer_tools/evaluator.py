@@ -92,10 +92,16 @@ def evaluator():
         print("Number of evaluated files: ", len(df))
 
         total_time = df["time_for_extraction"].sum()
+
+        if len(df) > 1:
+            var = statistics.stdev(df["time_for_extraction"])
+        else:
+            var = 0
+
         print(
             f"Total extraction time: {total_time}s or "
             f"{total_time / len(df)}"
-            f"+-{statistics.stdev(df['time_for_extraction']) / len(df)}s per file."
+            f"+-{var / len(df)}s per file."
         )
     failed_evaluations = {}
 
