@@ -9,6 +9,7 @@ from bs4 import BeautifulSoup
 from features.metadata_base import MetadataBase
 from features.website_manager import WebsiteData
 from lib.constants import VALUES
+from lib.settings import RETURN_IMAGES_IN_METADATA
 
 
 class ExtractFromFiles(MetadataBase):
@@ -67,7 +68,8 @@ class ExtractFromFiles(MetadataBase):
             filename = os.path.basename(urlparse(file).path)
             self._load_docx(file, filename)
             content = self._extract_docx(filename)
-            values.update({filename: content})
+            if RETURN_IMAGES_IN_METADATA:
+                values.update({filename: content})
             values[VALUES].append(filename)
             os.remove(filename)
 

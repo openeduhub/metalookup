@@ -4,23 +4,29 @@ from lib.constants import VALUES
 
 
 class Cookies(MetadataBase):
+    decision_threshold = 0.5
+
     def _start(self, website_data: WebsiteData) -> dict:
         raw_cookies = []
         data: list = website_data.har["log"]["entries"]
         for element in data:
-            raw_cookies += element["response"]["cookies"]
-            raw_cookies += element["request"]["cookies"]
-        raw_cookies = [cookie for cookie in raw_cookies if cookie]
+            raw_cookies += (
+                element["response"]["cookies"] + element["request"]["cookies"]
+            )
 
+        return {VALUES: [cookie for cookie in raw_cookies if cookie]}
 
-        cookies = []
+    def _calculate_probability(self, website_data: WebsiteData) -> float:
+        insecure_cookies = []
 
-        for cookie in raw_cookies:
-            name = cookie["name"]
-            httpOnly = cookie["httpOnly"]
+        for cookie in website_data.values:
+            http_only = cookie["httpOnly"]
             secure = cookie["secure"]
-            secure = cookie["secure"]
-            domain = cookie["domain"]
-            path = cookie["path"]
-            expires = cookie["expires"]
-        return {VALUES: cookies}
+
+            if not http_only and not secure:
+                insecure_cookies.append(cookie)
+
+        probability = 0
+        if len(insecure_cookies) > 0:
+            probability = 1
+        return probability
