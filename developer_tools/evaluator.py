@@ -4,6 +4,7 @@ import statistics
 
 import altair as alt
 import pandas as pd
+from tldextract import TLDExtract
 
 from lib.constants import MESSAGE_META
 
@@ -136,40 +137,39 @@ def evaluator():
     df.insert(0, "x", range(0, len(source)))
     df.insert(0, "accessibility", df["accessibility.probability"])
 
+    print(failed_evaluations)
+
+    print(df["cookies.values"].unique())
+
+    # Host names
+    extractor = TLDExtract(cache_dir=False)
+
+    df.insert(
+        0, "domain", df.apply(lambda row: extractor(row.name).domain, axis=1)
+    )
+    print(f"Unique top level domains: {df['domain'].unique()}")
+
+    # Plotting
+    fig_width = 800
+    fig_height = 800
+
     chart1 = (
         alt.Chart(df)
         .mark_circle(size=60)
-        .encode(
-            x="x:Q",
-            y="accessibility:Q",
-        )
+        .encode(x="x:Q", y="accessibility:Q", color=alt.Color("domain"))
         .interactive()
+        .properties(width=fig_width, height=fig_height)
     )
 
     chart2 = (
         alt.Chart(df, title="This is the Chart Title")
         .mark_circle(size=60)
-        .encode(
-            x="x:Q",
-            y="time_for_extraction:Q",
-        )
+        .encode(x="x:Q", y="time_for_extraction:Q", color=alt.Color("domain"))
         .interactive()
+        .properties(width=fig_width, height=fig_height)
     )
 
-    chart3 = (
-        alt.Chart(df, title="This is the Chart Title")
-        .mark_circle(size=60)
-        .encode(
-            x="x:Q",
-            y="accessibility.probability:Q",
-        )
-        .interactive()
-    )
-    print(failed_evaluations)
-
-    print(df["cookies.values"].unique())
-
-    (chart1 | chart2 | chart3).show()
+    (chart1 | chart2).show()
 
 
 if __name__ == "__main__":
