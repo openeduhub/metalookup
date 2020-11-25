@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import statistics
 
 import altair as alt
@@ -75,9 +76,21 @@ def load_raw_data_and_save_to_dataframe():
         row.append(elements["time_for_extraction"])
         row.append(elements["exception"])
         # print(row)
-        data.loc[url] = row
+        data.loc[:, url] = row
 
     data.to_csv(DATAFRAME)
+
+
+def regex_cookie_parameter(cookie: str, parameter: str = "name"):
+    regex = re.compile(fr"'{parameter}':\s'(.*?)',")
+    matches = []
+    if not isinstance(cookie, float):
+        matches = regex.findall(cookie)
+
+    if not matches:
+        matches = []
+
+    return matches
 
 
 def evaluator():
@@ -93,10 +106,10 @@ def evaluator():
         print("summary".center(80, "-"))
         print("Number of evaluated files: ", len(df))
 
-        total_time = df["time_for_extraction"].sum()
+        total_time = df.loc[:, "time_for_extraction"].sum()
 
         if len(df) > 1:
-            var = statistics.stdev(df["time_for_extraction"])
+            var = statistics.stdev(df.loc[:, "time_for_extraction"])
         else:
             var = 0
 
@@ -109,12 +122,12 @@ def evaluator():
 
     # Get rows with none content
     print("Failing evaluations".center(80, "-"))
-    rslt_df = df[df["advertisement.values"].isnull()]
+    rslt_df = df[df.loc[:, "advertisement.values"].isnull()]
     print(f"Total urls with failing evaluation: {len(rslt_df)}")
     failed_evaluations.update({"nan_evaluation": rslt_df.index.values})
 
     print("Unique GDPR values".center(80, "-"))
-    gdpr_values = df["g_d_p_r.values"].unique()
+    gdpr_values = df.loc[:, "g_d_p_r.values"].unique()
     unique_values = []
     for row in gdpr_values:
         if isinstance(row, str):
@@ -129,31 +142,55 @@ def evaluator():
             ]
     print(f"Unique values in GDPR: {unique_values}")
 
-    rslt_df = df[df["accessibility.probability"] < 0]
-    print(f"Total urls with failing accessibility: {len(rslt_df)}")
+    rslt_df = df[df.loc[:, "accessibility.probability"] < 0]
     failed_evaluations.update({"negative_accessibility": rslt_df.index.values})
 
     source = df.loc[:, "time_for_extraction"]
 
     df.insert(0, "x", range(0, len(source)))
-    df.insert(0, "accessibility", df["accessibility.probability"])
-    df.insert(0, "found_ads", df["advertisement.probability"])
+    df.insert(0, "accessibility", df.loc[:, "accessibility.probability"])
+    df.insert(0, "found_ads", df.loc[:, "advertisement.probability"])
 
-    print(failed_evaluations)
+    print(
+        f"Total urls with negative accessibility: {len(failed_evaluations['negative_accessibility'])}"
+    )
+    print(
+        f"Total urls with NaN in evaluation results: {len(failed_evaluations['nan_evaluation'])}"
+    )
 
-    # print(df["cookies.values"].unique())
+    cookies_values = "cookies.values"
+    cookies_df = df.apply(
+        lambda df_row: regex_cookie_parameter(df_row[cookies_values]), axis=1
+    ).tolist()
+    cookies_df = set([item for subl in cookies_df for item in subl])
+    print("Unique cookies".center(120, "-"))
+    print(cookies_df)
+
+    domains = df.apply(
+        lambda df_row: regex_cookie_parameter(
+            df_row[cookies_values], parameter="domain"
+        ),
+        axis=1,
+    ).tolist()
+    domains = set([item for subl in domains for item in subl if item != ""])
+    print("Unique domains".center(120, "-"))
+    print(domains)
 
     # Host names
     extractor = TLDExtract(cache_dir=False)
 
     df.insert(
-        0, "domain", df.apply(lambda row: extractor(row.name).domain, axis=1)
+        0,
+        "domain",
+        df.apply(lambda df_row: extractor(df_row.name).domain, axis=1),
     )
-    print(f"Unique top level domains: {df['domain'].unique()}")
+    print("Unique top level domains".center(120, "-"))
+    print(df.loc[:, "domain"].unique())
 
     # Extensions
     extract_from_files_values = "extract_from_files.values"
-    links = df[df[extract_from_files_values].notnull()]
+    mask = df.loc[:, extract_from_files_values].notnull()
+    links = df[mask]
     links.loc[:, extract_from_files_values] = links.loc[
         :, extract_from_files_values
     ].apply(lambda y: np.nan if y == [] else y)
@@ -165,7 +202,7 @@ def evaluator():
         for link in df.loc[:, extract_from_files_values]
     ]
     file_extensions = set([x for x in file_extensions if x != [] and x != ""])
-    print(f"Unique {file_extensions}")
+    print(f"Unique file extensions: {file_extensions}")
 
     # Plotting
     fig_width = 500
