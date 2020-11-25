@@ -104,7 +104,16 @@ class ExtractFromFiles(MetadataBase):
 
         extracted_content += extract_text(filename)
 
-        content = {"extracted_content": extracted_content, "images": []}
+        images = []
+        for page in range(pdf_file.getNumPages()):
+            pdf_page = pdf_file.getPage(page)
+            x_object = pdf_page["/Resources"]["/XObject"].getObject()
+
+            for obj in x_object:
+                if x_object[obj]["/Subtype"] == "/Image":
+                    images += obj
+
+        content = {"extracted_content": extracted_content, "images": images}
         return content
 
     def _work_files(self, files):
