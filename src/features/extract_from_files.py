@@ -5,8 +5,9 @@ from urllib.parse import urlparse
 
 import requests
 from bs4 import BeautifulSoup
+from pdfminer.high_level import extract_text
 
-from features.metadata_base import MetadataBase
+from features.metadata_base import MetadataBase, ProbabilityDeterminationMethod
 from features.website_manager import WebsiteData
 from lib.constants import VALUES
 from lib.settings import RETURN_IMAGES_IN_METADATA
@@ -62,6 +63,12 @@ class ExtractFromFiles(MetadataBase):
 
         return content
 
+    @staticmethod
+    def _extract_pdfs(filename) -> dict:
+        extracted_content = extract_text(filename)
+        content = {"extracted_content": extracted_content, "images": []}
+        return content
+
     def _work_files(self, files):
         values = {VALUES: []}
 
@@ -74,7 +81,7 @@ class ExtractFromFiles(MetadataBase):
             if extension == "docx":
                 content = self._extract_docx(filename)
             elif extension == "pdf":
-                print("pdf!")
+                content = self._extract_pdfs(filename)
 
             if len(content["extracted_content"]) > 0:
                 values[VALUES].append(filename)
@@ -83,14 +90,11 @@ class ExtractFromFiles(MetadataBase):
 
         return values
 
-    def _start(self, website_data: WebsiteData) -> dict:
-
+    @staticmethod
+    def _get_extractable_files(website_data: WebsiteData):
         file_extensions = [
             os.path.splitext(link)[-1] for link in website_data.raw_links
         ]
-
-        print(f"file_extensions: {file_extensions}")
-        print(f"website_data.raw_links: {website_data.raw_links}")
 
         extractable_files = [
             file
@@ -98,6 +102,20 @@ class ExtractFromFiles(MetadataBase):
             if extension in [".docx", ".pdf"]
         ]
 
+        return extractable_files
+
+    def _start(self, website_data: WebsiteData) -> dict:
+        extractable_files = self._get_extractable_files(website_data)
+
         values = self._work_files(files=extractable_files)
         print("all values: ", values)
         return {**values}
+
+    def _calculate_probability(self, website_data: WebsiteData) -> float:
+        probability = 0
+        extractable_files = self._get_extractable_files(website_data)
+
+        if len(website_data.values) > 0:
+            probability = len(extractable_files) / len(website_data.values)
+
+        return probability
