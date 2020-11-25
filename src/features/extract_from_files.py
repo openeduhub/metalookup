@@ -13,13 +13,11 @@ from lib.settings import RETURN_IMAGES_IN_METADATA
 
 
 class ExtractFromFiles(MetadataBase):
-    def _load_docx(self, docx, filename):
-        result = requests.get(docx)
-        if result.status_code == 200:
-            self.tag_list = result.text.splitlines()
-        else:
+    def _download_file(self, file_url, filename):
+        result = requests.get(file_url)
+        if result.status_code != 200:
             self._logger.warning(
-                f"Downloading tag list from '{docx}' yielded status code '{result.status_code}'."
+                f"Downloading tag list from '{file_url}' yielded status code '{result.status_code}'."
             )
 
         open(filename, "wb").write(result.content)
@@ -51,26 +49,36 @@ class ExtractFromFiles(MetadataBase):
                     text_pieces = [tag.string for tag in body.find_all("t")]
 
                 extracted_content += text_pieces
-            elif xml_file.filename.find("media") >= 0:
+            elif (
+                RETURN_IMAGES_IN_METADATA
+                and xml_file.filename.find("media") >= 0
+            ):
                 image = document.read(xml_file, pwd=None)
                 image = base64.b64encode(image).decode()
 
                 images.update({xml_file.filename: image})
 
-        content = {"content": extracted_content, "images": images}
+        content = {"extracted_content": extracted_content, "images": images}
 
         return content
 
-    def _work_docx(self, docx_files):
+    def _work_files(self, files):
         values = {VALUES: []}
 
-        for file in docx_files:
+        for file in files:
             filename = os.path.basename(urlparse(file).path)
-            self._load_docx(file, filename)
-            content = self._extract_docx(filename)
-            if RETURN_IMAGES_IN_METADATA:
-                values.update({filename: content})
-            values[VALUES].append(filename)
+            extension = filename.split(".")[-1]
+            self._download_file(file, filename)
+
+            content = {"extracted_content": [], "images": {}}
+            if extension == "docx":
+                content = self._extract_docx(filename)
+            elif extension == "pdf":
+                print("pdf!")
+
+            if len(content["extracted_content"]) > 0:
+                values[VALUES].append(filename)
+
             os.remove(filename)
 
         return values
@@ -81,12 +89,15 @@ class ExtractFromFiles(MetadataBase):
             os.path.splitext(link)[-1] for link in website_data.raw_links
         ]
 
-        docx_files = [
+        print(f"file_extensions: {file_extensions}")
+        print(f"website_data.raw_links: {website_data.raw_links}")
+
+        extractable_files = [
             file
             for file, extension in zip(website_data.raw_links, file_extensions)
-            if extension == ".docx"
+            if extension in [".docx", ".pdf"]
         ]
 
-        values = self._work_docx(docx_files=docx_files)
-
+        values = self._work_files(files=extractable_files)
+        print("all values: ", values)
         return {**values}
