@@ -31,6 +31,10 @@ class MetadataTags(BaseModel):
         default=None,
         description="A user friendly decision whether or not this metadatum is present in the website.",
     )
+    time_for_completion: Optional[float] = Field(
+        default=-1,
+        description="Debug information. How long did this metadata take?",
+    )
 
 
 class ListTags(BaseModel):
@@ -99,6 +103,10 @@ class Input(BaseModel):
         "Any metadata key == True will be extracted. "
         "If this list is not given, all values will be extracted.",
     )
+    debug: Optional[bool] = Field(
+        default=False,
+        description="Developer flag to receive more information through API",
+    )
 
 
 class Output(BaseModel):
@@ -122,18 +130,25 @@ app = FastAPI(title="Metadata Extractor", version="0.1")
 app.api_queue: ProcessToDaemonCommunication
 
 
-def _convert_dict_to_output_model(meta) -> ExtractorTags:
+def _convert_dict_to_output_model(
+    meta, debug: bool = "False"
+) -> ExtractorTags:
     out = ExtractorTags()
     for key in ExtractorTags.__fields__.keys():
         if key in meta.keys() and VALUES in meta[key]:
+
+            if "time_required" not in meta[key].keys() or not debug:
+                meta[key]["time_required"] = None
             out.__setattr__(
                 key,
                 MetadataTags(
                     values=meta[key][VALUES],
                     probability=meta[key][PROBABILITY],
                     decision=meta[key][DECISION],
+                    time_for_completion=meta[key]["time_required"],
                 ),
             )
+            print("out after:", out)
     return out
 
 
@@ -160,7 +175,9 @@ def extract_meta(input_data: Input):
     meta_data: dict = app.api_queue.get_message(uuid)
 
     if meta_data:
-        extractor_tags = _convert_dict_to_output_model(meta_data)
+        extractor_tags = _convert_dict_to_output_model(
+            meta_data, input_data.debug
+        )
 
         if MESSAGE_EXCEPTION in meta_data.keys():
             exception = meta_data[MESSAGE_EXCEPTION]
