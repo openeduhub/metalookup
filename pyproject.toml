@@ -13,6 +13,8 @@ bs4 = "^0.0.1"
 adblockparser = "^0.7"
 lxml = "^4.6.1"
 tldextract = "^3.0.2"
+"pdfminer.six" = "^20201018"
+PyPDF2 = "^1.26.0"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.6.0"

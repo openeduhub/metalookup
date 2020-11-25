@@ -1,7 +1,7 @@
 from config_manager import ConfigManager
 from features.accessibility import Accessibility
 from features.cookies import Cookies
-from features.extract_from_document import ExtractFromFiles
+from features.extract_from_files import ExtractFromFiles
 from features.gdpr import GDPR
 from features.html_based import (
     Advertisement,
