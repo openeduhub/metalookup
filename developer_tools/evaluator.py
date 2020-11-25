@@ -209,12 +209,6 @@ def evaluator(want_details: bool = False):
 
     # Extensions
     extract_from_files_values = "extract_from_files.values"
-    mask = df.loc[:, extract_from_files_values].notnull()
-    links = df[mask]
-    links.loc[:, extract_from_files_values] = links.loc[
-        :, extract_from_files_values
-    ].apply(lambda y: np.nan if y == [] else y)
-
     file_extensions = [
         os.path.splitext(link)[-1]
         if not (link == [] or isinstance(link, float))
