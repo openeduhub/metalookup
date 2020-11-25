@@ -143,6 +143,9 @@ def test_api_extract_meta():
     assert is_json and has_url and has_meta
 
 
+@pytest.mark.skip(
+    reason="This test takes a lot of time, depending on payload etc. Execute manually."
+)
 def test_ping_container():
     url = DOCKER_TEST_URL + "_ping"
 
