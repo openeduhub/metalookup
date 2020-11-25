@@ -3,11 +3,12 @@ import os
 import zipfile
 from urllib.parse import urlparse
 
+import PyPDF2
 import requests
 from bs4 import BeautifulSoup
 from pdfminer.high_level import extract_text
 
-from features.metadata_base import MetadataBase, ProbabilityDeterminationMethod
+from features.metadata_base import MetadataBase
 from features.website_manager import WebsiteData
 from lib.constants import VALUES
 from lib.settings import RETURN_IMAGES_IN_METADATA
@@ -65,7 +66,44 @@ class ExtractFromFiles(MetadataBase):
 
     @staticmethod
     def _extract_pdfs(filename) -> dict:
-        extracted_content = extract_text(filename)
+        extracted_content = []
+        pdf_file = PyPDF2.PdfFileReader(open(filename, "rb"))
+
+        extracted_content += f"{pdf_file.getDocumentInfo()}"
+
+        data = pdf_file.getXmpMetadata()
+
+        xmp_metadata = [
+            "dc_contributor",
+            "dc_coverage",
+            "dc_creator",
+            "dc_date",
+            "dc_description",
+            "dc_format",
+            "dc_identifier",
+            "dc_language",
+            "dc_publisher",
+            "dc_relation",
+            "dc_rights",
+            "dc_source",
+            "dc_subject",
+            "dc_title",
+            "dc_type",
+            "pdf_keywords",
+            "pdf_pdfversion",
+            "pdf_producer",
+            "xmp_createDate",
+            "xmp_modifyDate",
+            "xmp_metadataDate",
+            "xmp_creatorTool",
+            "xmpmm_documentId",
+            "xmpmm_instanceId",
+        ]
+        for parameter in xmp_metadata:
+            extracted_content += f"{parameter}, {getattr(data, parameter)}"
+
+        extracted_content += extract_text(filename)
+
         content = {"extracted_content": extracted_content, "images": []}
         return content
 
@@ -108,7 +146,6 @@ class ExtractFromFiles(MetadataBase):
         extractable_files = self._get_extractable_files(website_data)
 
         values = self._work_files(files=extractable_files)
-        print("all values: ", values)
         return {**values}
 
     def _calculate_probability(self, website_data: WebsiteData) -> float:
