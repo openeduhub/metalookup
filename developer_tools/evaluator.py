@@ -93,14 +93,15 @@ def regex_cookie_parameter(cookie: str, parameter: str = "name"):
     return matches
 
 
-def evaluator():
+def evaluator(want_details: bool = False):
     if not os.path.isfile(DATAFRAME):
         print(f"{DATAFRAME} does not exist, reading raw data.")
         load_raw_data_and_save_to_dataframe()
 
     print(f"Loading data from {DATAFRAME}.")
     df = pd.read_csv(DATAFRAME, index_col=0)
-    print(df.columns)
+    if want_details:
+        print(df.columns)
 
     if len(df) > 0:
         print("summary".center(80, "-"))
@@ -158,6 +159,7 @@ def evaluator():
         f"Total urls with NaN in evaluation results: {len(failed_evaluations['nan_evaluation'])}"
     )
 
+    # Cookie
     cookies_values = "cookies.values"
     cookies_df = df.apply(
         lambda df_row: regex_cookie_parameter(df_row[cookies_values]), axis=1
@@ -166,6 +168,7 @@ def evaluator():
     print("Unique cookies".center(120, "-"))
     print(cookies_df)
 
+    # Domain
     domains = df.apply(
         lambda df_row: regex_cookie_parameter(
             df_row[cookies_values], parameter="domain"
@@ -175,6 +178,23 @@ def evaluator():
     domains = set([item for subl in domains for item in subl if item != ""])
     print("Unique domains".center(120, "-"))
     print(domains)
+
+    # Ads
+
+    parameters = ["advertisement", "easy_privacy", "easylist_germany"]
+    for parameter in parameters:
+        ads = df.loc[:, f"{parameter}.values"].tolist()
+        ads = [ad.split(", ") for ad in ads if isinstance(ad, str)]
+        ads = set(
+            [
+                item.replace("'", "").replace("[", "").replace("]", "")
+                for sub in ads
+                for item in sub
+            ]
+        )
+        print(f"{len(ads)} unique values for {parameter}".center(120, "-"))
+        if want_details:
+            print(ads)
 
     # Host names
     extractor = TLDExtract(cache_dir=False)
@@ -202,7 +222,8 @@ def evaluator():
         for link in df.loc[:, extract_from_files_values]
     ]
     file_extensions = set([x for x in file_extensions if x != [] and x != ""])
-    print(f"Unique file extensions: {file_extensions}")
+    print("Unique file extensions".center(120, "-"))
+    print(file_extensions)
 
     # Plotting
     fig_width = 500
@@ -235,4 +256,5 @@ def evaluator():
 
 
 if __name__ == "__main__":
-    evaluator()
+    want_details = False
+    evaluator(want_details)
