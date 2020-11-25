@@ -1,9 +1,12 @@
 import json
 import os
+import re
 import statistics
 
 import altair as alt
+import numpy as np
 import pandas as pd
+from tldextract import TLDExtract
 
 from lib.constants import MESSAGE_META
 
@@ -73,28 +76,41 @@ def load_raw_data_and_save_to_dataframe():
         row.append(elements["time_for_extraction"])
         row.append(elements["exception"])
         # print(row)
-        data.loc[url] = row
+        data.loc[:, url] = row
 
     data.to_csv(DATAFRAME)
 
 
-def evaluator():
+def regex_cookie_parameter(cookie: str, parameter: str = "name"):
+    regex = re.compile(fr"'{parameter}':\s'(.*?)',")
+    matches = []
+    if not isinstance(cookie, float):
+        matches = regex.findall(cookie)
+
+    if not matches:
+        matches = []
+
+    return matches
+
+
+def evaluator(want_details: bool = False):
     if not os.path.isfile(DATAFRAME):
         print(f"{DATAFRAME} does not exist, reading raw data.")
         load_raw_data_and_save_to_dataframe()
 
     print(f"Loading data from {DATAFRAME}.")
     df = pd.read_csv(DATAFRAME, index_col=0)
-    print(df.columns)
+    if want_details:
+        print(df.columns)
 
     if len(df) > 0:
         print("summary".center(80, "-"))
         print("Number of evaluated files: ", len(df))
 
-        total_time = df["time_for_extraction"].sum()
+        total_time = df.loc[:, "time_for_extraction"].sum()
 
         if len(df) > 1:
-            var = statistics.stdev(df["time_for_extraction"])
+            var = statistics.stdev(df.loc[:, "time_for_extraction"])
         else:
             var = 0
 
@@ -107,12 +123,12 @@ def evaluator():
 
     # Get rows with none content
     print("Failing evaluations".center(80, "-"))
-    rslt_df = df[df["advertisement.values"].isnull()]
+    rslt_df = df[df.loc[:, "advertisement.values"].isnull()]
     print(f"Total urls with failing evaluation: {len(rslt_df)}")
     failed_evaluations.update({"nan_evaluation": rslt_df.index.values})
 
     print("Unique GDPR values".center(80, "-"))
-    gdpr_values = df["g_d_p_r.values"].unique()
+    gdpr_values = df.loc[:, "g_d_p_r.values"].unique()
     unique_values = []
     for row in gdpr_values:
         if isinstance(row, str):
@@ -127,50 +143,112 @@ def evaluator():
             ]
     print(f"Unique values in GDPR: {unique_values}")
 
-    rslt_df = df[df["accessibility.probability"] < 0]
-    print(f"Total urls with failing accessibility: {len(rslt_df)}")
+    rslt_df = df[df.loc[:, "accessibility.probability"] < 0]
     failed_evaluations.update({"negative_accessibility": rslt_df.index.values})
 
     source = df.loc[:, "time_for_extraction"]
 
     df.insert(0, "x", range(0, len(source)))
-    df.insert(0, "accessibility", df["accessibility.probability"])
+    df.insert(0, "accessibility", df.loc[:, "accessibility.probability"])
+    df.insert(0, "found_ads", df.loc[:, "advertisement.probability"])
+
+    print(
+        f"Total urls with negative accessibility: {len(failed_evaluations['negative_accessibility'])}"
+    )
+    print(
+        f"Total urls with NaN in evaluation results: {len(failed_evaluations['nan_evaluation'])}"
+    )
+
+    # Cookie
+    cookies_values = "cookies.values"
+    cookies_df = df.apply(
+        lambda df_row: regex_cookie_parameter(df_row[cookies_values]), axis=1
+    ).tolist()
+    cookies_df = set([item for subl in cookies_df for item in subl])
+    print("Unique cookies".center(120, "-"))
+    print(cookies_df)
+
+    # Domain
+    domains = df.apply(
+        lambda df_row: regex_cookie_parameter(
+            df_row[cookies_values], parameter="domain"
+        ),
+        axis=1,
+    ).tolist()
+    domains = set([item for subl in domains for item in subl if item != ""])
+    print("Unique domains".center(120, "-"))
+    print(domains)
+
+    # Ads
+
+    parameters = ["advertisement", "easy_privacy", "easylist_germany"]
+    for parameter in parameters:
+        ads = df.loc[:, f"{parameter}.values"].tolist()
+        ads = [ad.split(", ") for ad in ads if isinstance(ad, str)]
+        ads = set(
+            [
+                item.replace("'", "").replace("[", "").replace("]", "")
+                for sub in ads
+                for item in sub
+            ]
+        )
+        print(f"{len(ads)} unique values for {parameter}".center(120, "-"))
+        if want_details:
+            print(ads)
+
+    # Host names
+    extractor = TLDExtract(cache_dir=False)
+
+    df.insert(
+        0,
+        "domain",
+        df.apply(lambda df_row: extractor(df_row.name).domain, axis=1),
+    )
+    print("Unique top level domains".center(120, "-"))
+    print(df.loc[:, "domain"].unique())
+
+    # Extensions
+    extract_from_files_values = "extract_from_files.values"
+    file_extensions = [
+        os.path.splitext(link)[-1]
+        if not (link == [] or isinstance(link, float))
+        else []
+        for link in df.loc[:, extract_from_files_values]
+    ]
+    file_extensions = set([x for x in file_extensions if x != [] and x != ""])
+    print("Unique file extensions".center(120, "-"))
+    print(file_extensions)
+
+    # Plotting
+    fig_width = 500
+    fig_height = 400
 
     chart1 = (
         alt.Chart(df)
         .mark_circle(size=60)
-        .encode(
-            x="x:Q",
-            y="accessibility:Q",
-        )
+        .encode(x="x:Q", y="accessibility:Q", color=alt.Color("domain"))
         .interactive()
+        .properties(width=fig_width, height=fig_height)
     )
 
     chart2 = (
-        alt.Chart(df, title="This is the Chart Title")
+        alt.Chart(df, title="")
         .mark_circle(size=60)
-        .encode(
-            x="x:Q",
-            y="time_for_extraction:Q",
-        )
+        .encode(x="x:Q", y="time_for_extraction:Q", color=alt.Color("domain"))
         .interactive()
+        .properties(width=fig_width, height=fig_height)
     )
 
     chart3 = (
-        alt.Chart(df, title="This is the Chart Title")
+        alt.Chart(df, title="")
         .mark_circle(size=60)
-        .encode(
-            x="x:Q",
-            y="accessibility.probability:Q",
-        )
+        .encode(x="x:Q", y="found_ads:Q", color=alt.Color("domain"))
         .interactive()
+        .properties(width=fig_width, height=fig_height)
     )
-    print(failed_evaluations)
-
-    print(df["cookies.values"].unique())
-
-    (chart1 | chart2 | chart3).show()
+    (chart1 & chart3 | chart2).show()
 
 
 if __name__ == "__main__":
-    evaluator()
+    want_details = False
+    evaluator(want_details)
