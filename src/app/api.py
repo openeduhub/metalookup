@@ -60,6 +60,7 @@ class ListTags(BaseModel):
     log_in_out: Optional[bool] = True
     accessibility: Optional[bool] = True
     g_d_p_r: Optional[bool] = True
+    javascript: Optional[bool] = True
 
 
 class ExtractorTags(BaseModel):
@@ -84,6 +85,7 @@ class ExtractorTags(BaseModel):
     log_in_out: MetadataTags = Field(default=None)
     accessibility: MetadataTags = Field(default=None)
     g_d_p_r: MetadataTags = Field(default=None)
+    javascript: MetadataTags = Field(default=None)
 
 
 class Input(BaseModel):
@@ -148,7 +150,7 @@ def _convert_dict_to_output_model(
                     time_for_completion=meta[key]["time_required"],
                 ),
             )
-            print("out after:", out)
+
     return out
 
 

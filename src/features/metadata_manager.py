@@ -21,6 +21,7 @@ from features.html_based import (
     PopUp,
     RegWall,
 )
+from features.javascript import Javascript
 from features.malicious_extensions import MaliciousExtensions
 from features.metadata_base import MetadataBase
 from features.website_manager import Singleton, WebsiteManager
@@ -60,6 +61,7 @@ class MetadataManager:
             Accessibility,
             Cookies,
             GDPR,
+            Javascript,
         ]
 
         for extractor in extractors:
