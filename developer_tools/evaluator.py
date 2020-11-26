@@ -43,7 +43,7 @@ def load_raw_data_and_save_to_dataframe():
         "cookies",
         "g_d_p_r",
     ]
-    row_names = ["values", "probability", "decision"]
+    row_names = ["values", "probability", "decision", "time_for_completion"]
     col_names = []
 
     for key in meta_feature_keys:
@@ -52,6 +52,7 @@ def load_raw_data_and_save_to_dataframe():
 
     col_names += ["time_until_complete", "time_for_extraction", "exception"]
 
+    print("col_names")
     print(col_names)
 
     data = pd.DataFrame(columns=col_names)
@@ -70,13 +71,12 @@ def load_raw_data_and_save_to_dataframe():
                     else:
                         row.append(None)
             else:
-                [row.append(None) for _ in row_names]
+                _ = [row.append(None) for _ in row_names]
 
         row.append(elements["time_until_complete"])
         row.append(elements["time_for_extraction"])
         row.append(elements["exception"])
-        # print(row)
-        data.loc[:, url] = row
+        data.loc[url, :] = row
 
     data.to_csv(DATAFRAME)
 
@@ -164,7 +164,7 @@ def evaluator(want_details: bool = False):
     cookies_df = df.apply(
         lambda df_row: regex_cookie_parameter(df_row[cookies_values]), axis=1
     ).tolist()
-    cookies_df = set([item for subl in cookies_df for item in subl])
+    cookies_df = set(item for subl in cookies_df for item in subl)
     print("Unique cookies".center(120, "-"))
     print(cookies_df)
 
@@ -175,7 +175,7 @@ def evaluator(want_details: bool = False):
         ),
         axis=1,
     ).tolist()
-    domains = set([item for subl in domains for item in subl if item != ""])
+    domains = set(item for subl in domains for item in subl if item != "")
     print("Unique domains".center(120, "-"))
     print(domains)
 
@@ -186,17 +186,15 @@ def evaluator(want_details: bool = False):
         ads = df.loc[:, f"{parameter}.values"].tolist()
         ads = [ad.split(", ") for ad in ads if isinstance(ad, str)]
         ads = set(
-            [
-                item.replace("'", "").replace("[", "").replace("]", "")
-                for sub in ads
-                for item in sub
-            ]
+            item.replace("'", "").replace("[", "").replace("]", "")
+            for sub in ads
+            for item in sub
         )
         print(f"{len(ads)} unique values for {parameter}".center(120, "-"))
         if want_details:
             print(ads)
 
-    # Host names
+    # Top level domains
     extractor = TLDExtract(cache_dir=False)
 
     df.insert(
@@ -205,7 +203,8 @@ def evaluator(want_details: bool = False):
         df.apply(lambda df_row: extractor(df_row.name).domain, axis=1),
     )
     print("Unique top level domains".center(120, "-"))
-    print(df.loc[:, "domain"].unique())
+    top_level_domains = df.loc[:, "domain"]
+    print(top_level_domains.unique())
 
     # Extensions
     extract_from_files_values = "extract_from_files.values"
@@ -215,13 +214,41 @@ def evaluator(want_details: bool = False):
         else []
         for link in df.loc[:, extract_from_files_values]
     ]
-    file_extensions = set([x for x in file_extensions if x != [] and x != ""])
+    file_extensions = set(x for x in file_extensions if x not in ([], ""))
     print("Unique file extensions".center(120, "-"))
     print(file_extensions)
 
+    # extract time_for_completion
+    performance_columns = ["key", "average", "std", "domain"]
+    metadata_performance = pd.DataFrame({}, columns=performance_columns)
+    for column in df.columns:
+        if len(elements := column.split(".")) == 2:
+            key = elements[0]
+            parameter = elements[1]
+            if parameter == "time_for_completion":
+                for host in top_level_domains.unique():
+                    mask = df.loc[:, "domain"] == host
+                    values = df.loc[mask, f"{key}.{parameter}"]
+
+                    data = {
+                        "key": key,
+                        "average": np.nanmean(values),
+                        "std": np.nanstd(values),
+                        "min": np.nanmin(values),
+                        "max": np.nanmax(values),
+                        "domain": host,
+                    }
+
+                    metadata_performance = metadata_performance.append(
+                        pd.Series(
+                            data=data,
+                            name=key,
+                        )
+                    )
+
     # Plotting
     fig_width = 500
-    fig_height = 400
+    fig_height = 300
 
     chart1 = (
         alt.Chart(df)
@@ -246,9 +273,64 @@ def evaluator(want_details: bool = False):
         .interactive()
         .properties(width=fig_width, height=fig_height)
     )
-    (chart1 & chart3 | chart2).show()
+
+    min_value = (
+        alt.Chart(metadata_performance)
+        .mark_line()
+        .encode(
+            x="key:O",
+            y=alt.Y(
+                field="min",
+                scale=alt.Scale(type="log"),
+                type="quantitative",
+                title="average [s]",
+            ),
+            color=alt.Color("domain"),
+            strokeDash="domain",
+        )
+        .properties(width=fig_width, height=fig_height)
+    )
+    max_value = (
+        alt.Chart(metadata_performance)
+        .mark_line()
+        .encode(
+            x="key:O",
+            y=alt.Y(
+                field="max",
+                scale=alt.Scale(type="log"),
+                type="quantitative",
+                title="average [s]",
+            ),
+            color=alt.Color("domain"),
+            strokeDash="domain",
+        )
+        .properties(width=fig_width, height=fig_height)
+    )
+
+    performance_monitor = (
+        max_value
+        + min_value
+        + (
+            alt.Chart(metadata_performance, title="Time per metadatum")
+            .mark_circle(size=60)
+            .encode(
+                x="key:O",
+                y=alt.Y(
+                    field="average",
+                    scale=alt.Scale(type="log"),
+                    type="quantitative",
+                    title="average [s]",
+                ),
+                color=alt.Color("domain"),
+            )
+            .interactive()
+            .properties(width=fig_width, height=fig_height)
+        )
+    )
+
+    (chart1 & chart3 | chart2 & performance_monitor).show()
 
 
 if __name__ == "__main__":
-    want_details = False
-    evaluator(want_details)
+    wants_details = True
+    evaluator(wants_details)

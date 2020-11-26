@@ -84,6 +84,7 @@ def rester():
             MESSAGE_URL: raw["url"],
             MESSAGE_ALLOW_LIST: allow_list,
             MESSAGE_HAR: raw["har"],
+            "debug": True,
         }
         response = requests.request(
             "POST", extractor_url, headers=headers, data=json.dumps(payload)

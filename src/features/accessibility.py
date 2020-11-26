@@ -27,7 +27,7 @@ class Accessibility(MetadataBase):
             params={
                 "url": f"{website_data.url}",
                 "category": _categories,
-                "strategy": "desktop"
+                "strategy": "desktop",
             },
         )
         try:
