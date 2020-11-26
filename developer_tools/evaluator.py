@@ -218,6 +218,10 @@ def evaluator(want_details: bool = False):
     print("Unique file extensions".center(120, "-"))
     print(file_extensions)
 
+    df.insert(
+        0, "time_difference", df.loc[:, "time_for_extraction"].copy(deep=True)
+    )
+
     # extract time_for_completion
     performance_columns = ["key", "average", "std", "domain"]
     metadata_performance = pd.DataFrame({}, columns=performance_columns)
@@ -228,16 +232,26 @@ def evaluator(want_details: bool = False):
             if parameter == "time_for_completion":
                 for host in top_level_domains.unique():
                     mask = df.loc[:, "domain"] == host
-                    values = df.loc[mask, f"{key}.{parameter}"]
+                    values = df.loc[mask, column]
 
-                    data = {
-                        "key": key,
-                        "average": np.nanmean(values),
-                        "std": np.nanstd(values),
-                        "min": np.nanmin(values),
-                        "max": np.nanmax(values),
-                        "domain": host,
-                    }
+                    if sum(~np.isnan(values)) > 0:
+                        data = {
+                            "key": key,
+                            "average": np.nanmean(values),
+                            "std": np.nanstd(values),
+                            "min": np.nanmin(values),
+                            "max": np.nanmax(values),
+                            "domain": host,
+                        }
+                    else:
+                        data = {
+                            "key": key,
+                            "average": np.NaN,
+                            "std": np.NaN,
+                            "min": np.NaN,
+                            "max": np.NaN,
+                            "domain": host,
+                        }
 
                     metadata_performance = metadata_performance.append(
                         pd.Series(
@@ -245,6 +259,9 @@ def evaluator(want_details: bool = False):
                             name=key,
                         )
                     )
+                df.loc[:, "time_difference"] = df.loc[
+                    :, "time_difference"
+                ].sub(df[column], fill_value=0)
 
     # Plotting
     fig_width = 500
@@ -327,8 +344,27 @@ def evaluator(want_details: bool = False):
             .properties(width=fig_width, height=fig_height)
         )
     )
+    difference_meta_overall = (
+        alt.Chart(df, title="Time per metadatum")
+        .mark_circle(size=60)
+        .encode(
+            x="x:Q",
+            y=alt.Y(
+                field="time_difference",
+                type="quantitative",
+                title="difference [s]",
+            ),
+            color=alt.Color("domain"),
+        )
+        .interactive()
+        .properties(width=fig_width, height=fig_height)
+    )
 
-    (chart1 & chart3 | chart2 & performance_monitor).show()
+    (
+        chart1 & chart3
+        | chart2 & performance_monitor
+        | difference_meta_overall
+    ).show()
 
 
 if __name__ == "__main__":
