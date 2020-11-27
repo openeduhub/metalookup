@@ -8,7 +8,10 @@ class Cookies(MetadataBase):
 
     def _start(self, website_data: WebsiteData) -> dict:
         raw_cookies = []
-        data: list = website_data.har["log"]["entries"]
+        try:
+            data: list = website_data.har["log"]["entries"]
+        except KeyError:
+            data = []
         for element in data:
             raw_cookies += (
                 element["response"]["cookies"] + element["request"]["cookies"]
