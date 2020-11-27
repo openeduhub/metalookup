@@ -66,7 +66,10 @@ class WebsiteManager:
             self.website_data.url = message[MESSAGE_URL]
             self._extract_host_name()
 
-        if self.website_data.raw_header == "":
+        if (
+            self.website_data.raw_header == ""
+            and message[MESSAGE_HEADERS] != ""
+        ):
             self.website_data.raw_header = message[MESSAGE_HEADERS]
             self._preprocess_header()
 
