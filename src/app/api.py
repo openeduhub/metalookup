@@ -64,28 +64,141 @@ class ListTags(BaseModel):
 
 
 class ExtractorTags(BaseModel):
-    advertisement: MetadataTags = Field(default=None)
-    easy_privacy: MetadataTags = Field(default=None)
-    malicious_extensions: MetadataTags = Field(default=None)
-    extract_from_files: MetadataTags = Field(default=None)
-    internet_explorer_tracker: MetadataTags = Field(default=None)
-    cookies_in_html: MetadataTags = Field(default=None)
-    cookies: MetadataTags = Field(default=None)
-    fanboy_annoyance: MetadataTags = Field(default=None)
-    fanboy_notification: MetadataTags = Field(default=None)
-    fanboy_social_media: MetadataTags = Field(default=None)
-    anti_adblock: MetadataTags = Field(default=None)
-    easylist_germany: MetadataTags = Field(default=None)
-    easylist_adult: MetadataTags = Field(default=None)
-    paywall: MetadataTags = Field(default=None)
-    content_security_policy: MetadataTags = Field(default=None)
-    iframe_embeddable: MetadataTags = Field(default=None)
-    pop_up: MetadataTags = Field(default=None)
-    reg_wall: MetadataTags = Field(default=None)
-    log_in_out: MetadataTags = Field(default=None)
-    accessibility: MetadataTags = Field(default=None)
-    g_d_p_r: MetadataTags = Field(default=None)
-    javascript: MetadataTags = Field(default=None)
+    advertisement: MetadataTags = Field(
+        default=None,
+        description="Beta. Are there advertisments?"
+        "Probability = "
+        "Ratio of found elements which are identified as ads.",
+    )
+    easy_privacy: MetadataTags = Field(
+        default=None,
+        description="Beta. Are there trackers?"
+        "Probability = "
+        "1 If any element is found, else 0",
+    )
+    malicious_extensions: MetadataTags = Field(
+        default=None,
+        description="Beta. Are there malicious extensions, e.g. .exe, .docm?"
+        "Probability = "
+        "1 If any matching element is found, else 0.",
+    )
+    extract_from_files: MetadataTags = Field(
+        default=None,
+        description="Beta. Can all linked files be extracted, "
+        "e.g., is the text in a PDF readable?"
+        "Probability = "
+        "Ratio of found files which are extractable.",
+    )
+    internet_explorer_tracker: MetadataTags = Field(
+        default=None,
+        description="Beta. A tracker list specific for Internet Explorer. "
+        "Probability = "
+        "1 If any matching element is found, else 0.",
+    )
+    cookies_in_html: MetadataTags = Field(
+        default=None,
+        description="Beta. Are parts of the html matching with known cookie code?"
+        "Probability = "
+        "1 If any matching element is found, else 0.",
+    )
+    cookies: MetadataTags = Field(
+        default=None,
+        description="Alpha. Are cookies set and are they not whitelisted? "
+        "Currently, there is no whitelist, yet."
+        "Probability = "
+        "1 If any matching element is found, else 0.",
+    )
+    fanboy_annoyance: MetadataTags = Field(
+        default=None,
+        description="Beta. Code that indicates 'annoying' behaviour."
+        "Probability = "
+        "Ratio of matching elements.",
+    )
+    fanboy_notification: MetadataTags = Field(
+        default=None,
+        description="Beta. Code that indicates notifications."
+        "Probability = "
+        "Ratio of matching elements.",
+    )
+    fanboy_social_media: MetadataTags = Field(
+        default=None,
+        description="Beta. Code that indicates social media links and content."
+        "Probability = "
+        "1 If any matching element is found, else 0.",
+    )
+    anti_adblock: MetadataTags = Field(
+        default=None,
+        description="Beta. Code that indicates anti adblock walls."
+        "Probability = "
+        "1 If any matching element is found, else 0.",
+    )
+    easylist_germany: MetadataTags = Field(
+        default=None,
+        description="Beta. A blocking list specific for Germany."
+        "Probability = "
+        "1 If any matching element is found, else 0.",
+    )
+    easylist_adult: MetadataTags = Field(
+        default=None,
+        description="Beta. A blocking list specific adult/PG18 content."
+        "Probability = "
+        "1 If any matching element is found, else 0.",
+    )
+    paywall: MetadataTags = Field(
+        default=None,
+        description="Alpha. Keywords indicating paywalls."
+        "Probability = "
+        "1 If any matching element is found, else 0.",
+    )
+    content_security_policy: MetadataTags = Field(
+        default=None,
+        description="Release. Are security policies set?"
+        "Probability = "
+        "1 If any matching element is found, else 0.",
+    )
+    iframe_embeddable: MetadataTags = Field(
+        default=None,
+        description="Release. Are iFrames embeddable?"
+        "Probability = "
+        "1 If any matching element is found, else 0.",
+    )
+    pop_up: MetadataTags = Field(
+        default=None,
+        description="Alpha. Are pop ups present?"
+        "Probability = "
+        "1 If any matching element is found, else 0.",
+    )
+    reg_wall: MetadataTags = Field(
+        default=None,
+        description="Alpha. Are registration walls present?"
+        "Probability = "
+        "1 If any matching element is found, else 0.",
+    )
+    log_in_out: MetadataTags = Field(
+        default=None,
+        description="Alpha. Is content present that indicates log in or out forms?"
+        "Probability = "
+        "1 If any matching element is found, else 0.",
+    )
+    accessibility: MetadataTags = Field(
+        default=None,
+        description="Beta. Google Lighthouse based calculation of accessibility"
+        "Probability = "
+        "1 if the website is 100% accessible, "
+        "0 if the website is not accessible at all.",
+    )
+    g_d_p_r: MetadataTags = Field(
+        default=None,
+        description="Alpha. Are there indications that GDPR is obeyed?"
+        "Probability = "
+        "The more indicators are found the higher this value is.",
+    )
+    javascript: MetadataTags = Field(
+        default=None,
+        description="Alpha. Is there javascript among the files of this website?"
+        "Probability = "
+        "Ratio fo javascript files versus all files.",
+    )
 
 
 class Input(BaseModel):

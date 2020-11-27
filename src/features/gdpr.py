@@ -1,12 +1,15 @@
 import re
 
-from features.metadata_base import MetadataBase
+from features.metadata_base import MetadataBase, ProbabilityDeterminationMethod
 from features.website_manager import WebsiteData
 from lib.constants import VALUES
 
 
 class GDPR(MetadataBase):
     tag_list = ["impressum"]
+    probability_determination_method = (
+        ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
+    )
 
     def _https_in_url(self, website_data: WebsiteData) -> tuple[list, list]:
         http = "http"
