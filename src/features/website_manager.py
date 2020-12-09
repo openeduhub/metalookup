@@ -2,6 +2,7 @@ import json
 import os
 from dataclasses import dataclass, field
 
+import requests
 from bs4 import BeautifulSoup
 from tldextract.tldextract import TLDExtract
 
@@ -53,6 +54,12 @@ class Singleton:
 class WebsiteManager:
     website_data: WebsiteData
 
+    SPLASH_URL = "http://splash:8050"
+    SPLASH_HEADERS = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36"
+    }
+
     def __init__(self):
         super().__init__()
 
@@ -73,6 +80,11 @@ class WebsiteManager:
             self.website_data.raw_header = message[MESSAGE_HEADERS]
             self._preprocess_header()
 
+        if message[MESSAGE_HTML] == "":
+            response = self._get_html_and_har(self.website_data.url)
+            message[MESSAGE_HTML] = response[MESSAGE_HTML]
+            message[MESSAGE_HAR] = response[MESSAGE_HAR]
+
         if message[MESSAGE_HTML] != "" and self.website_data.html == "":
             self.website_data.html = message[MESSAGE_HTML].lower()
             self._create_html_soup()
@@ -88,6 +100,52 @@ class WebsiteManager:
         self.website_data.top_level_domain = extractor(
             url=self.website_data.url
         ).domain
+
+    def _preprocess_header(self) -> None:
+        header: str = self.website_data.raw_header.lower()
+        header = (
+            header.replace("b'", '"')
+            .replace("/'", '"')
+            .replace("'", '"')
+            .replace('""', '"')
+            .replace('/"', "/")
+        )
+
+        idx = header.find('b"')
+        if idx >= 0 and header[idx - 1] == "[":
+            bracket_idx = header[idx:].find("]")
+            header = (
+                header[:idx]
+                + '"'
+                + header[idx + 2 : idx + bracket_idx - 2].replace('"', " ")
+                + header[idx + bracket_idx - 1 :]
+            )
+
+        header = json.loads(header)
+        self.website_data.headers = header
+
+    def _get_html_and_har(self, url):
+        splash_url = (
+            f"{self.SPLASH_URL}/render.json?url={url}&html={1}&iframes={1}"
+            f"&har={1}&response_body={1}&wait={1}"
+        )
+
+        response = requests.get(
+            url=splash_url, headers=self.SPLASH_HEADERS, params={}
+        )
+
+        data = json.loads(response.content.decode("UTF-8"))
+        try:
+            html = data["html"]
+            har = str(json.dumps(data["har"]))
+        except KeyError:
+            html = ""
+            har = ""
+
+        return {
+            MESSAGE_HTML: html,
+            MESSAGE_HAR: har,
+        }
 
     def _create_html_soup(self):
         self.website_data.soup = BeautifulSoup(
@@ -113,29 +171,6 @@ class WebsiteManager:
         self.website_data.extensions = [
             x for x in list(set(file_extensions)) if x != ""
         ]
-
-    def _preprocess_header(self) -> None:
-        header: str = self.website_data.raw_header.lower()
-        header = (
-            header.replace("b'", '"')
-            .replace("/'", '"')
-            .replace("'", '"')
-            .replace('""', '"')
-            .replace('/"', "/")
-        )
-
-        idx = header.find('b"')
-        if idx >= 0 and header[idx - 1] == "[":
-            bracket_idx = header[idx:].find("]")
-            header = (
-                header[:idx]
-                + '"'
-                + header[idx + 2 : idx + bracket_idx - 2].replace('"', " ")
-                + header[idx + bracket_idx - 1 :]
-            )
-
-        header = json.loads(header)
-        self.website_data.headers = header
 
     def _load_har(self, har: str) -> None:
         self.website_data.har = json.loads(har)

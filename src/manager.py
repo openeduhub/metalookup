@@ -46,13 +46,7 @@ class Manager:
         for uuid, message in request.items():
             self._logger.debug(f"message: {message}")
 
-            if message[MESSAGE_HTML] == "":
-                response = {
-                    MESSAGE_META: {},
-                    MESSAGE_EXCEPTION: "No html data given and no stand-alone scraper built in yet.",
-                }
-            else:
-                response = self.metadata_manager.start(message=message)
+            response = self.metadata_manager.start(message=message)
 
             self.manager_to_api_queue.put({uuid: response})
 
