@@ -1,3 +1,5 @@
+import asyncio
+
 from config_manager import ConfigManager
 from features.accessibility import Accessibility
 from features.cookies import Cookies
@@ -76,11 +78,13 @@ class MetadataManager:
         self._create_extractors()
         self._setup_extractors()
 
-    def _extract_meta_data(
+    async def _extract_meta_data(
         self, allow_list: dict, config_manager: ConfigManager
     ) -> dict:
         data = {}
+        tasks = []
         for metadata_extractor in self.metadata_extractors:
+            metadata_extractor: MetadataBase
             if allow_list[metadata_extractor.key]:
                 if (
                     config_manager.is_host_predefined()
@@ -93,10 +97,15 @@ class MetadataManager:
                             metadata_extractor.key
                         )
                     )
+                    data.update(extracted_metadata)
+                elif metadata_extractor.call_async:
+                    tasks.append(metadata_extractor.astart())
                 else:
                     extracted_metadata = metadata_extractor.start()
+                    data.update(extracted_metadata)
 
-                data.update(extracted_metadata)
+        extracted_metadata = await asyncio.gather(*tasks)
+        [data.update(metadata) for metadata in extracted_metadata]
         return data
 
     def start(self, message: dict) -> dict:
@@ -111,8 +120,10 @@ class MetadataManager:
 
         starting_extraction = get_utc_now()
         try:
-            extracted_meta_data = self._extract_meta_data(
-                message[MESSAGE_ALLOW_LIST], config_manager
+            extracted_meta_data = asyncio.run(
+                self._extract_meta_data(
+                    message[MESSAGE_ALLOW_LIST], config_manager
+                )
             )
         except Exception as e:
             self._logger.exception(

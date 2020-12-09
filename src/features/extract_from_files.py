@@ -1,10 +1,11 @@
+import asyncio
 import base64
 import os
 import zipfile
 from urllib.parse import urlparse
 
 import PyPDF2
-import requests
+from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 from pdfminer.high_level import extract_text
 
@@ -15,14 +16,17 @@ from lib.settings import RETURN_IMAGES_IN_METADATA
 
 
 class ExtractFromFiles(MetadataBase):
-    def _download_file(self, file_url, filename):
-        result = requests.get(file_url)
-        if result.status_code != 200:
-            self._logger.warning(
-                f"Downloading tag list from '{file_url}' yielded status code '{result.status_code}'."
-            )
+    call_async = True
 
-        open(filename, "wb").write(result.content)
+    async def _download_file(
+        self, file_url, filename, session: ClientSession
+    ) -> None:
+        result = await session.request(method="GET", url=file_url)
+        if result.status != 200:
+            self._logger.warning(
+                f"Downloading tag list from '{file_url}' yielded status code '{result.status}'."
+            )
+        open(filename, "wb").write(await result.read())
 
     @staticmethod
     def _extract_docx(filename) -> dict:
@@ -116,24 +120,38 @@ class ExtractFromFiles(MetadataBase):
         content = {"extracted_content": extracted_content, "images": images}
         return content
 
-    def _work_files(self, files):
+    async def _process_file(self, file, session: ClientSession) -> str:
+        filename = os.path.basename(urlparse(file).path)
+        extension = filename.split(".")[-1]
+        await self._download_file(file, filename, session)
+
+        content = {"extracted_content": [], "images": {}}
+        if extension == "docx":
+            content = self._extract_docx(filename)
+        elif extension == "pdf":
+            content = self._extract_pdfs(filename)
+
+        os.remove(filename)
+
+        if len(content["extracted_content"]) > 0:
+            return filename
+        return ""
+
+    async def _work_files(self, files):
         values = {VALUES: []}
 
-        for file in files:
-            filename = os.path.basename(urlparse(file).path)
-            extension = filename.split(".")[-1]
-            self._download_file(file, filename)
+        tasks = []
 
-            content = {"extracted_content": [], "images": {}}
-            if extension == "docx":
-                content = self._extract_docx(filename)
-            elif extension == "pdf":
-                content = self._extract_pdfs(filename)
+        async with ClientSession() as session:
+            for file in files:
+                tasks.append(self._process_file(file, session))
+            extractable_files = await asyncio.gather(*tasks)
 
-            if len(content["extracted_content"]) > 0:
-                values[VALUES].append(filename)
-
-            os.remove(filename)
+        [
+            values[VALUES].append(file)
+            for file in extractable_files
+            if file != ""
+        ]
 
         return values
 
@@ -151,10 +169,9 @@ class ExtractFromFiles(MetadataBase):
 
         return extractable_files
 
-    def _start(self, website_data: WebsiteData) -> dict:
+    async def _astart(self, website_data: WebsiteData) -> dict:
         extractable_files = self._get_extractable_files(website_data)
-
-        values = self._work_files(files=extractable_files)
+        values = await self._work_files(files=extractable_files)
         return {**values}
 
     def _calculate_probability(self, website_data: WebsiteData) -> float:

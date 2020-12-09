@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from json.decoder import JSONDecodeError
 
 import requests
@@ -58,6 +59,8 @@ def rester():
         "log_in_out": True,
         "accessibility": True,
         "cookies": True,
+        "g_d_p_r": True,
+        "javascript": True,
     }
 
     extractor_url = "http://0.0.0.0:5057/extract_meta"
@@ -71,6 +74,7 @@ def rester():
 
     logs, file_path = load_file_list()
     for counter, raw in enumerate(load_scraped_data(logs, file_path)):
+        before = time.perf_counter()
         print(f"Working file {counter + 1} of {len(logs)}".center(80, "-"))
         print(raw["url"])
 
@@ -106,6 +110,9 @@ def rester():
             json.dump(result, fp)
 
         print(output)
+        after = time.perf_counter()
+        print(f"Total time needed in series: {after - before}")
+        break
 
 
 if __name__ == "__main__":

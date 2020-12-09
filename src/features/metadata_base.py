@@ -1,3 +1,4 @@
+import asyncio
 import os
 import re
 from collections import OrderedDict
@@ -33,6 +34,7 @@ class MetadataBase:
     probability_determination_method: ProbabilityDeterminationMethod = (
         ProbabilityDeterminationMethod.SINGLE_OCCURRENCE
     )
+    call_async: bool = False
 
     def __init__(self, logger) -> None:
         self._logger = logger
@@ -85,15 +87,14 @@ class MetadataBase:
             decision = False
         return decision
 
-    def start(self) -> dict:
-        self._logger.info(f"Starting {self.__class__.__name__}")
-        before = get_utc_now()
-
+    @staticmethod
+    def _prepare_website_data() -> WebsiteData:
         website_manager = WebsiteManager.get_instance()
-        website_data = website_manager.website_data
+        return website_manager.website_data
 
-        values = self._start(website_data=website_data)
-
+    def _processing_values(
+        self, values: dict, website_data: WebsiteData, before: float
+    ) -> dict:
         website_data.values = values[VALUES]
 
         probability = self._calculate_probability(website_data=website_data)
@@ -114,6 +115,32 @@ class MetadataBase:
                     "tag_list_expires": self.tag_list_expires,
                 }
             )
+        return data
+
+    async def astart(self) -> dict:
+        self._logger.info(f"Starting {self.__class__.__name__}")
+        before = get_utc_now()
+
+        website_data = self._prepare_website_data()
+
+        values = await self._astart(website_data=website_data)
+
+        data = self._processing_values(
+            values=values, website_data=website_data, before=before
+        )
+        return data
+
+    def start(self) -> dict:
+        self._logger.info(f"Starting {self.__class__.__name__}")
+        before = get_utc_now()
+
+        website_data = self._prepare_website_data()
+
+        values = self._start(website_data=website_data)
+
+        data = self._processing_values(
+            values=values, website_data=website_data, before=before
+        )
         return data
 
     def _work_header(self, header):
@@ -149,6 +176,9 @@ class MetadataBase:
         else:
             values = []
         return values
+
+    async def _astart(self, website_data: WebsiteData) -> dict:
+        return {VALUES: []}
 
     def _start(self, website_data: WebsiteData) -> dict:
         if self.evaluate_header:
