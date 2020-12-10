@@ -30,7 +30,7 @@ class Accessibility(MetadataBase):
             "best-practices",
         ]
         params = {
-            "url": f"{website_data.url}",
+            "url": website_data.url,
             "category": _categories,
             "strategy": strategy,
         }
