@@ -1,8 +1,8 @@
 import asyncio
 import json
+import subprocess
+import time
 from json import JSONDecodeError
-
-from aiohttp import ClientSession
 
 from features.metadata_base import MetadataBase, ProbabilityDeterminationMethod
 from features.website_manager import WebsiteData
@@ -19,7 +19,6 @@ class Accessibility(MetadataBase):
     async def _execute_api_call(
         self,
         website_data: WebsiteData,
-        session: ClientSession,
         strategy: str = "desktop",
     ):
         _categories = [
@@ -29,22 +28,31 @@ class Accessibility(MetadataBase):
             "pwa",
             "best-practices",
         ]
-        params = {
-            "url": f"{website_data.url}",
-            "category": _categories,
-            "strategy": strategy,
-        }
-        pagespeed_url = (
-            "https://www.googleapis.com/pagespeedonline/v5/runPagespeed"
+
+        cmd = [
+            "docker",
+            "run",
+            "femtopixel/google-lighthouse",
+            f"{website_data.url}",
+            f"--emulated-form-factor={strategy}",
+            "--output=json",
+            "--quiet",
+        ]
+
+        p = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
         )
 
-        process = await session.request(
-            method="GET", url=pagespeed_url, params=params
-        )
-        html = await process.text()
+        output = []
+
+        for line in iter(p.stdout.readline, b""):
+            output.append(line.decode())
+        output = "".join(output)
 
         try:
-            result = json.loads(html)
+            result = json.loads(output)
         except JSONDecodeError:
             self._logger.exception(
                 f"JSONDecodeError error when accessing PageSpeedOnline result for {website_data.url}."
@@ -52,16 +60,14 @@ class Accessibility(MetadataBase):
             result = {}
 
         try:
-            if "error" in result.keys():
+            if "runtimeError" in result.keys():
                 self._logger.error(
-                    f"{result['error']['code']}: {result['error']['message']}"
+                    f"{result['runtimeError']['code']}: {result['runtimeError']['message']}"
                 )
                 score = [-1]
             else:
                 score = [
-                    result["lighthouseResult"]["categories"][score_key][
-                        "score"
-                    ]
+                    result["categories"][score_key]["score"]
                     for score_key in _categories
                 ]
         except KeyError:
@@ -74,18 +80,15 @@ class Accessibility(MetadataBase):
         return score
 
     async def _astart(self, website_data: WebsiteData) -> dict:
-        async with ClientSession() as session:
-            score = await asyncio.gather(
-                self._execute_api_call(
-                    website_data=website_data,
-                    session=session,
-                    strategy="desktop",
-                ),
-                self._execute_api_call(
-                    website_data=website_data,
-                    session=session,
-                    strategy="mobile",
-                ),
-            )
+        score = await asyncio.gather(
+            self._execute_api_call(
+                website_data=website_data,
+                strategy="desktop",
+            ),
+            self._execute_api_call(
+                website_data=website_data,
+                strategy="mobile",
+            ),
+        )
         score = [element for sublist in score for element in sublist]
         return {VALUES: score}
