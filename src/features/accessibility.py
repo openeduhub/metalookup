@@ -1,12 +1,14 @@
 import asyncio
 import json
+import subprocess
+import time
 from json import JSONDecodeError
 
 from aiohttp import ClientSession
 
 from features.metadata_base import MetadataBase, ProbabilityDeterminationMethod
 from features.website_manager import WebsiteData
-from lib.constants import VALUES
+from lib.constants import ACCESSIBILITY, DESKTOP, MESSAGE_URL, SCORE, VALUES
 
 
 class Accessibility(MetadataBase):
@@ -20,55 +22,23 @@ class Accessibility(MetadataBase):
         self,
         website_data: WebsiteData,
         session: ClientSession,
-        strategy: str = "desktop",
-    ):
-        _categories = [
-            "accessibility",
-            "performance",
-            "seo",
-            "pwa",
-            "best-practices",
-        ]
+        strategy: str = DESKTOP,
+    ) -> list:
         params = {
-            "url": website_data.url,
-            "category": _categories,
+            MESSAGE_URL: website_data.url,
+            "category": ACCESSIBILITY,
             "strategy": strategy,
         }
-        pagespeed_url = (
-            "https://www.googleapis.com/pagespeedonline/v5/runPagespeed"
-        )
+        container_url = f"http://{ACCESSIBILITY}:5058/{ACCESSIBILITY}"
 
-        process = await session.request(
-            method="GET", url=pagespeed_url, params=params
-        )
-        html = await process.text()
+        process = await session.get(url=container_url, timeout=60, json=params)
+
+        score_text = await process.text()
 
         try:
-            result = json.loads(html)
-        except JSONDecodeError:
-            self._logger.exception(
-                f"JSONDecodeError error when accessing PageSpeedOnline result for {website_data.url}."
-            )
-            result = {}
-
-        try:
-            if "error" in result.keys():
-                self._logger.error(
-                    f"{result['error']['code']}: {result['error']['message']}"
-                )
-                score = [-1]
-            else:
-                score = [
-                    result["lighthouseResult"]["categories"][score_key][
-                        "score"
-                    ]
-                    for score_key in _categories
-                ]
-        except KeyError:
-            self._logger.exception(
-                f"Key error when accessing PageSpeedOnline result for {website_data.url}. "
-                f"Returns {result}"
-            )
+            score = [float(json.loads(score_text)[SCORE])]
+        except (KeyError, ValueError, TypeError):
+            self._logger.exception(f"Score output was: '{score_text}'")
             score = [-1]
 
         return score
@@ -79,7 +49,7 @@ class Accessibility(MetadataBase):
                 self._execute_api_call(
                     website_data=website_data,
                     session=session,
-                    strategy="desktop",
+                    strategy=DESKTOP,
                 ),
                 self._execute_api_call(
                     website_data=website_data,

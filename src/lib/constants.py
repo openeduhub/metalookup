@@ -13,3 +13,8 @@ LOGFILE_MANAGER = "manager"
 VALUES = "values"
 PROBABILITY = "probability"
 DECISION = "decision"
+
+
+ACCESSIBILITY = "accessibility"
+DESKTOP = "desktop"
+SCORE = "score"

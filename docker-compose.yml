@@ -7,12 +7,15 @@ services:
       - "5057:5057"
     links:
       - splash
+      - accessibility
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:5057/_ping" ]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 40s
+    networks:
+      - backend
   splash:
     image: scrapinghub/splash:master
     command: --maxrss 4000
@@ -25,4 +28,20 @@ services:
       timeout: 5s
       retries: 3
       start_period: 40s
-
+    networks:
+      - backend
+  accessibility:
+    image: oeh-search-meta_lighting:latest
+    restart: always
+    ports:
+      - "5058:5058"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5080/_ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    networks:
+      - backend
+networks:
+  backend:
