@@ -36,5 +36,6 @@ ENV CHROME_FLAGS="--headless --disable-gpu --no-sandbox"
 WORKDIR /home/chrome
 
 COPY src/lighthouse/api.py .
+COPY src/lib/constants.py lib/
 
 CMD python3 api.py
