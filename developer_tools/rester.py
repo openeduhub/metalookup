@@ -32,7 +32,11 @@ def load_file_list():
 def load_scraped_data(logs: list, data_path: str):
     for log in logs:
         with open(data_path + "/" + log, "r") as file:
-            raw = json.load(file)
+            try:
+                raw = json.load(file)
+            except JSONDecodeError as e:
+                print(f"File '{file}' cannot be evaluated: {e.args}")
+                continue
         yield raw
 
 
@@ -112,7 +116,6 @@ def rester():
         print(output)
         after = time.perf_counter()
         print(f"Total time needed in series: {after - before}")
-        break
 
 
 if __name__ == "__main__":
