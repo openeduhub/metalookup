@@ -38,8 +38,14 @@ class MetadataManager:
 
     def __init__(self):
         self._logger = create_logger()
+        asyncio.run(self._create_extractors())
 
-    def _create_extractors(self) -> None:
+    async def _async_create_and_setup(self, extractor_class) -> MetadataBase:
+        extractor: MetadataBase = extractor_class(self._logger)
+        await extractor.setup()
+        return extractor
+
+    async def _create_extractors(self) -> None:
 
         extractors = [
             Advertisement,
@@ -66,17 +72,11 @@ class MetadataManager:
             Javascript,
         ]
 
-        for extractor in extractors:
-            self.metadata_extractors.append(extractor(self._logger))
+        tasks = []
+        for metadata_extractor in extractors:
+            tasks.append(self._async_create_and_setup(metadata_extractor))
 
-    def _setup_extractors(self) -> None:
-        for metadata_extractor in self.metadata_extractors:
-            metadata_extractor: MetadataBase
-            metadata_extractor.setup()
-
-    def setup(self) -> None:
-        self._create_extractors()
-        self._setup_extractors()
+        self.metadata_extractors = await asyncio.gather(*tasks)
 
     async def _extract_meta_data(
         self, allow_list: dict, config_manager: ConfigManager

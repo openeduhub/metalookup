@@ -1,3 +1,4 @@
+import asyncio
 from unittest import mock
 
 import adblockparser
@@ -109,21 +110,23 @@ def test_under_start(metadatabase: MetadataBase, mocker):
 
 
 def test_setup(metadatabase: MetadataBase, mocker):
-    metadatabase._download_tag_list = mocker.MagicMock()
-    metadatabase._download_multiple_tag_lists = mocker.MagicMock()
+    metadatabase._download_tag_list = mocker.AsyncMock(return_value=[])
+    metadatabase._download_multiple_tag_lists = mocker.AsyncMock(
+        return_value=[]
+    )
     extract_date_from_list_spy = mocker.spy(
         metadatabase, "_extract_date_from_list"
     )
     prepare_tag_spy = mocker.spy(metadatabase, "_prepare_tag_list")
 
-    metadatabase.setup()
+    asyncio.run(metadatabase.setup())
     assert metadatabase._download_tag_list.call_count == 0
     assert metadatabase._download_multiple_tag_lists.call_count == 0
     assert extract_date_from_list_spy.call_count == 0
     assert prepare_tag_spy.call_count == 0
 
     metadatabase.url = "hello"
-    metadatabase.setup()
+    asyncio.run(metadatabase.setup())
     assert metadatabase._download_tag_list.call_count == 1
     assert metadatabase._download_multiple_tag_lists.call_count == 0
     assert extract_date_from_list_spy.call_count == 0
@@ -131,15 +134,16 @@ def test_setup(metadatabase: MetadataBase, mocker):
 
     metadatabase.url = ""
     metadatabase.urls = ["Hello1", "Hello2"]
-    metadatabase.setup()
+    metadatabase._download_tag_list.return_value = ["empty_list"]
+    asyncio.run(metadatabase.setup())
     assert metadatabase._download_tag_list.call_count == 1
     assert metadatabase._download_multiple_tag_lists.call_count == 1
     assert extract_date_from_list_spy.call_count == 0
     assert prepare_tag_spy.call_count == 0
 
-    metadatabase.tag_list = ["!Hello"]
+    metadatabase.tag_list = ["empty_list"]
     metadatabase.urls = []
-    metadatabase.setup()
+    asyncio.run(metadatabase.setup())
     assert metadatabase._download_tag_list.call_count == 1
     assert metadatabase._download_multiple_tag_lists.call_count == 1
     assert extract_date_from_list_spy.call_count == 1

@@ -1,11 +1,14 @@
+import asyncio
 import os
 import re
 from collections import OrderedDict
 from enum import Enum
+from itertools import chain
 from urllib.parse import urlparse
 
 import adblockparser
 import requests
+from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 
 from features.website_manager import WebsiteData, WebsiteManager
@@ -192,33 +195,45 @@ class MetadataBase:
             values = self._work_html_content(website_data)
         return {VALUES: values}
 
-    def _download_multiple_tag_lists(self):
-        complete_tag_list = []
+    async def _download_multiple_tag_lists(
+        self, session: ClientSession
+    ) -> list[str]:
+        tasks = []
         for url in self.urls:
-            self.url = url
-            self._download_tag_list()
-            complete_tag_list.append(self.tag_list)
+            tasks.append(self._download_tag_list(url=url, session=session))
 
-    def _download_tag_list(self) -> None:
+        tag_lists = await asyncio.gather(*tasks)
+        complete_list = []
+        for tag_list in tag_lists:
+            complete_list += tag_list
+
+        return list(set(complete_list))
+
+    async def _download_tag_list(
+        self, url: str, session: ClientSession
+    ) -> list[str]:
         taglist_path = "tag_lists/"
         if not os.path.isdir(taglist_path):
             os.mkdir(taglist_path)
 
-        filename = os.path.basename(urlparse(self.url).path)
+        filename = os.path.basename(urlparse(url).path)
         if USE_LOCAL_IF_POSSIBLE and os.path.isfile(taglist_path + filename):
             with open(taglist_path + filename, "r") as file:
-                self.tag_list = file.read().splitlines()
+                tag_list = file.read().splitlines()
         else:
-            result = requests.get(self.url)
-            if result.status_code == 200:
-                self.tag_list = result.text.splitlines()
+            result = await session.get(url=url)
+            if result.status == 200:
+                text = await result.text()
+                tag_list = text.splitlines()
                 if USE_LOCAL_IF_POSSIBLE:
                     with open(taglist_path + filename, "w+") as file:
-                        file.write(result.text)
+                        file.write(text)
             else:
                 self._logger.warning(
-                    f"Downloading tag list from '{self.url}' yielded status code '{result.status_code}'."
+                    f"Downloading tag list from '{url}' yielded status code '{result.status}'."
                 )
+                tag_list = []
+        return tag_list
 
     def _extract_date_from_list(self):
         expires_expression = re.compile(
@@ -254,12 +269,17 @@ class MetadataBase:
                 if not x.startswith(self.comment_symbol)
             ]
 
-    def setup(self) -> None:
+    async def setup(self) -> None:
         """Child function."""
-        if self.urls:
-            self._download_multiple_tag_lists()
-        elif self.url != "":
-            self._download_tag_list()
+        async with ClientSession() as session:
+            if self.urls:
+                self.tag_list = await self._download_multiple_tag_lists(
+                    session=session
+                )
+            elif self.url != "":
+                self.tag_list = await self._download_tag_list(
+                    url=self.url, session=session
+                )
 
         if self.tag_list:
             self._extract_date_from_list()

@@ -21,7 +21,7 @@ class ExtractFromFiles(MetadataBase):
     async def _download_file(
         self, file_url, filename, session: ClientSession
     ) -> None:
-        result = await session.request(method="GET", url=file_url)
+        result = await session.get(url=file_url)
         if result.status != 200:
             self._logger.warning(
                 f"Downloading tag list from '{file_url}' yielded status code '{result.status}'."
