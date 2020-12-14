@@ -1,4 +1,3 @@
-import asyncio
 import os
 import re
 from collections import OrderedDict
@@ -19,6 +18,12 @@ class ProbabilityDeterminationMethod(Enum):
     NUMBER_OF_ELEMENTS = 1
     SINGLE_OCCURRENCE = 2
     FIRST_VALUE = 3
+
+
+class MetadataBaseException(Exception):
+    """Base class for exceptions coming from a metadata class."""
+
+    pass
 
 
 class MetadataBase:

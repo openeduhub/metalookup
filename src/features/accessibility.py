@@ -1,12 +1,13 @@
 import asyncio
 import json
-import subprocess
-import time
-from json import JSONDecodeError
 
-from aiohttp import ClientSession
+from aiohttp import ClientConnectorError, ClientSession
 
-from features.metadata_base import MetadataBase, ProbabilityDeterminationMethod
+from features.metadata_base import (
+    MetadataBase,
+    MetadataBaseException,
+    ProbabilityDeterminationMethod,
+)
 from features.website_manager import WebsiteData
 from lib.constants import ACCESSIBILITY, DESKTOP, MESSAGE_URL, SCORE, VALUES
 
@@ -31,7 +32,14 @@ class Accessibility(MetadataBase):
         }
         container_url = f"http://{ACCESSIBILITY}:5058/{ACCESSIBILITY}"
 
-        process = await session.get(url=container_url, timeout=60, json=params)
+        try:
+            process = await session.get(
+                url=container_url, timeout=60, json=params
+            )
+        except (ClientConnectorError, ConnectionRefusedError, OSError):
+            raise MetadataBaseException(
+                "No connection to accessibility container."
+            )
 
         score_text = await process.text()
 

@@ -5,7 +5,7 @@ from json.decoder import JSONDecodeError
 
 import requests
 
-from developer_tools.evaluator import RESULT_FILE_PATH
+from evaluator import RESULT_FILE_PATH
 from lib.constants import (
     MESSAGE_ALLOW_LIST,
     MESSAGE_HAR,
@@ -18,7 +18,7 @@ from lib.timing import get_utc_now
 
 def load_file_list():
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    path = "/".join(dir_path.split("/")[:-1])
+    path = "/".join(dir_path.split("/")[:-3])
     data_path = path + "/scraped"
 
     files = [
@@ -32,7 +32,11 @@ def load_file_list():
 def load_scraped_data(logs: list, data_path: str):
     for log in logs:
         with open(data_path + "/" + log, "r") as file:
-            raw = json.load(file)
+            try:
+                raw = json.load(file)
+            except JSONDecodeError as e:
+                print(f"File '{file}' cannot be evaluated: {e.args}")
+                continue
         yield raw
 
 
@@ -112,7 +116,6 @@ def rester():
         print(output)
         after = time.perf_counter()
         print(f"Total time needed in series: {after - before}")
-        break
 
 
 if __name__ == "__main__":

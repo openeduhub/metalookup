@@ -37,7 +37,11 @@ class ConfigManager:
         return self.top_level_domain in self.hosts.keys()
 
     def is_metadata_predefined(self, key: str):
-        return key in self.hosts[self.top_level_domain].keys()
+        return (
+            key in self.hosts[self.top_level_domain].keys()
+            if self.top_level_domain != ""
+            else False
+        )
 
     def get_predefined_metadata(self, key: str) -> dict:
         return {key: self.hosts[self.top_level_domain][key]}

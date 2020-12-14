@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 
 import requests
 from bs4 import BeautifulSoup
+from tldextract.suffix_list import SuffixListNotFound
 from tldextract.tldextract import TLDExtract
 
 from lib.constants import (
@@ -96,10 +97,14 @@ class WebsiteManager:
             self._load_har(message[MESSAGE_HAR])
 
     def _extract_host_name(self):
-        extractor = TLDExtract(cache_dir=False)
-        self.website_data.top_level_domain = extractor(
-            url=self.website_data.url
-        ).domain
+        try:
+            extractor = TLDExtract(cache_dir=False)
+            self.website_data.top_level_domain = extractor(
+                url=self.website_data.url
+            ).domain
+        except (ConnectionError, SuffixListNotFound, ValueError) as e:
+            print(f"Cannot extract host name because '{e.args}'")
+            self.website_data.top_level_domain = ""
 
     def _preprocess_header(self) -> None:
         header: str = self.website_data.raw_header.lower()

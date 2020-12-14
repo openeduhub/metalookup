@@ -1,3 +1,4 @@
+import cProfile
 import multiprocessing
 import signal
 import time
@@ -10,7 +11,7 @@ from app.communication import ProcessToDaemonCommunication
 from features.metadata_manager import MetadataManager
 from lib.constants import MESSAGE_EXCEPTION, MESSAGE_HTML, MESSAGE_META
 from lib.logger import create_logger
-from lib.settings import API_PORT
+from lib.settings import API_PORT, WANT_PROFILING
 from lib.timing import get_utc_now
 
 
@@ -50,6 +51,10 @@ class Manager:
 
             self.manager_to_api_queue.put({uuid: response})
 
+        if WANT_PROFILING:
+            profiler.disable()
+            self._logger.debug(f"stats: {profiler.print_stats()}")
+
     def get_api_request(self):
         try:
             request = self.api_to_manager_queue.get(block=False, timeout=0.1)
@@ -81,4 +86,8 @@ def api_server(queue, return_queue):
 
 
 if __name__ == "__main__":
+    if WANT_PROFILING:
+        profiler = cProfile.Profile()
+        profiler.enable()
+
     manager = Manager()

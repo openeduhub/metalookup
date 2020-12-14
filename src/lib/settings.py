@@ -8,6 +8,9 @@ LOG_PATH = "logs/"
 # Online lists
 USE_LOCAL_IF_POSSIBLE = True
 
-# MISC
+# Miscellaneous
 RETURN_IMAGES_IN_METADATA = False
 API_RETRIES = 180
+
+# Performance
+WANT_PROFILING = False
