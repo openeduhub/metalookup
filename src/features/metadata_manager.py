@@ -1,4 +1,6 @@
 import asyncio
+import multiprocessing
+from itertools import repeat
 
 from features.accessibility import Accessibility
 from features.config_manager import ConfigManager
@@ -32,20 +34,21 @@ from lib.logger import create_logger
 from lib.timing import get_utc_now
 
 
+def _parallel_setup(extractor_class, logger) -> MetadataBase:
+    extractor: MetadataBase = extractor_class(logger)
+    extractor.setup()
+    return extractor
+
+
 @Singleton
 class MetadataManager:
     metadata_extractors: list = []
 
     def __init__(self):
         self._logger = create_logger()
-        asyncio.run(self._create_extractors())
+        self._create_extractors()
 
-    async def _async_create_and_setup(self, extractor_class) -> MetadataBase:
-        extractor: MetadataBase = extractor_class(self._logger)
-        await extractor.setup()
-        return extractor
-
-    async def _create_extractors(self) -> None:
+    def _create_extractors(self) -> None:
 
         extractors = [
             Advertisement,
@@ -72,11 +75,10 @@ class MetadataManager:
             Javascript,
         ]
 
-        tasks = []
-        for metadata_extractor in extractors:
-            tasks.append(self._async_create_and_setup(metadata_extractor))
-
-        self.metadata_extractors = await asyncio.gather(*tasks)
+        pool = multiprocessing.Pool(processes=6)
+        self.metadata_extractors = pool.starmap(
+            _parallel_setup, zip(extractors, repeat(self._logger))
+        )
 
     async def _extract_meta_data(
         self, allow_list: dict, config_manager: ConfigManager
@@ -101,8 +103,7 @@ class MetadataManager:
                 elif metadata_extractor.call_async:
                     tasks.append(metadata_extractor.astart())
                 else:
-                    extracted_metadata = metadata_extractor.start()
-                    data.update(extracted_metadata)
+                    data.update(metadata_extractor.start())
 
         extracted_metadata = await asyncio.gather(*tasks)
         [data.update(metadata) for metadata in extracted_metadata]

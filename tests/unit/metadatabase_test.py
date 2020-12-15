@@ -119,14 +119,14 @@ def test_setup(metadatabase: MetadataBase, mocker):
     )
     prepare_tag_spy = mocker.spy(metadatabase, "_prepare_tag_list")
 
-    asyncio.run(metadatabase.setup())
+    metadatabase.setup()
     assert metadatabase._download_tag_list.call_count == 0
     assert metadatabase._download_multiple_tag_lists.call_count == 0
     assert extract_date_from_list_spy.call_count == 0
     assert prepare_tag_spy.call_count == 0
 
     metadatabase.url = "hello"
-    asyncio.run(metadatabase.setup())
+    metadatabase.setup()
     assert metadatabase._download_tag_list.call_count == 1
     assert metadatabase._download_multiple_tag_lists.call_count == 0
     assert extract_date_from_list_spy.call_count == 0
@@ -135,7 +135,7 @@ def test_setup(metadatabase: MetadataBase, mocker):
     metadatabase.url = ""
     metadatabase.urls = ["Hello1", "Hello2"]
     metadatabase._download_tag_list.return_value = ["empty_list"]
-    asyncio.run(metadatabase.setup())
+    metadatabase.setup()
     assert metadatabase._download_tag_list.call_count == 1
     assert metadatabase._download_multiple_tag_lists.call_count == 1
     assert extract_date_from_list_spy.call_count == 0
@@ -143,7 +143,7 @@ def test_setup(metadatabase: MetadataBase, mocker):
 
     metadatabase.tag_list = ["empty_list"]
     metadatabase.urls = []
-    asyncio.run(metadatabase.setup())
+    metadatabase.setup()
     assert metadatabase._download_tag_list.call_count == 1
     assert metadatabase._download_multiple_tag_lists.call_count == 1
     assert extract_date_from_list_spy.call_count == 1

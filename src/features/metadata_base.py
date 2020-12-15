@@ -1,18 +1,18 @@
 import asyncio
+import multiprocessing
 import os
 import re
 from collections import OrderedDict
 from enum import Enum
-from itertools import chain
+from itertools import repeat
 from urllib.parse import urlparse
 
 import adblockparser
-import requests
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 
 from features.website_manager import WebsiteData, WebsiteManager
-from lib.constants import DECISION, PROBABILITY, VALUES
+from lib.constants import DECISION, PROBABILITY, TIME_REQUIRED, VALUES
 from lib.settings import USE_LOCAL_IF_POSSIBLE
 from lib.timing import get_utc_now
 
@@ -23,10 +23,19 @@ class ProbabilityDeterminationMethod(Enum):
     FIRST_VALUE = 3
 
 
+class ExtractionMethod(Enum):
+    MATCH_DIRECTLY = 1
+    USE_ADBLOCK_PARSER = 2
+
+
 class MetadataBaseException(Exception):
     """Base class for exceptions coming from a metadata class."""
 
     pass
+
+
+def _parallel_rule_matching(rules, html, options):
+    return [rule for rule in rules if rule.match_url(html, options)]
 
 
 class MetadataBase:
@@ -42,7 +51,33 @@ class MetadataBase:
     probability_determination_method: ProbabilityDeterminationMethod = (
         ProbabilityDeterminationMethod.SINGLE_OCCURRENCE
     )
+    extraction_method: ExtractionMethod = ExtractionMethod.MATCH_DIRECTLY
     call_async: bool = False
+    match_rules = None
+
+    adblockparser_options = {
+        "script": True,
+        "image": True,
+        "stylesheet": True,
+        "object": True,
+        "xmlhttprequest": True,
+        "object-subrequest": True,
+        "subdocument": True,
+        "document": True,
+        "elemhide": True,
+        "other": True,
+        "background": True,
+        "xbl": True,
+        "ping": True,
+        "dtd": True,
+        "media": True,
+        "third-party": True,
+        "match-case": True,
+        "collapse": True,
+        "donottrack": True,
+        "websocket": True,
+        "domain": "",
+    }
 
     def __init__(self, logger) -> None:
         self._logger = logger
@@ -81,6 +116,7 @@ class MetadataBase:
         elif (
             self.probability_determination_method
             == ProbabilityDeterminationMethod.FIRST_VALUE
+            and len(website_data.values) >= 1
         ):
             probability = website_data.values[0]
 
@@ -110,7 +146,7 @@ class MetadataBase:
 
         data = {
             self.key: {
-                "time_required": get_utc_now() - before,
+                TIME_REQUIRED: get_utc_now() - before,
                 **values,
                 PROBABILITY: probability,
                 DECISION: decision,
@@ -166,27 +202,58 @@ class MetadataBase:
     def _extract_raw_links(soup: BeautifulSoup) -> list:
         return list({a["href"] for a in soup.find_all(href=True)})
 
-    def _work_html_content(self, website_data: WebsiteData) -> list:
-        if self.tag_list:
-            if self.url.find("easylist") >= 0:
-                rules = adblockparser.AdblockRules(self.tag_list)
-                values = []
-                for url in website_data.raw_links:
-                    is_blocked = rules.should_block(url)
-                    if is_blocked:
-                        values.append(url)
-            else:
-                values = [
-                    ele
-                    for ele in self.tag_list
-                    if website_data.html.find(ele) >= 0
-                ]
+    def _parse_adblock_rules(self, website_data, html) -> list:
+        values = [
+            el.group() for el in self.match_rules.blacklist_re.finditer(html)
+        ]
+        self.adblockparser_options["domain"] = website_data.top_level_domain
+
+        elements_per_process = 1000
+        rules = self.match_rules.blacklist_with_options
+        number_of_workers = 1
+        options = self.adblockparser_options
+
+        if len(rules) > elements_per_process:
+            rules = [
+                rules[x : x + elements_per_process]
+                for x in range(0, len(rules), elements_per_process)
+            ]
+            number_of_workers = len(rules)
+
+        if number_of_workers > 1:
+            pool = multiprocessing.Pool(processes=number_of_workers)
+            pool_values = pool.starmap(
+                _parallel_rule_matching,
+                zip(rules, repeat(html), repeat(options)),
+            )
         else:
-            values = []
+            pool_values = _parallel_rule_matching(rules, html, options)
+        values += [y for el in pool_values for y in el]
+        return values
+
+    def _work_html_content(self, website_data: WebsiteData) -> list:
+        values = []
+
+        self._logger.info(f"{self.__class__.__name__},{len(self.tag_list)}")
+        if self.tag_list:
+            html = "".join(website_data.html)
+            if self.extraction_method == ExtractionMethod.MATCH_DIRECTLY:
+                values = [ele for ele in self.tag_list if html.find(ele) >= 0]
+            elif self.extraction_method == ExtractionMethod.USE_ADBLOCK_PARSER:
+                values = self._parse_adblock_rules(
+                    website_data=website_data, html=html
+                )
+
         return values
 
     async def _astart(self, website_data: WebsiteData) -> dict:
-        return {VALUES: []}
+        """
+        Intentionally left empty to force user to implement the respective function in the inheriting class.
+        :param website_data:
+        :return:
+        """
+        values = self._work_html_content(website_data=website_data)
+        return {VALUES: values}
 
     def _start(self, website_data: WebsiteData) -> dict:
         if self.evaluate_header:
@@ -269,8 +336,7 @@ class MetadataBase:
                 if not x.startswith(self.comment_symbol)
             ]
 
-    async def setup(self) -> None:
-        """Child function."""
+    async def _setup_downloads(self) -> None:
         async with ClientSession() as session:
             if self.urls:
                 self.tag_list = await self._download_multiple_tag_lists(
@@ -281,6 +347,12 @@ class MetadataBase:
                     url=self.url, session=session
                 )
 
+    def setup(self) -> None:
+        """Child function."""
+        asyncio.run(self._setup_downloads())
+
         if self.tag_list:
             self._extract_date_from_list()
             self._prepare_tag_list()
+            if self.extraction_method == ExtractionMethod.USE_ADBLOCK_PARSER:
+                self.match_rules = adblockparser.AdblockRules(self.tag_list)

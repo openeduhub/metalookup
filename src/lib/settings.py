@@ -6,7 +6,7 @@ LOG_LEVEL = logging.DEBUG
 LOG_PATH = "logs/"
 
 # Online lists
-USE_LOCAL_IF_POSSIBLE = False
+USE_LOCAL_IF_POSSIBLE = True
 
 # Miscellaneous
 RETURN_IMAGES_IN_METADATA = False

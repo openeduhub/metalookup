@@ -13,7 +13,7 @@ LOGFILE_MANAGER = "manager"
 VALUES = "values"
 PROBABILITY = "probability"
 DECISION = "decision"
-
+TIME_REQUIRED = "time_required"
 
 ACCESSIBILITY = "accessibility"
 DESKTOP = "desktop"
