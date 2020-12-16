@@ -206,20 +206,10 @@ class MetadataBase:
         self, website_data: WebsiteData, html: str
     ) -> list:
         values = []
-        if self.tag_list:
-            if self.url.find("easylist") >= 0:
-                rules = adblockparser.AdblockRules(self.tag_list)
-                values = []
-                for url in website_data.raw_links:
-                    is_blocked = rules.should_block(url)
-                    if is_blocked:
-                        values.append(url)
-            else:
-                values = [
-                    ele
-                    for ele in self.tag_list
-                    if website_data.html.find(ele) >= 0
-                ]
+        for url in website_data.raw_links:
+            is_blocked = self.match_rules.should_block(url)
+            if is_blocked:
+                values.append(url)
         return values
 
     def _work_html_content(self, website_data: WebsiteData) -> list:
