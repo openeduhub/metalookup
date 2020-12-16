@@ -202,33 +202,24 @@ class MetadataBase:
     def _extract_raw_links(soup: BeautifulSoup) -> list:
         return list({a["href"] for a in soup.find_all(href=True)})
 
-    def _parse_adblock_rules(self, website_data, html) -> list:
-        values = [
-            el.group() for el in self.match_rules.blacklist_re.finditer(html)
-        ]
-        self.adblockparser_options["domain"] = website_data.top_level_domain
-
-        elements_per_process = 1000
-        rules = self.match_rules.blacklist_with_options
-        number_of_workers = 1
-        options = self.adblockparser_options
-
-        if len(rules) > elements_per_process:
-            rules = [
-                rules[x : x + elements_per_process]
-                for x in range(0, len(rules), elements_per_process)
-            ]
-            number_of_workers = len(rules)
-
-        if number_of_workers > 1:
-            pool = multiprocessing.Pool(processes=number_of_workers)
-            pool_values = pool.starmap(
-                _parallel_rule_matching,
-                zip(rules, repeat(html), repeat(options)),
-            )
-        else:
-            pool_values = _parallel_rule_matching(rules, html, options)
-        values += [y for el in pool_values for y in el]
+    def _parse_adblock_rules(
+        self, website_data: WebsiteData, html: str
+    ) -> list:
+        values = []
+        if self.tag_list:
+            if self.url.find("easylist") >= 0:
+                rules = adblockparser.AdblockRules(self.tag_list)
+                values = []
+                for url in website_data.raw_links:
+                    is_blocked = rules.should_block(url)
+                    if is_blocked:
+                        values.append(url)
+            else:
+                values = [
+                    ele
+                    for ele in self.tag_list
+                    if website_data.html.find(ele) >= 0
+                ]
         return values
 
     def _work_html_content(self, website_data: WebsiteData) -> list:

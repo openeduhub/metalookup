@@ -1,4 +1,5 @@
 from features.metadata_base import (
+    ExtractionMethod,
     MetadataBase,
     ProbabilityDeterminationMethod,
 )
@@ -28,6 +29,7 @@ class Advertisement(MetadataBase):
         ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
     )
     call_async = True
+    extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
 
 class EasyPrivacy(MetadataBase):
@@ -45,6 +47,7 @@ class EasyPrivacy(MetadataBase):
     ]
     decision_threshold = 0
     call_async = True
+    extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
 
 class IETracker(MetadataBase):
@@ -52,6 +55,7 @@ class IETracker(MetadataBase):
     key: str = "internet_explorer_tracker"
     comment_symbol = "#"
     decision_threshold = 0
+    extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
 
 class CookiesInHtml(MetadataBase):
@@ -69,6 +73,7 @@ class CookiesInHtml(MetadataBase):
     ]
     decision_threshold = 0
     call_async = True
+    extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
 
 class FanboyAnnoyance(MetadataBase):
@@ -87,6 +92,7 @@ class FanboyAnnoyance(MetadataBase):
         ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
     )
     call_async = True
+    extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
 
 class FanboyNotification(MetadataBase):
@@ -104,6 +110,7 @@ class FanboyNotification(MetadataBase):
         ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
     )
     call_async = True
+    extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
 
 class FanboySocialMedia(MetadataBase):
@@ -120,6 +127,7 @@ class FanboySocialMedia(MetadataBase):
     ]
     decision_threshold = 0
     call_async = True
+    extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
 
 class AntiAdBlock(MetadataBase):
@@ -130,6 +138,7 @@ class AntiAdBlock(MetadataBase):
     ]
     key: str = "anti_adblock"
     decision_threshold = 0
+    extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
 
 class EasylistGermany(MetadataBase):
@@ -152,6 +161,7 @@ class EasylistGermany(MetadataBase):
     ]
     decision_threshold = 0
     call_async = True
+    extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
 
 class EasylistAdult(MetadataBase):
@@ -168,6 +178,7 @@ class EasylistAdult(MetadataBase):
     ]
     decision_threshold = 0
     call_async = True
+    extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
 
 class Paywalls(MetadataBase):
