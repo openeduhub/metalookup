@@ -1,10 +1,8 @@
 import asyncio
-import multiprocessing
 import os
 import re
 from collections import OrderedDict
 from enum import Enum
-from itertools import repeat
 from urllib.parse import urlparse
 
 import adblockparser
@@ -34,11 +32,11 @@ class MetadataBaseException(Exception):
     pass
 
 
-def _parallel_rule_matching(rules, html, options):
-    return [rule for rule in rules if rule.match_url(html, options)]
-
-
 class MetadataBase:
+    """
+    Base class for features to be extracted.
+    """
+
     tag_list: list = []
     tag_list_last_modified = ""
     tag_list_expires: int = 0
@@ -202,14 +200,21 @@ class MetadataBase:
     def _extract_raw_links(soup: BeautifulSoup) -> list:
         return list({a["href"] for a in soup.find_all(href=True)})
 
-    def _parse_adblock_rules(
-        self, website_data: WebsiteData, html: str
-    ) -> list:
+    def _parse_adblock_rules(self, website_data: WebsiteData) -> list:
         values = []
+        self.adblockparser_options["domain"] = website_data.top_level_domain
+
         for url in website_data.raw_links:
-            is_blocked = self.match_rules.should_block(url)
-            if is_blocked:
-                values.append(url)
+            values += [
+                el.group()
+                for el in self.match_rules.blacklist_re.finditer(url)
+            ]
+            values += [
+                rule
+                for rule in self.match_rules.blacklist_with_options
+                if rule.match_url(url, self.adblockparser_options)
+            ]
+
         return values
 
     def _work_html_content(self, website_data: WebsiteData) -> list:
@@ -217,13 +222,11 @@ class MetadataBase:
 
         self._logger.info(f"{self.__class__.__name__},{len(self.tag_list)}")
         if self.tag_list:
-            html = "".join(website_data.html)
             if self.extraction_method == ExtractionMethod.MATCH_DIRECTLY:
+                html = "".join(website_data.html)
                 values = [ele for ele in self.tag_list if html.find(ele) >= 0]
             elif self.extraction_method == ExtractionMethod.USE_ADBLOCK_PARSER:
-                values = self._parse_adblock_rules(
-                    website_data=website_data, html=html
-                )
+                values = self._parse_adblock_rules(website_data=website_data)
 
         return values
 

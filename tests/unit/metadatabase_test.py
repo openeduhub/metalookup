@@ -1,4 +1,3 @@
-import asyncio
 from unittest import mock
 
 import adblockparser
@@ -49,7 +48,6 @@ def test_start(metadatabase: MetadataBase, mocker):
     assert values_has_only_one_key
     assert values[metadatabase.key]["values"] == []
 
-    # TODO: An if in a test -> is this a bad idea?
     if "tag_list_last_modified" in values[metadatabase.key].keys():
         assert values[metadatabase.key]["tag_list_last_modified"] == ""
         assert values[metadatabase.key]["tag_list_expires"] == 0
