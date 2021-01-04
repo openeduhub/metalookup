@@ -31,7 +31,7 @@ services:
     networks:
       - backend
   accessibility:
-    image: oeh-search-meta_lighting:latest
+    image: oeh-search-meta_lighthouse:latest
     restart: always
     ports:
       - "5058:5058"

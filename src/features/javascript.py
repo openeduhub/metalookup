@@ -1,14 +1,11 @@
-import os
-import re
-
-from bs4 import BeautifulSoup, element
-
 from features.metadata_base import MetadataBase
 from features.website_manager import WebsiteData
 from lib.constants import VALUES
 
 
 class Javascript(MetadataBase):
+    decision_threshold = 0
+
     def _start(self, website_data: WebsiteData) -> dict:
         scripts = list(website_data.soup.select("script"))
 

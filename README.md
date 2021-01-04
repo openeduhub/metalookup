@@ -45,3 +45,17 @@ The class must be included in
 1. "src/features/metadata_manager.py:_create_extractors"
 2. app.api.ExtractorTags
 3. app.api.ListTags
+
+# Tests
+
+Tests are divided into three categories:
+- End-To-End (E2E)
+- Integration
+- Unit
+
+The E2E test comprises a test with minimum input but maximum coverage.
+Basically, every part of the program and any connected containers are used.
+
+Currently not covered by tests yet
+- rester.py
+- evaluator.py

@@ -10,6 +10,7 @@ class GDPR(MetadataBase):
     probability_determination_method = (
         ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
     )
+    decision_threshold = 0.9
 
     def _https_in_url(self, website_data: WebsiteData) -> tuple[list, list]:
         http = "http"

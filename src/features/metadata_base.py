@@ -3,6 +3,7 @@ import os
 import re
 from collections import OrderedDict
 from enum import Enum
+from logging import Logger
 from urllib.parse import urlparse
 
 import adblockparser
@@ -77,7 +78,7 @@ class MetadataBase:
         "domain": "",
     }
 
-    def __init__(self, logger) -> None:
+    def __init__(self, logger: Logger) -> None:
         self._logger = logger
 
         if self.key == "":
@@ -141,6 +142,9 @@ class MetadataBase:
 
         probability = self._calculate_probability(website_data=website_data)
         decision = self._decide(probability=probability)
+
+        if not decision:
+            probability = 0
 
         data = {
             self.key: {

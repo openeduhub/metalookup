@@ -190,6 +190,7 @@ class Paywalls(MetadataBase):
 class ContentSecurityPolicy(MetadataBase):
     tag_list = ["Content-Security-Policy"]
     evaluate_header = True
+    decision_threshold = 0
 
 
 class IFrameEmbeddable(MetadataBase):
@@ -224,6 +225,7 @@ class RegWall(MetadataBase):
         "Registration",
         "registerbtn",
     ]
+    decision_threshold = 0
 
 
 class LogInOut(MetadataBase):
@@ -242,3 +244,4 @@ class LogInOut(MetadataBase):
         "Submit",
         "Username",
     ]
+    decision_threshold = 0

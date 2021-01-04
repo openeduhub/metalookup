@@ -197,6 +197,7 @@ class MaliciousExtensions(MetadataBase):
         "potm",
         "\u202e",
     ]
+    decision_threshold = 0
 
     def _start(self, website_data: WebsiteData) -> dict:
         malicious_extensions = [
