@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from dataclasses import dataclass, field
 
 import requests
@@ -89,8 +90,8 @@ class WebsiteManager:
         if message[MESSAGE_HTML] != "" and self.website_data.html == "":
             self.website_data.html = message[MESSAGE_HTML].lower()
             self._create_html_soup()
-            self._extract_raw_links()
             self._extract_images()
+            self._extract_raw_links()
             self._extract_extensions()
 
         if message[MESSAGE_HAR] != "" and not self.website_data.har:
@@ -158,9 +159,31 @@ class WebsiteManager:
         )
 
     def _extract_raw_links(self):
-        self.website_data.raw_links = list(
-            {a["href"] for a in self.website_data.soup.find_all(href=True)}
-        )
+        tags = {tag.name for tag in self.website_data.soup.find_all()}
+        attributes = [
+            "href",
+            "src",
+            "srcset",
+            "img src",
+            "data-src",
+            "data-srcset",
+        ]
+
+        links = []
+        for tag in tags:
+            for el in self.website_data.soup.find_all(tag):
+                if el is not None:
+                    links += [
+                        el.attrs.get(attribute)
+                        for attribute in attributes
+                        if el.has_attr(attribute)
+                    ]
+
+        self.website_data.raw_links = [
+            el
+            for el in list(set(links + self.website_data.image_links))
+            if el is not None
+        ]
 
     def _extract_images(self) -> None:
         self.website_data.image_links = [

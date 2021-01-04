@@ -25,22 +25,19 @@ def test_advertisement(mocker):
     website_manager = WebsiteManager.get_instance()
 
     html = {
-        "html": "ad_block, ad_slot= mallorcash.com admanmedia murkymouse.online",
+        "html": "<script src='/xlayer/layer.php?uid='></script>",
         "har": "",
         "url": "",
         "headers": "{}",
     }
     expected = {
         "advertisement": {
-            "values": [],  # ["ad_block", "ad_slot="]
+            "values": ["/xlayer/layer.php?uid=$script"],
             "runs_within": 10,  # time the evaluation may take AT MAX -> acceptance test
         },
     }
 
     website_manager.load_raw_data(html)
-    website_data = WebsiteData(html=html["html"], raw_header="", headers={})
-    website_data.raw_links = [html["html"]]
-    website_data.html = html["html"]
 
     data = advertisement.start()
 

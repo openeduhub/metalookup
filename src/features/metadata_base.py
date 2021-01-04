@@ -210,7 +210,7 @@ class MetadataBase:
                 for el in self.match_rules.blacklist_re.finditer(url)
             ]
             values += [
-                rule
+                rule.raw_rule_text
                 for rule in self.match_rules.blacklist_with_options
                 if rule.match_url(url, self.adblockparser_options)
             ]

@@ -1,5 +1,6 @@
 import asyncio
 import json
+from json import JSONDecodeError
 
 from aiohttp import ClientConnectorError, ClientSession
 
@@ -41,12 +42,17 @@ class Accessibility(MetadataBase):
                 "No connection to accessibility container."
             )
 
-        score_text = await process.text()
+        if process.status == 200:
+            score_text = await process.text()
+        else:
+            score_text = ""
 
         try:
             score = [float(json.loads(score_text)[SCORE])]
-        except (KeyError, ValueError, TypeError):
-            self._logger.exception(f"Score output was: '{score_text}'")
+        except (JSONDecodeError, KeyError, ValueError, TypeError):
+            self._logger.exception(
+                f"Score output was: '{score_text}'. HTML response code was '{process.status}'"
+            )
             score = [-1]
 
         return score
