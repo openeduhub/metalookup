@@ -78,13 +78,16 @@ class MetadataBase:
         "domain": "",
     }
 
+    def _create_key(self):
+        self.key = re.sub(
+            r"(?<!^)(?=[A-Z])", "_", self.__class__.__name__
+        ).lower()
+
     def __init__(self, logger: Logger) -> None:
         self._logger = logger
 
         if self.key == "":
-            self.key = re.sub(
-                r"(?<!^)(?=[A-Z])", "_", self.__class__.__name__
-            ).lower()
+            self._create_key()
 
     @staticmethod
     def _get_ratio_of_elements(website_data: WebsiteData) -> float:
