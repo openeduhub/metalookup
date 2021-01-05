@@ -1,12 +1,21 @@
 import json
+import os
 
 import pytest
 import requests
-from test_libs import (
-    DOCKER_TEST_HEADERS,
-    DOCKER_TEST_URL,
-    _build_and_run_docker,
-)
+
+if "PRE_COMMIT" in os.environ:
+    from test_libs import (
+        DOCKER_TEST_HEADERS,
+        DOCKER_TEST_URL,
+        _build_and_run_docker,
+    )
+else:
+    from tests.test_libs import (
+        DOCKER_TEST_HEADERS,
+        DOCKER_TEST_URL,
+        _build_and_run_docker,
+    )
 
 
 @pytest.mark.skip(
