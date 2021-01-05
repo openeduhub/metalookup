@@ -4,12 +4,16 @@ import time
 from urllib.parse import urlparse
 
 from features.extract_from_files import ExtractFromFiles
+from features.gdpr import GDPR
 from features.html_based import (
     Advertisement,
     CookiesInHtml,
     EasylistAdult,
     EasyPrivacy,
+    FanboySocialMedia,
+    LogInOut,
     Paywalls,
+    PopUp,
 )
 from features.malicious_extensions import MaliciousExtensions
 from features.website_manager import WebsiteManager
@@ -273,9 +277,7 @@ def test_extract_from_files():
     feature._create_key(feature)
     feature.start = _test_extract_from_files_start_wrapper
     feature.call_async = False
-    #
-    # <a href=\"https://dll-production.s3-de-central.profitbricks.com/media/filer_public/06/78/0678543a-fa24-4aa4-9250-e6a8d7650fd3/arbeitsblatt_analog_losung.pdf\" target=\"_blank\">
-    # Arbeitsblatt analog L\u00f6sung.pdf</a>
+
     html = {
         "html": """<a href=\"arbeitsblatt_analog_losung.pdf\" target=\"_blank\">
 Arbeitsblatt analog L\u00f6sung.pdf</a>
@@ -293,6 +295,158 @@ Arbeitsblatt analog L\u00f6sung.docx</a>
                 "arbeitsblatt_analog_losung.docx",
             ],
             "excluded_values": [],
+            "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}
+        }
+    }
+
+    are_values_correct, runs_fast_enough = _test_feature(
+        feature_class=feature, html=html, expectation=expected
+    )
+    assert are_values_correct and runs_fast_enough
+
+
+def test_fanboy_social_media():
+    feature = FanboySocialMedia
+    feature._create_key(feature)
+
+    html = {
+        "html": """<link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href=
+'https://canyoublockit.com/wp-content/plugins/social-icons-widget-by-wpzoom/block/dist/blocks.style.build.css
+?ver=1603794146' type='text/css' media='all' />
+<script type="4fc846f350e30f875f7efd7a-text/javascript" src=
+'https://canyoublockit.com/wp-content/plugins/elementor/assets/lib/share-link/share-link.min.js?ver=3.0.15'
+id='share-link-js'></script>
+""",
+        "har": "",
+        "url": "",
+        "headers": "{}",
+    }
+    expected = {
+        feature.key: {
+            "values": [
+                "/social-icons-",
+                "/share-link/share-link.min.js?ver=3.0.15",
+            ],
+            "excluded_values": [],
+            "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}
+        }
+    }
+
+    are_values_correct, runs_fast_enough = _test_feature(
+        feature_class=feature, html=html, expectation=expected
+    )
+    assert are_values_correct and runs_fast_enough
+
+
+def test_pop_up():
+    feature = PopUp
+    feature._create_key(feature)
+
+    html = {
+        "html": """<noscript><img width="845" height="477"
+src="https://canyoublockit.com/wp-content/uploads/2020/01/Screenshot_1.png" class="attachment-large size-large"
+alt="Scum Interstitial Ad Placement" loading="lazy" srcset=
+"https://canyoublockit.com/wp-content/uploads/2020/01/Screenshot_1.png 845w,
+https://canyoublockit.com/wp-content/uploads/2020/01/Screenshot_1-300x169.png 300w,
+https://canyoublockit.com/wp-content/uploads/2020/01/Screenshot_1-768x434.png 768w"
+sizes="(max-width: 845px) 100vw, 845px" /></noscript>
+<div id="KKIbeOcDqZob" class="rIdHlTQAtJaQ" style="background:#dddddd;z-index:9999999; "></div>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
+<script type="4fc846f350e30f875f7efd7a-text/javascript">/* <![CDATA[ */var anOptions =
+{"anOptionChoice":"2","anOptionStats":"1","anOptionAdsSelectors":"","anOptionCookie":"1","anOptionCookieLife":"30",
+"anPageRedirect":"","anPermalink":"undefined","anOptionModalEffect":"fadeAndPop","anOptionModalspeed":"350",
+"anOptionModalclose":true,"anOptionModalOverlay":"rgba( 0,0,0,0.8 )","anAlternativeActivation":false,
+"anAlternativeElement":"","anAlternativeText":","anAlternativeClone":"2","anAlternativeProperties":"",
+"anOptionModalShowAfter":0,"anPageMD5":"","anSiteID":0,
+"modalHTML":"
+""",
+        "har": "",
+        "url": "",
+        "headers": "{}",
+    }
+    expected = {
+        feature.key: {
+            "values": [
+                "modal",
+                "interstitial",
+            ],
+            "excluded_values": [],
+            "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}
+        }
+    }
+
+    are_values_correct, runs_fast_enough = _test_feature(
+        feature_class=feature, html=html, expectation=expected
+    )
+    assert are_values_correct and runs_fast_enough
+
+
+def test_log_in_out():
+    feature = LogInOut
+    feature._create_key(feature)
+
+    html = {
+        "html": """input[type="email"]:focus,input[type="url"]:focus,input[type="password"]:focus,input[type="reset"]:
+input#submit,input[type="button"],input[type="submit"],input[type="reset"]
+""",
+        "har": "",
+        "url": "",
+        "headers": "{}",
+    }
+    expected = {
+        feature.key: {
+            "values": [
+                "email",
+                "password",
+                "submit",
+            ],
+            "excluded_values": [],
+            "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}
+        }
+    }
+
+    are_values_correct, runs_fast_enough = _test_feature(
+        feature_class=feature, html=html, expectation=expected
+    )
+    assert are_values_correct and runs_fast_enough
+
+
+def test_g_d_p_r():
+    feature = GDPR
+    feature._create_key(feature)
+
+    html = {
+        "html": """
+<link rel=\"preload\" href=\"/mediathek/podcast/dist/runtime.2e1c836.js\" as=\"script\">
+@font-face {font-family: "Astra";
+src: url(https://canyoublockit.com/wp-content/themes/astra/assets/fonts/astra.svg#astra)
+format("svg");font-weight: normal;font-style: normal;font-display: fallback;}
+<button type='button' class='menu-toggle main-header-menu-toggle  ast-mobile-menu-buttons-fill '
+        aria-controls='primary-menu' aria-expanded='false'>
+<datetime type='datetime'>
+<a href=\"/impressum\">Impressum</a>
+""",
+        "har": "",
+        "url": "https://www.tutory.de",
+        "headers": "{b'Referrer-Policy': [b'no-referrer'],"
+        "b'Strict-Transport-Security': [b'max-age=15724800; includeSubDomains']}",
+    }
+    expected = {
+        feature.key: {
+            "values": [
+                "preload",
+                "https_in_url",
+                "hsts",
+                "includesubdomains",
+                "do_not_preload",
+                "max_age",
+                "found_fonts,https://canyoublockit.com/wp-content/themes/astra/assets/fonts/astra.svg#astra",
+                "no_referrerpolicy",
+                "no-referrer",
+                "found_inputs,button,datetime",
+                "impressum",
+            ],
+            "excluded_values": ["no_link_rel", "do_not_max_age"],
             "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}
         }
     }

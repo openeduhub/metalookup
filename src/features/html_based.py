@@ -50,14 +50,6 @@ class EasyPrivacy(MetadataBase):
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
 
-class IETracker(MetadataBase):
-    url: str = "https://easylist-downloads.adblockplus.org/easyprivacy.tpl"
-    key: str = "internet_explorer_tracker"
-    comment_symbol = "#"
-    decision_threshold = 0
-    extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
-
-
 class CookiesInHtml(MetadataBase):
     urls = [
         "https://easylist-downloads.adblockplus.org/easylist-cookie.txt",

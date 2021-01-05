@@ -7,9 +7,6 @@ from lib.constants import VALUES
 
 class GDPR(MetadataBase):
     tag_list = ["impressum"]
-    probability_determination_method = (
-        ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
-    )
     decision_threshold = 0.9
 
     def _https_in_url(self, website_data: WebsiteData) -> tuple[list, list]:
@@ -55,9 +52,9 @@ class GDPR(MetadataBase):
                     [int(regex.match(element).group(1)) for element in sts]
                 )
                 if match > 10886400:
-                    values += ["max-age"]
+                    values += ["max_age"]
             except AttributeError:
-                values += ["do_not_max-age"]
+                values += ["do_not_max_age"]
         else:
             values += ["no_hsts"]
         return values
@@ -82,21 +79,29 @@ class GDPR(MetadataBase):
         matches = re.findall(regex, website_data.html)
 
         if len(matches) > 0:
-            values += [matches]
+            values += [
+                match.replace('"', "").replace(" ", "") for match in matches
+            ]
         else:
             values += ["no_link_rel"]
 
         return values
 
     def _font_face(self, website_data: WebsiteData) -> list:
-        regex = re.compile(r"@font-face{.*?}")
+        regex = re.compile(r"@font-face\s*{[\s\w\d\D\n]*?}")
         matches = re.findall(regex, website_data.html)
         url_regex = re.compile(r"url\((.*?)\)")
+
         found_fonts = []
         for match in matches:
             url_matches = re.findall(url_regex, match)
             for url_match in url_matches:
                 found_fonts.append(url_match)
+
+        if len(found_fonts) > 0:
+            found_fonts = "found_fonts," + ",".join(found_fonts)
+        else:
+            found_fonts = "found_no_fonts"
         return [found_fonts]
 
     def _input_fields(self, website_data: WebsiteData) -> list:
@@ -128,9 +133,14 @@ class GDPR(MetadataBase):
             "datetime",
         ]
         for input_type in input_types:
-            regex = re.compile(rf"<{input_type}(.*?)>")
-            matches = re.findall(regex, website_data.html)
-            inputs += [f"{input_type}{match}" for match in matches]
+            matches = website_data.soup.find_all(input_type)
+            if len(matches) > 0:
+                inputs += [input_type]
+
+        if len(inputs) > 0:
+            inputs = "found_inputs," + ",".join(inputs)
+        else:
+            inputs = "found_no_inputs"
         return [inputs]
 
     def _start(self, website_data: WebsiteData) -> dict:
@@ -148,4 +158,33 @@ class GDPR(MetadataBase):
 
         values += self._input_fields(website_data=website_data)
 
-        return {VALUES: values, "http_links": http_links}
+        flat_values = []
+        for value in values:
+            if isinstance(value, list):
+                for el in value:
+                    flat_values.append(el)
+            else:
+                flat_values.append(value)
+
+        return {VALUES: list(set(flat_values)), "http_links": http_links}
+
+    def _calculate_probability(self, website_data: WebsiteData) -> float:
+        probability = 0.5
+
+        if (
+            "https_in_url" not in website_data.values
+            or "hsts" not in website_data.values
+            or "impressum" not in website_data.values
+        ):
+            probability = 0
+        elif (
+            "max_age" not in website_data.values
+            or "found_no_fonts" in website_data.values
+            or "found_no_inputs" in website_data.values
+        ):
+            probability -= 0.1
+
+        if probability < 0:
+            probability = 0
+
+        return probability
