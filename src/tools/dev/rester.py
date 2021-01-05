@@ -4,8 +4,8 @@ import time
 from json.decoder import JSONDecodeError
 
 import requests
-
 from evaluator import RESULT_FILE_PATH
+
 from lib.constants import (
     MESSAGE_ALLOW_LIST,
     MESSAGE_HAR,

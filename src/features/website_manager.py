@@ -2,6 +2,7 @@ import json
 import os
 import re
 from dataclasses import dataclass, field
+from urllib.parse import urlparse
 
 import requests
 from bs4 import BeautifulSoup
@@ -169,10 +170,16 @@ class WebsiteManager:
             "data-srcset",
         ]
 
+        script_re = re.compile(r"src\=[\"|\']([\w\d\:\/\.\-\?\=]+)[\"|\']")
+
         links = []
         for tag in tags:
             for el in self.website_data.soup.find_all(tag):
                 if el is not None:
+                    if tag == "script":
+                        matches = script_re.findall(str(el).replace("\n", ""))
+                        if len(matches) > 0:
+                            links += matches
                     links += [
                         el.attrs.get(attribute)
                         for attribute in attributes
@@ -193,8 +200,8 @@ class WebsiteManager:
 
     def _extract_extensions(self):
         file_extensions = [
-            os.path.splitext(link)[-1]
-            for link in self.website_data.image_links
+            os.path.splitext(urlparse(link)[2])[-1]
+            for link in self.website_data.raw_links
         ]
         self.website_data.extensions = [
             x for x in list(set(file_extensions)) if x != ""

@@ -8,6 +8,7 @@ import PyPDF2
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 from pdfminer.high_level import extract_text
+from PyPDF2.utils import PdfReadError
 
 from features.metadata_base import MetadataBase, ProbabilityDeterminationMethod
 from features.website_manager import WebsiteData
@@ -114,11 +115,13 @@ class ExtractFromFiles(MetadataBase):
         return images
 
     def _extract_pdfs(self, filename) -> dict:
-        pdf_file = PyPDF2.PdfFileReader(open(filename, "rb"))
-
-        extracted_content = self._get_pdf_content(filename, pdf_file)
-
-        images = self._get_pdf_images(pdf_file)
+        try:
+            pdf_file = PyPDF2.PdfFileReader(open(filename, "rb"))
+            extracted_content = self._get_pdf_content(filename, pdf_file)
+            images = self._get_pdf_images(pdf_file)
+        except PdfReadError:
+            extracted_content = []
+            images = []
 
         content = {"extracted_content": extracted_content, "images": images}
         return content
