@@ -4,7 +4,7 @@ from typing import Optional
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
-from app.communication import ProcessToDaemonCommunication
+from app.communication import QueueCommunicator
 from lib.constants import (
     DECISION,
     MESSAGE_ALLOW_LIST,
@@ -236,7 +236,7 @@ class Output(BaseModel):
 
 
 app = FastAPI(title="Metadata Extractor", version="0.1")
-app.api_queue: ProcessToDaemonCommunication
+app.communicator: QueueCommunicator
 
 
 def _convert_dict_to_output_model(meta, debug: bool = False) -> ExtractorTags:
@@ -269,7 +269,7 @@ def extract_meta(input_data: Input):
 
     allowance = _convert_allow_list_to_dict(input_data.allow_list)
 
-    uuid = app.api_queue.send_message(
+    uuid = app.communicator.send_message(
         {
             MESSAGE_URL: input_data.url,
             MESSAGE_HTML: input_data.html,
@@ -279,7 +279,7 @@ def extract_meta(input_data: Input):
         }
     )
 
-    meta_data: dict = app.api_queue.get_message(uuid)
+    meta_data: dict = app.communicator.get_message(uuid)
 
     if meta_data:
         extractor_tags = _convert_dict_to_output_model(

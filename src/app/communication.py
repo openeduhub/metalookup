@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 from lib.settings import API_RETRIES
 
 
-class ProcessToDaemonCommunication:
+class QueueCommunicator:
     def __init__(
         self,
         send_queue: multiprocessing.Queue,

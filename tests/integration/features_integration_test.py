@@ -719,7 +719,7 @@ def test_cookies():
 {
 "log":
     {
-    "entries": 
+    "entries":
     [{
         "response": {"cookies": [{
             "name": "test_response_cookie",

@@ -6,7 +6,7 @@ from queue import Empty
 import uvicorn
 
 from app.api import app
-from app.communication import ProcessToDaemonCommunication
+from app.communication import QueueCommunicator
 from features.metadata_manager import MetadataManager
 from lib.logger import create_logger
 from lib.settings import API_PORT, WANT_PROFILING
@@ -80,7 +80,7 @@ class Manager:
 
 
 def api_server(queue, return_queue):
-    app.api_queue = ProcessToDaemonCommunication(queue, return_queue)
+    app.communicator = QueueCommunicator(queue, return_queue)
     uvicorn.run(app, host="0.0.0.0", port=API_PORT, log_level="info")
 
 
