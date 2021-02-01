@@ -180,7 +180,7 @@ class Paywalls(MetadataBase):
 
 
 class ContentSecurityPolicy(MetadataBase):
-    tag_list = ["Content-Security-Policy"]
+    tag_list = ["content-security-policy"]
     evaluate_header = True
     decision_threshold = 0
 

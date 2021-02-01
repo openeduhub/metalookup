@@ -8,12 +8,14 @@ from features.gdpr import GDPR
 from features.html_based import (
     Advertisement,
     AntiAdBlock,
+    ContentSecurityPolicy,
     CookiesInHtml,
     EasylistAdult,
     EasylistGermany,
     EasyPrivacy,
     FanboyNotification,
     FanboySocialMedia,
+    IFrameEmbeddable,
     LogInOut,
     Paywalls,
     PopUp,
@@ -594,6 +596,64 @@ def test_reg_wall():
         feature.key: {
             "values": ["register", "regwall", "registerbtn"],
             "excluded_values": [],
+            "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}
+        }
+    }
+
+    are_values_correct, runs_fast_enough = _test_feature(
+        feature_class=feature, html=html, expectation=expected
+    )
+    assert are_values_correct and runs_fast_enough
+
+
+"""
+--------------------------------------------------------------------------------
+"""
+
+
+def test_content_security_policy():
+    feature = ContentSecurityPolicy
+    feature._create_key(feature)
+
+    html = {
+        "html": "empty_html",
+        "har": "",
+        "url": "",
+        "headers": "{'Content-Security-Policy': 'deny', 'content-security-policy': 'same_origin'}",
+    }
+    expected = {
+        feature.key: {
+            "values": ["same_origin"],
+            "excluded_values": ["deny"],
+            "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}
+        }
+    }
+
+    are_values_correct, runs_fast_enough = _test_feature(
+        feature_class=feature, html=html, expectation=expected
+    )
+    assert are_values_correct and runs_fast_enough
+
+
+"""
+--------------------------------------------------------------------------------
+"""
+
+
+def test_iframe_embeddable():
+    feature = IFrameEmbeddable
+    feature._create_key(feature)
+
+    html = {
+        "html": "empty_html",
+        "har": "",
+        "url": "",
+        "headers": "{'X-Frame-Options': 'deny', 'x-frame-options': 'same_origin'}",
+    }
+    expected = {
+        feature.key: {
+            "values": ["same_origin"],
+            "excluded_values": ["deny"],
             "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}
         }
     }

@@ -195,12 +195,16 @@ class MetadataBase:
     def _work_header(self, header):
         values = []
         if len(self.tag_list) == 1:
-            if self.tag_list[0] in header:
-                values = header[self.tag_list[0]]
+            if self.tag_list[0].lower() in header:
+                values = header[self.tag_list[0].lower()]
                 if not isinstance(values, list):
                     values = [values]
         else:
-            values = [header[ele] for ele in self.tag_list if ele in header]
+            values = [
+                header[ele.lower()]
+                for ele in self.tag_list
+                if ele.lower() in header
+            ]
         return values
 
     @staticmethod
