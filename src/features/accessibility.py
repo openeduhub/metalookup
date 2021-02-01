@@ -20,6 +20,16 @@ class Accessibility(MetadataBase):
     decision_threshold = 0.8
     call_async = True
 
+    def extract_score(self, score_text, status_code):
+        try:
+            score = [float(json.loads(score_text)[SCORE])]
+        except (JSONDecodeError, KeyError, ValueError, TypeError):
+            self._logger.exception(
+                f"Score output was: '{score_text}'. HTML response code was '{status_code}'"
+            )
+            score = [-1]
+        return score
+
     async def _execute_api_call(
         self,
         website_data: WebsiteData,
@@ -42,20 +52,14 @@ class Accessibility(MetadataBase):
                 "No connection to accessibility container."
             )
 
-        if process.status == 200:
+        status_code = process.status
+
+        if status_code == 200:
             score_text = await process.text()
         else:
             score_text = ""
 
-        try:
-            score = [float(json.loads(score_text)[SCORE])]
-        except (JSONDecodeError, KeyError, ValueError, TypeError):
-            self._logger.exception(
-                f"Score output was: '{score_text}'. HTML response code was '{process.status}'"
-            )
-            score = [-1]
-
-        return score
+        return self.extract_score(score_text, status_code)
 
     async def _astart(self, website_data: WebsiteData) -> dict:
         async with ClientSession() as session:

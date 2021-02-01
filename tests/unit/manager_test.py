@@ -43,12 +43,6 @@ def test_run(manager: Manager, mocker):
     manager.run(manager)
     assert manager.get_api_request.call_count == 0
 
-    # TODO Cannot mock the while loop sufficiently well, yet
-    # manager.run_loop = True
-    # manager.get_api_request.side_effect = _setting_run_loop()
-    # print("run")
-    # manager.run(manager)
-
 
 """
 --------------------------------------------------------------------------------
