@@ -208,7 +208,7 @@ class WebsiteManager:
         ]
 
     def _load_har(self, har: str) -> None:
-        self.website_data.har = json.loads(har)
+        self.website_data.har = json.loads(har.replace("\n", ""))
 
     def get_website_data_to_log(self) -> dict:
         data = {}

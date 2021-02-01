@@ -3,6 +3,7 @@ import os
 import time
 from urllib.parse import urlparse
 
+from features.cookies import Cookies
 from features.extract_from_files import ExtractFromFiles
 from features.gdpr import GDPR
 from features.html_based import (
@@ -21,6 +22,7 @@ from features.html_based import (
     PopUp,
     RegWall,
 )
+from features.javascript import Javascript
 from features.malicious_extensions import MaliciousExtensions
 from features.website_manager import WebsiteManager
 from lib.constants import VALUES
@@ -44,9 +46,17 @@ def _test_feature(feature_class, html, expectation) -> tuple[bool, bool]:
 
     website_manager.reset()
 
-    are_values_correct = set(data[feature.key]["values"]) == set(
-        expectation[feature.key]["values"]
-    )
+    try:
+        are_values_correct = set(data[feature.key]["values"]) == set(
+            expectation[feature.key]["values"]
+        )
+    except TypeError:
+        value_names = [value["name"] for value in data[feature.key]["values"]]
+        expected_value_names = [
+            value["name"] for value in expectation[feature.key]["values"]
+        ]
+        are_values_correct = set(value_names) == set(expected_value_names)
+
     if are_values_correct and "excluded_values" in expectation[feature.key]:
         are_values_correct = (
             not data[feature.key]["values"]
@@ -654,6 +664,86 @@ def test_iframe_embeddable():
         feature.key: {
             "values": ["same_origin"],
             "excluded_values": ["deny"],
+            "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}
+        }
+    }
+
+    are_values_correct, runs_fast_enough = _test_feature(
+        feature_class=feature, html=html, expectation=expected
+    )
+    assert are_values_correct and runs_fast_enough
+
+
+"""
+--------------------------------------------------------------------------------
+"""
+
+
+def test_javascript():
+    feature = Javascript
+    feature._create_key(feature)
+
+    html = {
+        "html": "<script src='/xlayer/layer.php?uid='></script>"
+        "<script href='some_test_javascript.js'></script>",
+        "har": "",
+        "url": "",
+        "headers": "",
+    }
+    expected = {
+        feature.key: {
+            "values": ["/xlayer/layer.php?uid="],
+            "excluded_values": ["some_test_javascript.js"],
+            "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}
+        }
+    }
+
+    are_values_correct, runs_fast_enough = _test_feature(
+        feature_class=feature, html=html, expectation=expected
+    )
+    assert are_values_correct and runs_fast_enough
+
+
+"""
+--------------------------------------------------------------------------------
+"""
+
+
+def test_cookies():
+    feature = Cookies
+    feature._create_key(feature)
+
+    html = {
+        "html": "empty_html",
+        "har": """
+{
+"log":
+    {
+    "entries": 
+    [{
+        "response": {"cookies": [{
+            "name": "test_response_cookie",
+            "httpOnly": false,
+            "secure": true}
+            ]},
+        "request": {"cookies": [{
+            "name": "test_request_cookie",
+            "httpOnly": false,
+            "secure": true}
+            ]}
+    }]
+    }
+}""",
+        "url": "",
+        "headers": "",
+    }
+    expected = {
+        feature.key: {
+            "values": [
+                {"name": "test_response_cookie"},
+                {"name": "test_request_cookie"},
+            ],
+            "excluded_values": [],
             "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}
         }
     }
