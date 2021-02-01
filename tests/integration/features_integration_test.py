@@ -7,13 +7,17 @@ from features.extract_from_files import ExtractFromFiles
 from features.gdpr import GDPR
 from features.html_based import (
     Advertisement,
+    AntiAdBlock,
     CookiesInHtml,
     EasylistAdult,
+    EasylistGermany,
     EasyPrivacy,
+    FanboyNotification,
     FanboySocialMedia,
     LogInOut,
     Paywalls,
     PopUp,
+    RegWall,
 )
 from features.malicious_extensions import MaliciousExtensions
 from features.website_manager import WebsiteManager
@@ -447,6 +451,149 @@ format("svg");font-weight: normal;font-style: normal;font-display: fallback;}
                 "impressum",
             ],
             "excluded_values": ["no_link_rel", "do_not_max_age"],
+            "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}
+        }
+    }
+
+    are_values_correct, runs_fast_enough = _test_feature(
+        feature_class=feature, html=html, expectation=expected
+    )
+    assert are_values_correct and runs_fast_enough
+
+
+"""
+--------------------------------------------------------------------------------
+"""
+
+
+def test_easylist_germany():
+    feature = EasylistGermany
+    feature._create_key(feature)
+
+    html = {
+        "html": """
+<link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='/werbung/banner_' type='text/css' media='all' />
+<link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='.at/werbung/' type='text/css' media='all' />
+<link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='finanzen100.de' type='text/css' media='all' />
+""",
+        "har": "",
+        "url": "",
+        "headers": "{}",
+    }
+    expected = {
+        feature.key: {
+            "values": [
+                "/werbung/*$third-party",
+                "/werbung/banner_",
+                ".at/werbung/",
+            ],
+            "excluded_values": [],
+            "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}
+        }
+    }
+
+    are_values_correct, runs_fast_enough = _test_feature(
+        feature_class=feature, html=html, expectation=expected
+    )
+    assert are_values_correct and runs_fast_enough
+
+
+"""
+--------------------------------------------------------------------------------
+"""
+
+
+def test_anti_adblock():
+    feature = AntiAdBlock
+    feature._create_key(feature)
+
+    html = {
+        "html": """
+<link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='/adb_script/' type='text/css' media='all' />
+<link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='/adbDetect.' type='text/css' media='all' />
+<link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='cmath.fr/images/fond2.gif' type='text/css' media='all' />
+<link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='||dbz-fantasy.com/ads.css' type='text/css' media='all' />
+""",
+        "har": "",
+        "url": "",
+        "headers": "{}",
+    }
+    expected = {
+        feature.key: {
+            "values": [
+                "cmath.fr/images/fond2.gif",
+                "/adb_script/",
+                "/adbdetect.",
+            ],
+            "excluded_values": [],
+            "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}
+        }
+    }
+
+    are_values_correct, runs_fast_enough = _test_feature(
+        feature_class=feature, html=html, expectation=expected
+    )
+    assert are_values_correct and runs_fast_enough
+
+
+"""
+--------------------------------------------------------------------------------
+"""
+
+
+def test_fanboy_notification():
+    feature = FanboyNotification
+    feature._create_key(feature)
+
+    html = {
+        "html": """
+<link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='/build/push.js' type='text/css' media='all' />
+<link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='/notification-ext.' type='text/css' media='all' />
+<link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='indianexpress.com' type='text/css' media='all' />
+""",
+        "har": "",
+        "url": "",
+        "headers": "{}",
+    }
+    expected = {
+        feature.key: {
+            "values": [
+                "/build/push.js",
+                "/notification-ext.",
+            ],
+            "excluded_values": [],
+            "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}
+        }
+    }
+
+    are_values_correct, runs_fast_enough = _test_feature(
+        feature_class=feature, html=html, expectation=expected
+    )
+    assert are_values_correct and runs_fast_enough
+
+
+"""
+--------------------------------------------------------------------------------
+"""
+
+
+def test_reg_wall():
+    feature = RegWall
+    feature._create_key(feature)
+
+    html = {
+        "html": """
+<link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='regwall' type='text/css' media='all' />
+<link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='registerbtn' type='text/css' media='all' />
+""",
+        "har": "",
+        "url": "",
+        "headers": "{}",
+    }
+    expected = {
+        feature.key: {
+            "values": ["register", "regwall", "registerbtn"],
+            "excluded_values": [],
             "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}
         }
     }
