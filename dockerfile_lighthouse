@@ -1,7 +1,7 @@
 FROM femtopixel/google-chrome-headless AS FEMTOPIXEL
 
 USER root
-# Install deps + add Chrome Stable + purge all the things
+
 RUN rm -rf /var/lib/apt/lists/* && \
   apt-get update && \
   apt-get remove gnupg -y && apt-get install --reinstall gnupg2 dirmngr --allow-unauthenticated -y && \
@@ -21,14 +21,12 @@ RUN apt-get update || : && \
     apt-get install python3 -y && \
     apt-get install g++ python3-dev libxml2 libxml2-dev libffi-dev libssl-dev libxslt-dev -y && \
     apt-get install python3-pip -y
-# RUN apt-get install openssl-dev -y
 
 RUN apt-get install curl -y
 
 COPY requirements.txt requirements.txt
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Run Chrome non-privileged
 USER chrome
 
 ENV CHROME_FLAGS="--headless --disable-gpu --no-sandbox"

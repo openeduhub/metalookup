@@ -36,7 +36,7 @@ class ProcessToDaemonCommunication:
         return False
 
     def get_message(self, uuid: UUID) -> Optional[dict]:
-        tries = 1  # TODO: possible growing dict with each failed attempt
+        tries = 1
         self._receive_message()
         while uuid not in self._request_queue.keys() and tries <= API_RETRIES:
             print(f"waited {tries} times for {uuid}")
