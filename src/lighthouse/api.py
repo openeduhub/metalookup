@@ -5,17 +5,22 @@ import uvicorn as uvicorn
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
-from lib.constants import ACCESSIBILITY, DESKTOP, SCORE
+from lib.constants import (
+    ACCESSIBILITY,
+    DESKTOP,
+    LIGHTHOUSE_EXTRACTOR,
+    SCORE,
+    VERSION,
+)
+from lib.settings import LIGHTHOUSE_API_PORT
 
-app = FastAPI(title="Lighthouse Extractor", version="0.1")
-
-API_PORT = 5058
+app = FastAPI(title=LIGHTHOUSE_EXTRACTOR, version=str(VERSION))
 
 
 class Output(BaseModel):
     score: float = Field(
         default=-1,
-        description="The accessibility score.",
+        description=f"The {ACCESSIBILITY} score.",
     )
 
 
@@ -31,7 +36,7 @@ class Input(BaseModel):
     )
 
 
-@app.get("/accessibility", response_model=Output)
+@app.get(f"/{ACCESSIBILITY}", response_model=Output)
 def accessibility(input_data: Input):
     url = input_data.url
     strategy = input_data.strategy
@@ -76,4 +81,7 @@ def ping():
     return {"status": "ok"}
 
 
-uvicorn.run(app, host="0.0.0.0", port=API_PORT, log_level="info")
+if __name__ == "__main__":
+    uvicorn.run(
+        app, host="0.0.0.0", port=LIGHTHOUSE_API_PORT, log_level="info"
+    )

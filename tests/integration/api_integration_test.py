@@ -41,7 +41,7 @@ def test_ping_container():
         "GET",
         DOCKER_TEST_URL + "_ping",
         headers=DOCKER_TEST_HEADERS,
-        timeout=60,
+        timeout=1,
     )
     api_process.terminate()
     api_process.join()

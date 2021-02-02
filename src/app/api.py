@@ -13,9 +13,11 @@ from lib.constants import (
     MESSAGE_HEADERS,
     MESSAGE_HTML,
     MESSAGE_URL,
+    METADATA_EXTRACTOR,
     PROBABILITY,
     TIME_REQUIRED,
     VALUES,
+    VERSION,
 )
 from lib.timing import get_utc_now
 
@@ -235,7 +237,7 @@ class Output(BaseModel):
     )
 
 
-app = FastAPI(title="Metadata Extractor", version="0.1")
+app = FastAPI(title=METADATA_EXTRACTOR, version=VERSION)
 app.communicator: QueueCommunicator
 
 
@@ -293,7 +295,7 @@ def extract_meta(input_data: Input):
 
     else:
         extractor_tags = None
-        exception = "No response from metadata extractor."
+        exception = f"No response from {METADATA_EXTRACTOR}."
 
     out = Output(
         url=input_data.url,

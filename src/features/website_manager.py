@@ -15,6 +15,7 @@ from lib.constants import (
     MESSAGE_HTML,
     MESSAGE_URL,
 )
+from lib.settings import SPLASH_HEADERS, SPLASH_URL
 
 
 @dataclass
@@ -56,12 +57,6 @@ class Singleton:
 @Singleton
 class WebsiteManager:
     website_data: WebsiteData
-
-    SPLASH_URL = "http://splash:8050"
-    SPLASH_HEADERS = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36"
-    }
 
     def __init__(self):
         super().__init__()
@@ -133,12 +128,12 @@ class WebsiteManager:
 
     def _get_html_and_har(self, url):
         splash_url = (
-            f"{self.SPLASH_URL}/render.json?url={url}&html={1}&iframes={1}"
+            f"{SPLASH_URL}/render.json?url={url}&html={1}&iframes={1}"
             f"&har={1}&response_body={1}&wait={1}"
         )
 
         response = requests.get(
-            url=splash_url, headers=self.SPLASH_HEADERS, params={}
+            url=splash_url, headers=SPLASH_HEADERS, params={}
         )
 
         data = json.loads(response.content.decode("UTF-8"))

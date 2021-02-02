@@ -35,5 +35,6 @@ WORKDIR /home/chrome
 
 COPY src/lighthouse/api.py .
 COPY src/lib/constants.py lib/
+COPY src/lib/settings.py lib/
 
 CMD python3 api.py

@@ -11,6 +11,7 @@ from features.metadata_base import (
 )
 from features.website_manager import WebsiteData
 from lib.constants import ACCESSIBILITY, DESKTOP, MESSAGE_URL, SCORE, VALUES
+from lib.settings import LIGHTHOUSE_API_PORT
 
 
 class Accessibility(MetadataBase):
@@ -41,7 +42,9 @@ class Accessibility(MetadataBase):
             "category": ACCESSIBILITY,
             "strategy": strategy,
         }
-        container_url = f"http://{ACCESSIBILITY}:5058/{ACCESSIBILITY}"
+        container_url = (
+            f"http://{ACCESSIBILITY}:{LIGHTHOUSE_API_PORT}/{ACCESSIBILITY}"
+        )
 
         try:
             process = await session.get(

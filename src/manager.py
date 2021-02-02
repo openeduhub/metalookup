@@ -15,6 +15,7 @@ from lib.timing import get_utc_now
 
 class Manager:
     run_loop: bool = False
+    api_process: multiprocessing.Process
 
     def __init__(self):
 
@@ -27,18 +28,17 @@ class Manager:
         self.run_loop = True
 
         self._logger.info("Manager set up and waiting for data.")
-        print("Manager set up and waiting for data.")
 
         self.run()
 
     def _create_api(self):
         self.api_to_manager_queue = multiprocessing.Queue()
         self.manager_to_api_queue = multiprocessing.Queue()
-        api_process = multiprocessing.Process(
+        self.api_process = multiprocessing.Process(
             target=api_server,
             args=(self.api_to_manager_queue, self.manager_to_api_queue),
         )
-        api_process.start()
+        self.api_process.start()
 
     # =========== LOOP ============
     def handle_content(self, request):
@@ -77,6 +77,8 @@ class Manager:
 
     def _graceful_shutdown(self, signum=None, frame=None):
         self.run_loop = False
+        self.api_process.terminate()
+        self.api_process.join()
 
 
 def api_server(queue, return_queue):
