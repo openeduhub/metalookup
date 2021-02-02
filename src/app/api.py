@@ -17,8 +17,8 @@ from lib.constants import (
     PROBABILITY,
     TIME_REQUIRED,
     VALUES,
-    VERSION,
 )
+from lib.settings import VERSION
 from lib.timing import get_utc_now
 
 
@@ -241,14 +241,17 @@ app = FastAPI(title=METADATA_EXTRACTOR, version=VERSION)
 app.communicator: QueueCommunicator
 
 
-def _convert_dict_to_output_model(meta, debug: bool = False) -> ExtractorTags:
-    out = ExtractorTags()
+def _convert_dict_to_output_model(
+    meta: dict, debug: bool = False
+) -> ExtractorTags:
+    extractor_tags = ExtractorTags()
     for key in ExtractorTags.__fields__.keys():
         if key in meta.keys() and VALUES in meta[key]:
 
             if not debug or TIME_REQUIRED not in meta[key].keys():
                 meta[key][TIME_REQUIRED] = None
-            out.__setattr__(
+
+            extractor_tags.__setattr__(
                 key,
                 MetadataTags(
                     values=meta[key][VALUES],
@@ -258,7 +261,7 @@ def _convert_dict_to_output_model(meta, debug: bool = False) -> ExtractorTags:
                 ),
             )
 
-    return out
+    return extractor_tags
 
 
 def _convert_allow_list_to_dict(allow_list: ListTags) -> dict:

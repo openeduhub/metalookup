@@ -2,6 +2,7 @@ import json
 import os
 import re
 from dataclasses import dataclass, field
+from typing import NoReturn
 from urllib.parse import urlparse
 
 import requests
@@ -37,7 +38,7 @@ class WebsiteData:
 class Singleton:
     _instance = None
 
-    def __init__(self, cls):
+    def __init__(self, cls) -> None:
         self._class = cls
 
     def get_instance(self):
@@ -45,12 +46,12 @@ class Singleton:
             self._instance = self._class()
         return self._instance
 
-    def __call__(self):
+    def __call__(self) -> NoReturn:
         raise TypeError(
             "Singletons must only be accessed through `get_instance()`."
         )
 
-    def __instancecheck__(self, inst):
+    def __instancecheck__(self, inst) -> bool:
         return isinstance(inst, self._class)
 
 
@@ -58,10 +59,10 @@ class Singleton:
 class WebsiteManager:
     website_data: WebsiteData
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
-        self.website_data = WebsiteData()
+        self.reset()
 
     def load_raw_data(self, message: dict = None) -> None:
         if message is None:
@@ -69,7 +70,7 @@ class WebsiteManager:
 
         if self.website_data.url == "":
             self.website_data.url = message[MESSAGE_URL]
-            self._extract_host_name()
+            self._extract_top_level_domain()
 
         if (
             self.website_data.raw_header == ""
@@ -93,14 +94,14 @@ class WebsiteManager:
         if message[MESSAGE_HAR] != "" and not self.website_data.har:
             self._load_har(message[MESSAGE_HAR])
 
-    def _extract_host_name(self):
+    def _extract_top_level_domain(self) -> None:
         try:
             extractor = TLDExtract(cache_dir=False)
             self.website_data.top_level_domain = extractor(
                 url=self.website_data.url
             ).domain
         except (ConnectionError, SuffixListNotFound, ValueError) as e:
-            print(f"Cannot extract host name because '{e.args}'")
+            print(f"Cannot extract top_level_domain because '{e.args}'")
             self.website_data.top_level_domain = ""
 
     def _preprocess_header(self) -> None:
@@ -126,7 +127,8 @@ class WebsiteManager:
         header = json.loads(header)
         self.website_data.headers = header
 
-    def _get_html_and_har(self, url):
+    @staticmethod
+    def _get_html_and_har(url: str) -> dict:
         splash_url = (
             f"{SPLASH_URL}/render.json?url={url}&html={1}&iframes={1}"
             f"&har={1}&response_body={1}&wait={1}"
@@ -149,12 +151,12 @@ class WebsiteManager:
             MESSAGE_HAR: har,
         }
 
-    def _create_html_soup(self):
+    def _create_html_soup(self) -> None:
         self.website_data.soup = BeautifulSoup(
             self.website_data.html, "html.parser"
         )
 
-    def _extract_raw_links(self):
+    def _extract_raw_links(self) -> None:
         tags = {tag.name for tag in self.website_data.soup.find_all()}
         attributes = [
             "href",
@@ -193,7 +195,7 @@ class WebsiteManager:
             for image in self.website_data.soup.findAll("img")
         ]
 
-    def _extract_extensions(self):
+    def _extract_extensions(self) -> None:
         file_extensions = [
             os.path.splitext(urlparse(link)[2])[-1]
             for link in self.website_data.raw_links

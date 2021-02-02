@@ -21,3 +21,4 @@ API_RETRIES = 180
 
 # Performance
 WANT_PROFILING = False
+VERSION = 0.2

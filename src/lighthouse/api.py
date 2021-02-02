@@ -5,14 +5,8 @@ import uvicorn as uvicorn
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
-from lib.constants import (
-    ACCESSIBILITY,
-    DESKTOP,
-    LIGHTHOUSE_EXTRACTOR,
-    SCORE,
-    VERSION,
-)
-from lib.settings import LIGHTHOUSE_API_PORT
+from lib.constants import ACCESSIBILITY, DESKTOP, LIGHTHOUSE_EXTRACTOR, SCORE
+from lib.settings import LIGHTHOUSE_API_PORT, VERSION
 
 app = FastAPI(title=LIGHTHOUSE_EXTRACTOR, version=str(VERSION))
 

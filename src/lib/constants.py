@@ -21,4 +21,3 @@ SCORE = "score"
 
 METADATA_EXTRACTOR = "metadata_extractor"
 LIGHTHOUSE_EXTRACTOR = "lighthouse_extractor"
-VERSION = 0.2

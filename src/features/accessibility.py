@@ -4,11 +4,7 @@ from json import JSONDecodeError
 
 from aiohttp import ClientConnectorError, ClientSession
 
-from features.metadata_base import (
-    MetadataBase,
-    MetadataBaseException,
-    ProbabilityDeterminationMethod,
-)
+from features.metadata_base import MetadataBase, ProbabilityDeterminationMethod
 from features.website_manager import WebsiteData
 from lib.constants import ACCESSIBILITY, DESKTOP, MESSAGE_URL, SCORE, VALUES
 from lib.settings import LIGHTHOUSE_API_PORT
@@ -21,7 +17,7 @@ class Accessibility(MetadataBase):
     decision_threshold = 0.8
     call_async = True
 
-    def extract_score(self, score_text, status_code):
+    def extract_score(self, score_text: str, status_code: int) -> float:
         try:
             score = [float(json.loads(score_text)[SCORE])]
         except (JSONDecodeError, KeyError, ValueError, TypeError):
@@ -51,9 +47,7 @@ class Accessibility(MetadataBase):
                 url=container_url, timeout=60, json=params
             )
         except (ClientConnectorError, ConnectionRefusedError, OSError):
-            raise MetadataBaseException(
-                "No connection to accessibility container."
-            )
+            raise ConnectionError("No connection to accessibility container.")
 
         status_code = process.status
 

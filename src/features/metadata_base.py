@@ -27,12 +27,6 @@ class ExtractionMethod(Enum):
     USE_ADBLOCK_PARSER = 2
 
 
-class MetadataBaseException(Exception):
-    """Base class for exceptions coming from a metadata class."""
-
-    pass
-
-
 class MetadataBase:
     """
     Base class for features to be extracted.
@@ -78,7 +72,7 @@ class MetadataBase:
         "domain": "",
     }
 
-    def _create_key(self):
+    def _create_key(self) -> None:
         self.key = re.sub(
             r"(?<!^)(?=[A-Z])", "_", self.__class__.__name__
         ).lower()
@@ -192,19 +186,15 @@ class MetadataBase:
         )
         return data
 
-    def _work_header(self, header):
+    def _work_header(self, header: dict) -> list:
         values = []
         if len(self.tag_list) == 1:
-            if self.tag_list[0].lower() in header:
-                values = header[self.tag_list[0].lower()]
+            if self.tag_list[0] in header:
+                values = header[self.tag_list[0]]
                 if not isinstance(values, list):
                     values = [values]
         else:
-            values = [
-                header[ele.lower()]
-                for ele in self.tag_list
-                if ele.lower() in header
-            ]
+            values = [header[ele] for ele in self.tag_list if ele in header]
         return values
 
     @staticmethod
@@ -297,7 +287,7 @@ class MetadataBase:
                 tag_list = []
         return tag_list
 
-    def _extract_date_from_list(self):
+    def _extract_date_from_list(self) -> None:
         expires_expression = re.compile(
             r"[!#:]\sExpires[:=]\s?(\d+)\s?\w{0,4}"
         )
@@ -320,16 +310,17 @@ class MetadataBase:
                 break
 
     def _prepare_tag_list(self) -> None:
-        self.tag_list = [i for i in self.tag_list if i != ""]
+        tag_list = [
+            el.lower()
+            for el in self.tag_list
+            if el != ""
+            and (
+                self.comment_symbol == ""
+                or not el.startswith(self.comment_symbol)
+            )
+        ]
 
-        self.tag_list = list(OrderedDict.fromkeys(self.tag_list))
-
-        if self.comment_symbol != "":
-            self.tag_list = [
-                x
-                for x in self.tag_list
-                if not x.startswith(self.comment_symbol)
-            ]
+        self.tag_list = list(OrderedDict.fromkeys(tag_list))
 
     async def _setup_downloads(self) -> None:
         async with ClientSession() as session:

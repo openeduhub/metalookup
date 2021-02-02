@@ -17,7 +17,7 @@ class Manager:
     run_loop: bool = False
     api_process: multiprocessing.Process
 
-    def __init__(self):
+    def __init__(self) -> None:
 
         self._logger = create_logger()
 
@@ -31,17 +31,17 @@ class Manager:
 
         self.run()
 
-    def _create_api(self):
+    def _create_api(self) -> None:
         self.api_to_manager_queue = multiprocessing.Queue()
         self.manager_to_api_queue = multiprocessing.Queue()
         self.api_process = multiprocessing.Process(
-            target=api_server,
+            target=launch_api_server,
             args=(self.api_to_manager_queue, self.manager_to_api_queue),
         )
         self.api_process.start()
 
     # =========== LOOP ============
-    def handle_content(self, request):
+    def _handle_content(self, request: dict) -> None:
 
         self._logger.info(f"Received request: {request}")
         for uuid, message in request.items():
@@ -55,11 +55,11 @@ class Manager:
             profiler.disable()
             self._logger.debug(f"stats: {profiler.print_stats()}")
 
-    def get_api_request(self):
+    def _handle_api_request(self) -> None:
         try:
             request = self.api_to_manager_queue.get(block=True, timeout=None)
             if isinstance(request, dict):
-                self.handle_content(request)
+                self._handle_content(request)
         except Empty:
             self._logger.debug("api_to_manager_queue was Empty.")
         except AttributeError:
@@ -67,21 +67,23 @@ class Manager:
                 "Probably, api <-> manager queues are None."
             )
 
-    def run(self):
+    def run(self) -> None:
         signal.signal(signal.SIGINT, self._graceful_shutdown)
         signal.signal(signal.SIGTERM, self._graceful_shutdown)
 
         while self.run_loop:
-            self.get_api_request()
+            self._handle_api_request()
             self._logger.info(f"Current time: {get_utc_now()}")
 
-    def _graceful_shutdown(self, signum=None, frame=None):
+    def _graceful_shutdown(self, signum=None, frame=None) -> None:
         self.run_loop = False
         self.api_process.terminate()
         self.api_process.join()
 
 
-def api_server(queue, return_queue):
+def launch_api_server(
+    queue: multiprocessing.Queue, return_queue: multiprocessing.Queue
+) -> None:
     app.communicator = QueueCommunicator(queue, return_queue)
     uvicorn.run(app, host="0.0.0.0", port=API_PORT, log_level="info")
 

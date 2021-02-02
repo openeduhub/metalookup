@@ -51,8 +51,10 @@ class ExtractFromFiles(MetadataBase):
     ]
 
     @staticmethod
-    def _get_xml_body(soup, xml_file):
-        body = None
+    def _get_xml_body(
+        soup: BeautifulSoup, xml_file: zipfile.ZipInfo
+    ) -> BeautifulSoup:
+        body = BeautifulSoup()
         if xml_file.filename == "word/document.xml":
             body = soup.document.body
         elif xml_file.filename == "word/footer1.xml":
@@ -62,23 +64,24 @@ class ExtractFromFiles(MetadataBase):
         return body
 
     @staticmethod
-    def _extract_xml_content(document, xml_file):
+    def _extract_xml_content(
+        document: zipfile.ZipFile, xml_file: zipfile.ZipInfo
+    ) -> list:
         content = document.read(xml_file, pwd=None).decode()
         soup = BeautifulSoup(content, "xml")
 
         body = ExtractFromFiles._get_xml_body(soup, xml_file)
-
-        if body:
-            return [tag.string for tag in body.find_all("t")]
-        return []
+        return [tag.string for tag in body.find_all("t")]
 
     @staticmethod
-    def _extract_image_content(document, xml_file):
+    def _extract_image_content(
+        document: zipfile.ZipFile, xml_file: zipfile.ZipInfo
+    ) -> dict:
         image = document.read(xml_file, pwd=None)
         image = base64.b64encode(image).decode()
         return {xml_file.filename: image}
 
-    def _extract_docx(self, filename) -> dict:
+    def _extract_docx(self, filename: str) -> dict:
         document = zipfile.ZipFile(filename)
 
         extracted_content = []
@@ -94,7 +97,9 @@ class ExtractFromFiles(MetadataBase):
 
         return {"extracted_content": extracted_content, "images": images}
 
-    def _get_pdf_content(self, filename, pdf_file):
+    def _get_pdf_content(
+        self, filename: str, pdf_file: PyPDF2.PdfFileReader
+    ) -> str:
         extracted_content = f"{pdf_file.getDocumentInfo()}"
         data = pdf_file.getXmpMetadata()
         for parameter in self.xmp_metadata:
@@ -103,7 +108,7 @@ class ExtractFromFiles(MetadataBase):
         return extracted_content
 
     @staticmethod
-    def _get_pdf_images(pdf_file):
+    def _get_pdf_images(pdf_file: PyPDF2.PdfFileReader) -> list:
         images = []
         for page in range(pdf_file.getNumPages()):
             pdf_page = pdf_file.getPage(page)
@@ -114,7 +119,7 @@ class ExtractFromFiles(MetadataBase):
                     images += obj
         return images
 
-    def _extract_pdfs(self, filename) -> dict:
+    def _extract_pdfs(self, filename: str) -> dict:
         try:
             pdf_file = PyPDF2.PdfFileReader(open(filename, "rb"))
             extracted_content = self._get_pdf_content(filename, pdf_file)
@@ -127,7 +132,7 @@ class ExtractFromFiles(MetadataBase):
         return content
 
     async def _download_file(
-        self, file_url, filename, session: ClientSession
+        self, file_url: str, filename: str, session: ClientSession
     ) -> None:
         result = await session.get(url=file_url)
         if result.status != 200:
@@ -136,7 +141,8 @@ class ExtractFromFiles(MetadataBase):
             )
         open(filename, "wb").write(await result.read())
 
-    async def _process_file(self, file, session: ClientSession) -> str:
+    # TODO: Typing
+    async def _process_file(self, file: str, session: ClientSession) -> str:
         filename = os.path.basename(urlparse(file).path)
         extension = filename.split(".")[-1]
         await self._download_file(file, filename, session)
@@ -153,16 +159,14 @@ class ExtractFromFiles(MetadataBase):
             return filename
         return ""
 
-    async def _work_files(self, files):
-        values = {VALUES: []}
-
-        tasks = []
-
+    async def _work_files(self, files: list) -> dict:
         async with ClientSession() as session:
+            tasks = []
             for file in files:
                 tasks.append(self._process_file(file, session))
             extractable_files = await asyncio.gather(*tasks)
 
+        values = {VALUES: []}
         [
             values[VALUES].append(file)
             for file in extractable_files
@@ -172,7 +176,7 @@ class ExtractFromFiles(MetadataBase):
         return values
 
     @staticmethod
-    def _get_extractable_files(website_data: WebsiteData):
+    def _get_extractable_files(website_data: WebsiteData) -> list:
         file_extensions = [
             os.path.splitext(link)[-1] for link in website_data.raw_links
         ]

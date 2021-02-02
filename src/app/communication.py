@@ -16,24 +16,22 @@ class QueueCommunicator:
         self._receive_queue = receive_queue
         self._request_queue = {}
 
-    def send_message(self, message: dict):
-        uuid = uuid4()
+    def send_message(self, message: dict) -> Optional[UUID]:
         try:
+            uuid = uuid4()
             self._send_queue.put({uuid: message}, block=True, timeout=1)
-            return uuid
         except queue.Full:
-            return None
+            uuid = None
+        return uuid
 
-    def _receive_message(self) -> bool:
+    def _receive_message(self) -> None:
         try:
             response = self._receive_queue.get(block=True, timeout=1)
             if isinstance(response, dict):
                 for uuid, message in response.items():
                     self._request_queue.update({uuid: message})
-                    return True
         except queue.Empty:
             print("Queue empty")
-        return False
 
     def get_message(self, uuid: UUID) -> Optional[dict]:
         tries = 1
@@ -46,8 +44,8 @@ class QueueCommunicator:
         if uuid in self._request_queue.keys():
             message = self._request_queue[uuid]
             del self._request_queue[uuid]
+        else:
+            message = None
+            print("No return message received")
 
-            return message
-
-        print("No return message received")
-        return None
+        return message

@@ -1,6 +1,7 @@
 import asyncio
 import multiprocessing
 from itertools import repeat
+from logging import Logger
 
 from config.config_manager import ConfigManager
 from features.accessibility import Accessibility
@@ -26,15 +27,17 @@ from features.html_based import (
 )
 from features.javascript import Javascript
 from features.malicious_extensions import MaliciousExtensions
-from features.metadata_base import MetadataBase, MetadataBaseException
+from features.metadata_base import MetadataBase
 from features.website_manager import Singleton, WebsiteManager
 from lib.constants import MESSAGE_ALLOW_LIST
 from lib.logger import create_logger
 from lib.timing import get_utc_now
 
 
-def _parallel_setup(extractor_class, logger) -> MetadataBase:
-    extractor: MetadataBase = extractor_class(logger)
+def _parallel_setup(
+    extractor_class: type(MetadataBase), logger: Logger
+) -> MetadataBase:
+    extractor = extractor_class(logger)
     extractor.setup()
     return extractor
 
@@ -43,7 +46,7 @@ def _parallel_setup(extractor_class, logger) -> MetadataBase:
 class MetadataManager:
     metadata_extractors: list = []
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._logger = create_logger()
         self._create_extractors()
 
@@ -124,8 +127,8 @@ class MetadataManager:
                     message[MESSAGE_ALLOW_LIST], config_manager
                 )
             )
-        except MetadataBaseException as e:
-            exception = f"Extracting metadata raised: '{e.args}'"
+        except ConnectionError as e:
+            exception = f"Connection error extracting metadata: '{e.args}'"
             self._logger.exception(
                 exception,
                 exc_info=True,

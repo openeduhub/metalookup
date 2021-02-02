@@ -37,11 +37,11 @@ def test_init(manager: Manager, mocker):
 
 def test_run(manager: Manager, mocker):
     manager.run = Manager.run
-    manager.get_api_request = mocker.MagicMock()
+    manager._handle_api_request = mocker.MagicMock()
 
     manager.run_loop = False
     manager.run(manager)
-    assert manager.get_api_request.call_count == 0
+    assert manager._handle_api_request.call_count == 0
 
 
 """
@@ -56,7 +56,7 @@ def test_handle_content(manager: Manager, mocker):
     empty_html = "empty_html"
     empty_url = "empty_url"
 
-    manager.handle_content(request)
+    manager._handle_content(request)
 
     assert (
         manager.metadata_manager.get_instance().load_raw_data.call_count == 0
@@ -75,7 +75,7 @@ def test_handle_content(manager: Manager, mocker):
 
     manager.manager_to_api_queue = mocker.MagicMock()
     manager.metadata_manager = mocker.MagicMock()
-    manager.handle_content(request)
+    manager._handle_content(request)
 
     assert manager.metadata_manager.start.call_count == 1
 
