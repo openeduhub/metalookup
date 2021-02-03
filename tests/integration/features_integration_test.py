@@ -37,7 +37,7 @@ def _test_feature(feature_class, html, expectation) -> tuple[bool, bool]:
     feature.setup()
     website_manager = WebsiteManager.get_instance()
 
-    website_manager.load_raw_data(html)
+    website_manager.load_website_data(html)
 
     if feature.call_async:
         data = asyncio.run(feature.astart())
@@ -112,7 +112,6 @@ def test_paywalls():
     assert are_values_correct and runs_fast_enough
 
 
-# TODO: Currently, no solution to find these manually
 def test_easylist_adult():
     feature = EasylistAdult
     feature._create_key(feature)

@@ -59,7 +59,8 @@ def test_handle_content(manager: Manager, mocker):
     manager._handle_content(request)
 
     assert (
-        manager.metadata_manager.get_instance().load_raw_data.call_count == 0
+        manager.metadata_manager.get_instance().load_website_data.call_count
+        == 0
     )
     assert manager.metadata_manager.get_instance().reset.call_count == 0
 

@@ -10,7 +10,7 @@ class GDPR(MetadataBase):
     decision_threshold = 0.9
 
     @staticmethod
-    def _is_https_in_url(website_data: WebsiteData) -> tuple[list, list]:
+    def _check_https_in_url(website_data: WebsiteData) -> tuple[list, list]:
         http = "http"
         https = "https"
         https_in_url = https in website_data.url
@@ -32,7 +32,7 @@ class GDPR(MetadataBase):
         return value, http_links
 
     @staticmethod
-    def _has_hsts(website_data: WebsiteData) -> list:
+    def _get_hsts(website_data: WebsiteData) -> list:
         values = []
         strict_transport_security = "strict-transport-security"
         hsts = strict_transport_security in website_data.headers.keys()
@@ -62,7 +62,7 @@ class GDPR(MetadataBase):
         return values
 
     @staticmethod
-    def _has_referrer_policy(website_data: WebsiteData) -> list:
+    def _get_referrer_policy(website_data: WebsiteData) -> list:
         referrer_policy = "referrer-policy"
         rp = referrer_policy in website_data.headers.keys()
         if rp:
@@ -152,12 +152,12 @@ class GDPR(MetadataBase):
         impressum = super()._start(website_data=website_data)[VALUES]
         values = impressum
 
-        value, http_links = self._is_https_in_url(website_data=website_data)
+        value, http_links = self._check_https_in_url(website_data=website_data)
         values += value
 
-        values += self._has_hsts(website_data=website_data)
+        values += self._get_hsts(website_data=website_data)
 
-        values += self._has_referrer_policy(website_data=website_data)
+        values += self._get_referrer_policy(website_data=website_data)
 
         values += self._find_fonts(website_data=website_data)
 

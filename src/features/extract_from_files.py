@@ -141,7 +141,6 @@ class ExtractFromFiles(MetadataBase):
             )
         open(filename, "wb").write(await result.read())
 
-    # TODO: Typing
     async def _process_file(self, file: str, session: ClientSession) -> str:
         filename = os.path.basename(urlparse(file).path)
         extension = filename.split(".")[-1]

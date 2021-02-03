@@ -65,7 +65,7 @@ class WebsiteManager:
 
         self.reset()
 
-    def load_raw_data(self, message: dict = None) -> None:
+    def load_website_data(self, message: dict = None) -> None:
         if message is None:
             message = {}
 

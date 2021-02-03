@@ -49,9 +49,9 @@ class MetadataManager:
 
     def __init__(self) -> None:
         self._logger = create_logger()
-        self._create_extractors()
+        self._setup_extractors()
 
-    def _create_extractors(self) -> None:
+    def _setup_extractors(self) -> None:
 
         extractors = [
             Advertisement,
@@ -114,7 +114,7 @@ class MetadataManager:
     def start(self, message: dict) -> dict:
 
         website_manager = WebsiteManager.get_instance()
-        website_manager.load_raw_data(message=message)
+        website_manager.load_website_data(message=message)
 
         config_manager = ConfigManager.get_instance()
         config_manager.top_level_domain = (
