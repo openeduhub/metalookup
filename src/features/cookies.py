@@ -19,7 +19,7 @@ class Cookies(MetadataBase):
 
         return {VALUES: [cookie for cookie in raw_cookies if cookie]}
 
-    def _calculate_probability(self, website_data: WebsiteData) -> float:
+    def _decide(self, website_data: WebsiteData) -> tuple[bool, float]:
         insecure_cookies = []
 
         for cookie in website_data.values:
@@ -32,4 +32,5 @@ class Cookies(MetadataBase):
         probability = 0
         if len(insecure_cookies) > 0:
             probability = 1
-        return probability
+        decision = probability > self.decision_threshold
+        return decision, probability

@@ -1,5 +1,6 @@
 import asyncio
 import multiprocessing
+import traceback
 from itertools import repeat
 from logging import Logger
 
@@ -121,28 +122,33 @@ class MetadataManager:
         )
 
         starting_extraction = get_utc_now()
-        try:
-            extracted_meta_data = asyncio.run(
-                self._extract_meta_data(
-                    message[MESSAGE_ALLOW_LIST], config_manager
+        if website_manager.website_data.html == "":
+            exception = "Empty html. Potentially, splash failed."
+            extracted_meta_data = {"exception": exception}
+        else:
+            try:
+                extracted_meta_data = asyncio.run(
+                    self._extract_meta_data(
+                        message[MESSAGE_ALLOW_LIST], config_manager
+                    )
                 )
-            )
-        except ConnectionError as e:
-            exception = f"Connection error extracting metadata: '{e.args}'"
-            self._logger.exception(
-                exception,
-                exc_info=True,
-            )
-            extracted_meta_data = {"exception": exception}
-        except Exception as e:
-            exception = (
-                f"Unknown exception from extracting metadata: '{e.args}'"
-            )
-            self._logger.exception(
-                exception,
-                exc_info=True,
-            )
-            extracted_meta_data = {"exception": exception}
+            except ConnectionError as e:
+                exception = f"Connection error extracting metadata: '{e.args}'"
+                self._logger.exception(
+                    exception,
+                    exc_info=True,
+                )
+                extracted_meta_data = {"exception": exception}
+            except Exception as e:
+                exception = (
+                    f"Unknown exception from extracting metadata: '{e.args}'. "
+                    f"{''.join(traceback.format_exception(None, e, e.__traceback__))}"
+                )
+                self._logger.exception(
+                    exception,
+                    exc_info=True,
+                )
+                extracted_meta_data = {"exception": exception}
 
         extracted_meta_data.update(
             {

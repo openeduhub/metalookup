@@ -173,23 +173,24 @@ class GDPR(MetadataBase):
 
         return {VALUES: list(set(flat_values)), "http_links": http_links}
 
-    def _calculate_probability(self, website_data: WebsiteData) -> float:
-        probability = 0.5
+    def _decide(self, website_data: WebsiteData) -> tuple[bool, float]:
+        decision_indicator = 0.5
 
         if (
             "https_in_url" not in website_data.values
             or "hsts" not in website_data.values
             or "impressum" not in website_data.values
         ):
-            probability = 0
+            decision_indicator = 0
         elif (
             "max_age" not in website_data.values
             or "found_no_fonts" in website_data.values
             or "found_no_inputs" in website_data.values
         ):
-            probability -= 0.1
+            decision_indicator -= 0.1
 
-        if probability < 0:
-            probability = 0
+        if decision_indicator < 0:
+            decision_indicator = 0
 
-        return probability
+        decision = decision_indicator > self.decision_threshold
+        return decision, decision_indicator

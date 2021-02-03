@@ -2,6 +2,7 @@ import json
 import os
 import re
 from dataclasses import dataclass, field
+from json import JSONDecodeError
 from typing import NoReturn
 from urllib.parse import urlparse
 
@@ -134,11 +135,16 @@ class WebsiteManager:
             f"&har={1}&response_body={1}&wait={1}"
         )
 
-        response = requests.get(
-            url=splash_url, headers=SPLASH_HEADERS, params={}
-        )
+        try:
+            response = requests.get(
+                url=splash_url, headers=SPLASH_HEADERS, params={}
+            )
+            data = json.loads(response.content.decode("UTF-8"))
+        except (JSONDecodeError, OSError):
+            data = {}
+        except Exception:
+            raise ConnectionError
 
-        data = json.loads(response.content.decode("UTF-8"))
         try:
             html = data["html"]
             har = str(json.dumps(data["har"]))

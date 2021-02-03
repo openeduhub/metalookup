@@ -190,6 +190,10 @@ class IFrameEmbeddable(MetadataBase):
     key: str = "iframe_embeddable"
     evaluate_header = True
     decision_threshold = 0
+    false_list = ["same-origin", "sameorigin", "deny"]
+    probability_determination_method = (
+        ProbabilityDeterminationMethod.FALSE_LIST
+    )
 
 
 class PopUp(MetadataBase):

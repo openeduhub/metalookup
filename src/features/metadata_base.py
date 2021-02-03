@@ -20,6 +20,8 @@ class ProbabilityDeterminationMethod(Enum):
     NUMBER_OF_ELEMENTS = 1
     SINGLE_OCCURRENCE = 2
     FIRST_VALUE = 3
+    FALSE_LIST = 4
+    MEAN_VALUE = 5
 
 
 class ExtractionMethod(Enum):
@@ -35,6 +37,7 @@ class MetadataBase:
     tag_list: list = []
     tag_list_last_modified = ""
     tag_list_expires: int = 0
+    false_list: list = []
     key: str = ""
     url: str = ""
     urls: list = []
@@ -91,15 +94,40 @@ class MetadataBase:
             ratio = 0
         return round(ratio, 2)
 
-    def _calculate_probability(self, website_data: WebsiteData) -> float:
-        probability = -1
+    def _calculate_probability_from_ratio(
+        self, decision_indicator: float
+    ) -> float:
+        return (
+            round(
+                abs(
+                    (decision_indicator - self.decision_threshold)
+                    / (1 - self.decision_threshold)
+                ),
+                2,
+            )
+            if self.decision_threshold != 1
+            else 0
+        )
+
+    def _get_decision(self, decision_indicator: float) -> bool:
+        return (
+            decision_indicator > self.decision_threshold
+            if self.decision_threshold != -1
+            else False
+        )
+
+    def _decide(self, website_data: WebsiteData) -> tuple[bool, float]:
         if (
             self.probability_determination_method
             == ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
         ):
-            probability = self._get_ratio_of_elements(
+            decision_indicator = self._get_ratio_of_elements(
                 website_data=website_data
             )
+            probability = self._calculate_probability_from_ratio(
+                decision_indicator
+            )
+            decision = self._get_decision(decision_indicator)
         elif (
             self.probability_determination_method
             == ProbabilityDeterminationMethod.SINGLE_OCCURRENCE
@@ -109,23 +137,41 @@ class MetadataBase:
                 if (website_data.values and len(website_data.values) > 0)
                 else 0
             )
+            decision = self._get_decision(probability)
         elif (
             self.probability_determination_method
             == ProbabilityDeterminationMethod.FIRST_VALUE
             and len(website_data.values) >= 1
         ):
-            probability = website_data.values[0]
-
-        return probability
-
-    def _decide(self, probability: float) -> bool:
-        if self.decision_threshold == -1 or probability == -1:
-            decision = None
-        elif probability > self.decision_threshold:
+            probability = self._calculate_probability_from_ratio(
+                website_data.values[0]
+            )
+            decision = self._get_decision(website_data.values[0])
+        elif (
+            self.probability_determination_method
+            == ProbabilityDeterminationMethod.MEAN_VALUE
+            and len(website_data.values) >= 1
+        ):
+            mean = round(
+                sum(website_data.values) / (len(website_data.values)), 2
+            )
+            probability = self._calculate_probability_from_ratio(mean)
+            decision = self._get_decision(mean)
+        elif (
+            self.probability_determination_method
+            == ProbabilityDeterminationMethod.FALSE_LIST
+        ):
+            probability = 1
             decision = True
+            for false_element in self.false_list:
+                if false_element in website_data.values:
+                    decision = False
+                    break
         else:
+            probability = 0
             decision = False
-        return decision
+
+        return decision, probability
 
     @staticmethod
     def _prepare_website_data() -> WebsiteData:
@@ -137,11 +183,7 @@ class MetadataBase:
     ) -> dict:
         website_data.values = values[VALUES]
 
-        probability = self._calculate_probability(website_data=website_data)
-        decision = self._decide(probability=probability)
-
-        if not decision:
-            probability = 0
+        decision, probability = self._decide(website_data=website_data)
 
         data = {
             self.key: {
@@ -205,14 +247,34 @@ class MetadataBase:
         values = []
         self.adblockparser_options["domain"] = website_data.top_level_domain
 
+        if self.match_rules.whitelist_re is not None:
+            whitelist_re = self.match_rules.whitelist_re.finditer
+            whitelist_with_options = self.match_rules.whitelist_with_options
+            skip_whitelist = False
+        else:
+            skip_whitelist = True
+            whitelist_re = None
+            whitelist_with_options = None
+
+        blacklist_re = self.match_rules.blacklist_re.finditer
+        blacklist_with_options = self.match_rules.blacklist_with_options
+
         for url in website_data.raw_links:
-            values += [
-                el.group()
-                for el in self.match_rules.blacklist_re.finditer(url)
-            ]
+            if not skip_whitelist:
+                whitelisted = [el.group() for el in whitelist_re(url)]
+                whitelisted += [
+                    rule.raw_rule_text
+                    for rule in whitelist_with_options
+                    if rule.match_url(url, self.adblockparser_options)
+                ]
+                if len(whitelisted) > 0:
+                    self._logger.debug("whitelisted: ", whitelisted)
+                    continue
+
+            values += [el.group() for el in blacklist_re(url)]
             values += [
                 rule.raw_rule_text
-                for rule in self.match_rules.blacklist_with_options
+                for rule in blacklist_with_options
                 if rule.match_url(url, self.adblockparser_options)
             ]
 

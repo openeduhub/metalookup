@@ -194,11 +194,12 @@ class ExtractFromFiles(MetadataBase):
         values = await self._work_files(files=extractable_files)
         return {**values}
 
-    def _calculate_probability(self, website_data: WebsiteData) -> float:
+    def _decide(self, website_data: WebsiteData) -> tuple[bool, float]:
         probability = 0
         extractable_files = self._get_extractable_files(website_data)
 
         if len(website_data.values) > 0:
             probability = len(extractable_files) / len(website_data.values)
 
-        return probability
+        decision = probability > self.decision_threshold
+        return decision, probability

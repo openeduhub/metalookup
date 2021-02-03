@@ -27,12 +27,12 @@ class MetadataTags(BaseModel):
         default=[], description="Raw values found by the metadata extractors."
     )
     probability: float = Field(
-        default=-1,
-        description="The calculated probability that this metadatum is present in the website.",
+        default=0,
+        description="The calculated probability that the decision is certain.",
     )
     decision: bool = Field(
-        default=None,
-        description="A user friendly decision whether or not this metadatum is present in the website.",
+        default=False,
+        description="A user friendly decision whether or not this metadata is present in the website.",
     )
     time_for_completion: Optional[float] = Field(
         default=-1,

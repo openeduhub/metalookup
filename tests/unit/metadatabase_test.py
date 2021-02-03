@@ -3,7 +3,7 @@ from unittest import mock
 import adblockparser
 import pytest
 
-from features.metadata_base import MetadataBase
+from features.metadata_base import MetadataBase, ProbabilityDeterminationMethod
 from features.website_manager import WebsiteData
 
 
@@ -184,3 +184,258 @@ def test_easylist_filter():
     for url, to_be_blocked in urls_to_be_blocked:
         result = rules.should_block(url)  # "http://ads.example.com"
         assert result == to_be_blocked
+
+
+"""
+--------------------------------------------------------------------------------
+"""
+
+
+@pytest.mark.parametrize(
+    "values, decision_threshold, expected_decision, expected_probability",
+    [
+        ([], -1, False, 0),
+        (
+            [0.5],
+            -1,
+            False,
+            1,
+        ),
+        (
+            [0.5, 1],
+            -1,
+            False,
+            1,
+        ),
+        (
+            [0.5],
+            0.5,
+            True,
+            1,
+        ),
+        (
+            [0.5],
+            1,
+            False,
+            1,
+        ),
+    ],
+)
+def test_decide_single(
+    metadatabase: MetadataBase,
+    values,
+    decision_threshold,
+    expected_decision,
+    expected_probability,
+):
+    website_data = WebsiteData()
+
+    website_data.values = values
+    metadatabase.decision_threshold = decision_threshold
+    metadatabase.probability_determination_method = (
+        ProbabilityDeterminationMethod.SINGLE_OCCURRENCE
+    )
+    decision, probability = metadatabase._decide(website_data=website_data)
+
+    assert decision == expected_decision
+    assert probability == expected_probability
+
+
+"""
+--------------------------------------------------------------------------------
+"""
+
+
+@pytest.mark.parametrize(
+    "values, decision_threshold, expected_decision, expected_probability, raw_links",
+    [
+        (
+            [0.5],
+            0,
+            False,
+            0,
+            [],
+        ),
+        (
+            [0.5, 1, 1, 1],
+            0,
+            True,
+            1,
+            [1, 1, 1, 1],
+        ),
+        (
+            [0.5],
+            0,
+            True,
+            0.25,
+            [1, 1, 1, 1],
+        ),
+        (
+            [0.5],
+            0.5,
+            False,
+            0.5,
+            [1, 1, 1, 1],
+        ),
+    ],
+)
+def test_decide_number_of_elements(
+    metadatabase: MetadataBase,
+    values,
+    decision_threshold,
+    expected_decision,
+    expected_probability,
+    raw_links,
+):
+    website_data = WebsiteData()
+
+    website_data.values = values
+    website_data.raw_links = raw_links
+    metadatabase.decision_threshold = decision_threshold
+    metadatabase.probability_determination_method = (
+        ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
+    )
+    decision, probability = metadatabase._decide(website_data=website_data)
+
+    assert decision == expected_decision
+    assert probability == expected_probability
+
+
+"""
+--------------------------------------------------------------------------------
+"""
+
+
+@pytest.mark.parametrize(
+    "values, decision_threshold, expected_decision, expected_probability",
+    [
+        (
+            [0.5],
+            0,
+            True,
+            0.5,
+        ),
+        (
+            [0.5],
+            0.5,
+            False,
+            0,
+        ),
+        (
+            [0.75, 0.1],
+            0.5,
+            True,
+            0.5,
+        ),
+    ],
+)
+def test_first_value(
+    metadatabase: MetadataBase,
+    values,
+    decision_threshold,
+    expected_decision,
+    expected_probability,
+):
+    website_data = WebsiteData()
+
+    website_data.values = values
+    metadatabase.decision_threshold = decision_threshold
+    metadatabase.probability_determination_method = (
+        ProbabilityDeterminationMethod.FIRST_VALUE
+    )
+    decision, probability = metadatabase._decide(website_data=website_data)
+
+    assert decision == expected_decision
+    assert probability == expected_probability
+
+
+"""
+--------------------------------------------------------------------------------
+"""
+
+
+@pytest.mark.parametrize(
+    "values, decision_threshold, expected_decision, expected_probability",
+    [
+        (
+            [0.5],
+            0,
+            True,
+            0.5,
+        ),
+        (
+            [0.5],
+            0.5,
+            False,
+            0,
+        ),
+        (
+            [0.75, 0.25],
+            0.5,
+            False,
+            0,
+        ),
+        (
+            [0.6, 0.8],
+            0.5,
+            True,
+            0.4,
+        ),
+    ],
+)
+def test_mean_value(
+    metadatabase: MetadataBase,
+    values,
+    decision_threshold,
+    expected_decision,
+    expected_probability,
+):
+    website_data = WebsiteData()
+
+    website_data.values = values
+    metadatabase.decision_threshold = decision_threshold
+    metadatabase.probability_determination_method = (
+        ProbabilityDeterminationMethod.MEAN_VALUE
+    )
+    decision, probability = metadatabase._decide(website_data=website_data)
+
+    assert decision == expected_decision
+    assert probability == expected_probability
+
+
+"""
+--------------------------------------------------------------------------------
+"""
+
+
+@pytest.mark.parametrize(
+    "values, decision_threshold, expected_decision, expected_probability, false_list",
+    [
+        ([0.5], 1, True, 1, [0]),
+        ([0.5], 1, False, 1, [0.5]),
+        ([0.5, 0.1, 0, "hello"], 1, False, 1, ["hello"]),
+        ([0.5, 0.1, 0, "hello"], 1, True, 1, ["hell"]),
+        ([0.5, 0.1, 0, "hello"], 1, True, 1, ["0"]),
+        ([0.5, 0.1, 0, "hello"], 1, False, 1, ["0", "hello"]),
+    ],
+)
+def test_false_list(
+    metadatabase: MetadataBase,
+    values,
+    decision_threshold,
+    expected_decision,
+    expected_probability,
+    false_list,
+):
+    website_data = WebsiteData()
+
+    website_data.values = values
+    metadatabase.false_list = false_list
+    metadatabase.decision_threshold = decision_threshold
+    metadatabase.probability_determination_method = (
+        ProbabilityDeterminationMethod.FALSE_LIST
+    )
+    decision, probability = metadatabase._decide(website_data=website_data)
+
+    assert decision == expected_decision
+    assert probability == expected_probability

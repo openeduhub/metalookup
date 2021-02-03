@@ -12,7 +12,7 @@ from lib.settings import LIGHTHOUSE_API_PORT
 
 class Accessibility(MetadataBase):
     probability_determination_method = (
-        ProbabilityDeterminationMethod.FIRST_VALUE
+        ProbabilityDeterminationMethod.MEAN_VALUE
     )
     decision_threshold = 0.8
     call_async = True
