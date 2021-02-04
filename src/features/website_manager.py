@@ -6,6 +6,7 @@ from json import JSONDecodeError
 from typing import NoReturn
 from urllib.parse import urlparse
 
+import bs4
 import requests
 from bs4 import BeautifulSoup
 from tldextract.suffix_list import SuffixListNotFound
@@ -178,22 +179,35 @@ class WebsiteManager:
         links = []
         for tag in tags:
             for el in self.website_data.soup.find_all(tag):
-                if el is not None:
-                    if tag == "script":
-                        matches = script_re.findall(str(el).replace("\n", ""))
-                        if len(matches) > 0:
-                            links += matches
-                    links += [
-                        el.attrs.get(attribute)
-                        for attribute in attributes
-                        if el.has_attr(attribute)
-                    ]
+                links += self._get_raw_link_from_tag_element(
+                    attributes, el, script_re, tag
+                )
 
         self.website_data.raw_links = [
             el
             for el in list(set(links + self.website_data.image_links))
             if el is not None
         ]
+
+    @staticmethod
+    def _get_raw_link_from_tag_element(
+        attributes: list,
+        element: bs4.element.ResultSet,
+        script_re: re.Pattern,
+        tag: BeautifulSoup,
+    ) -> list:
+        links = []
+        if element is not None:
+            if tag == "script":
+                matches = script_re.findall(str(element).replace("\n", ""))
+                if len(matches) > 0:
+                    links += matches
+            links += [
+                element.attrs.get(attribute)
+                for attribute in attributes
+                if element.has_attr(attribute)
+            ]
+        return links
 
     def _extract_images(self) -> None:
         self.website_data.image_links = [

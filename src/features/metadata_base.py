@@ -4,6 +4,7 @@ import re
 from collections import OrderedDict
 from enum import Enum
 from logging import Logger
+from typing import Callable
 from urllib.parse import urlparse
 
 import adblockparser
@@ -132,45 +133,78 @@ class MetadataBase:
             self.probability_determination_method
             == ProbabilityDeterminationMethod.SINGLE_OCCURRENCE
         ):
-            probability = (
-                1
-                if (website_data.values and len(website_data.values) > 0)
-                else 0
+            decision, probability = self._decide_single_occurrence(
+                website_data
             )
-            decision = self._get_decision(probability)
         elif (
             self.probability_determination_method
             == ProbabilityDeterminationMethod.FIRST_VALUE
-            and len(website_data.values) >= 1
         ):
+            decision, probability = self._decide_first_value(website_data)
+        elif (
+            self.probability_determination_method
+            == ProbabilityDeterminationMethod.MEAN_VALUE
+        ):
+            decision, probability = self._decide_mean_value(website_data)
+        elif (
+            self.probability_determination_method
+            == ProbabilityDeterminationMethod.FALSE_LIST
+        ):
+            decision, probability = self._decide_false_list(website_data)
+        else:
+            decision, probability = self._get_default_decision()
+
+        return decision, probability
+
+    def _decide_single_occurrence(
+        self, website_data: WebsiteData
+    ) -> tuple[float, float]:
+        probability = (
+            1 if (website_data.values and len(website_data.values) > 0) else 0
+        )
+        decision = self._get_decision(probability)
+        return decision, probability
+
+    def _decide_first_value(
+        self, website_data: WebsiteData
+    ) -> tuple[float, float]:
+        if len(website_data.values) >= 1:
             probability = self._calculate_probability_from_ratio(
                 website_data.values[0]
             )
             decision = self._get_decision(website_data.values[0])
-        elif (
-            self.probability_determination_method
-            == ProbabilityDeterminationMethod.MEAN_VALUE
-            and len(website_data.values) >= 1
-        ):
+        else:
+            decision, probability = self._get_default_decision()
+        return decision, probability
+
+    def _decide_mean_value(
+        self, website_data: WebsiteData
+    ) -> tuple[float, float]:
+        if len(website_data.values) >= 1:
             mean = round(
                 sum(website_data.values) / (len(website_data.values)), 2
             )
             probability = self._calculate_probability_from_ratio(mean)
             decision = self._get_decision(mean)
-        elif (
-            self.probability_determination_method
-            == ProbabilityDeterminationMethod.FALSE_LIST
-        ):
-            probability = 1
-            decision = True
-            for false_element in self.false_list:
-                if false_element in website_data.values:
-                    decision = False
-                    break
         else:
-            probability = 0
-            decision = False
+            decision, probability = self._get_default_decision()
+        return decision, probability
 
+    def _decide_false_list(
+        self, website_data: WebsiteData
+    ) -> tuple[float, float]:
+        probability = 1
+        decision = True
+        for false_element in self.false_list:
+            if false_element in website_data.values:
+                decision = False
+                break
+        return decision, probability
+
+    @staticmethod
+    def _get_default_decision() -> tuple[float, float]:
+        probability = 0
+        decision = False
         return decision, probability
 
     @staticmethod
@@ -250,9 +284,7 @@ class MetadataBase:
         if self.match_rules.whitelist_re is not None:
             whitelist_re = self.match_rules.whitelist_re.finditer
             whitelist_with_options = self.match_rules.whitelist_with_options
-            skip_whitelist = False
         else:
-            skip_whitelist = True
             whitelist_re = None
             whitelist_with_options = None
 
@@ -260,25 +292,30 @@ class MetadataBase:
         blacklist_with_options = self.match_rules.blacklist_with_options
 
         for url in website_data.raw_links:
-            if not skip_whitelist:
-                whitelisted = [el.group() for el in whitelist_re(url)]
-                whitelisted += [
-                    rule.raw_rule_text
-                    for rule in whitelist_with_options
-                    if rule.match_url(url, self.adblockparser_options)
-                ]
+            if whitelist_re is not None:
+                whitelisted = self._get_list_matches(
+                    url, whitelist_re, whitelist_with_options
+                )
                 if len(whitelisted) > 0:
                     self._logger.debug("whitelisted: ", whitelisted)
                     continue
 
-            values += [el.group() for el in blacklist_re(url)]
-            values += [
-                rule.raw_rule_text
-                for rule in blacklist_with_options
-                if rule.match_url(url, self.adblockparser_options)
-            ]
+            values += self._get_list_matches(
+                url, blacklist_re, blacklist_with_options
+            )
 
         return values
+
+    def _get_list_matches(
+        self, url: str, list_re: Callable, list_with_options: list
+    ) -> list:
+        matches = [el.group() for el in list_re(url)]
+        matches += [
+            rule.raw_rule_text
+            for rule in list_with_options
+            if rule.match_url(url, self.adblockparser_options)
+        ]
+        return matches
 
     def _work_html_content(self, website_data: WebsiteData) -> list:
         values = []

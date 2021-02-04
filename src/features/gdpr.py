@@ -31,34 +31,43 @@ class GDPR(MetadataBase):
             http_links = []
         return value, http_links
 
-    @staticmethod
-    def _get_hsts(website_data: WebsiteData) -> list:
+    def _get_hsts(self, website_data: WebsiteData) -> list:
         values = []
         strict_transport_security = "strict-transport-security"
         hsts = strict_transport_security in website_data.headers.keys()
+        sts = website_data.headers[strict_transport_security]
 
         if hsts:
             values += ["hsts"]
-            sts = website_data.headers[strict_transport_security]
-
-            for key in ["includesubdomains", "preload"]:
-                matches = [element for element in sts if key in element]
-                if len(matches) > 0:
-                    values += [key]
-                else:
-                    values += [f"do_not_{key}"]
-
-            regex = re.compile(r"max-age=(\d*)")
-            try:
-                match = min(
-                    [int(regex.match(element).group(1)) for element in sts]
-                )
-                if match > 10886400:
-                    values += ["max_age"]
-            except AttributeError:
-                values += ["do_not_max_age"]
+            values += self._extract_sts(sts)
+            values += self._extract_max_age(sts)
         else:
             values += ["no_hsts"]
+        return values
+
+    @staticmethod
+    def _extract_max_age(sts: list) -> list:
+        values = []
+        regex = re.compile(r"max-age=(\d*)")
+        try:
+            match = min(
+                [int(regex.match(element).group(1)) for element in sts]
+            )
+            if match > 10886400:
+                values += ["max_age"]
+        except AttributeError:
+            values += ["do_not_max_age"]
+        return values
+
+    @staticmethod
+    def _extract_sts(sts: list) -> list:
+        values = []
+        for key in ["includesubdomains", "preload"]:
+            matches = [element for element in sts if key in element]
+            if len(matches) > 0:
+                values += [key]
+            else:
+                values += [f"do_not_{key}"]
         return values
 
     @staticmethod
