@@ -38,11 +38,11 @@ class GDPR(MetadataBase):
         sts = website_data.headers[strict_transport_security]
 
         if hsts:
-            values += ["hsts"]
-            values += self._extract_sts(sts)
-            values += self._extract_max_age(sts)
+            values.extend(["hsts"])
+            values.extend(self._extract_sts(sts))
+            values.extend(self._extract_max_age(sts))
         else:
-            values += ["no_hsts"]
+            values.extend(["no_hsts"])
         return values
 
     @staticmethod
@@ -54,9 +54,9 @@ class GDPR(MetadataBase):
                 [int(regex.match(element).group(1)) for element in sts]
             )
             if match > 10886400:
-                values += ["max_age"]
+                values.extend(["max_age"])
         except AttributeError:
-            values += ["do_not_max_age"]
+            values.extend(["do_not_max_age"])
         return values
 
     @staticmethod
@@ -108,8 +108,7 @@ class GDPR(MetadataBase):
         found_fonts = []
         for match in matches:
             url_matches = re.findall(url_regex, match)
-            for url_match in url_matches:
-                found_fonts.append(url_match)
+            found_fonts += [url_match for url_match in url_matches]
 
         if len(found_fonts) > 0:
             found_fonts = "found_fonts," + ",".join(found_fonts)
@@ -175,8 +174,7 @@ class GDPR(MetadataBase):
         flat_values = []
         for value in values:
             if isinstance(value, list):
-                for el in value:
-                    flat_values.append(el)
+                flat_values.extend([el for el in value])
             else:
                 flat_values.append(value)
 

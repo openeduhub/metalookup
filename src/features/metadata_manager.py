@@ -29,6 +29,7 @@ from features.html_based import (
 from features.javascript import Javascript
 from features.malicious_extensions import MaliciousExtensions
 from features.metadata_base import MetadataBase
+from features.metatag_explorer import MetatagExplorer
 from features.website_manager import Singleton, WebsiteManager
 from lib.constants import MESSAGE_ALLOW_LIST
 from lib.logger import create_logger
@@ -71,10 +72,11 @@ class MetadataManager:
             PopUp,
             RegWall,
             LogInOut,
-            Accessibility,
             Cookies,
             GDPR,
             Javascript,
+            MetatagExplorer,
+            Accessibility,
         ]
 
         pool = multiprocessing.Pool(processes=6)

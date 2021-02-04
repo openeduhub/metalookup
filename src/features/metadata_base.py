@@ -278,32 +278,14 @@ class MetadataBase:
         return list({a["href"] for a in soup.find_all(href=True)})
 
     def _parse_adblock_rules(self, website_data: WebsiteData) -> list:
-        values = []
         self.adblockparser_options["domain"] = website_data.top_level_domain
-
-        if self.match_rules.whitelist_re is not None:
-            whitelist_re = self.match_rules.whitelist_re.finditer
-            whitelist_with_options = self.match_rules.whitelist_with_options
-        else:
-            whitelist_re = None
-            whitelist_with_options = None
-
-        blacklist_re = self.match_rules.blacklist_re.finditer
-        blacklist_with_options = self.match_rules.blacklist_with_options
-
-        for url in website_data.raw_links:
-            if whitelist_re is not None:
-                whitelisted = self._get_list_matches(
-                    url, whitelist_re, whitelist_with_options
-                )
-                if len(whitelisted) > 0:
-                    self._logger.debug("whitelisted: ", whitelisted)
-                    continue
-
-            values += self._get_list_matches(
-                url, blacklist_re, blacklist_with_options
+        values = [
+            url
+            for url in website_data.raw_links
+            if self.match_rules.should_block(
+                url=url, options=self.adblockparser_options
             )
-
+        ]
         return values
 
     def _get_list_matches(
@@ -324,18 +306,13 @@ class MetadataBase:
         if self.tag_list:
             if self.extraction_method == ExtractionMethod.MATCH_DIRECTLY:
                 html = "".join(website_data.html)
-                values = [ele for ele in self.tag_list if html.find(ele) >= 0]
+                values = [ele for ele in self.tag_list if ele in html]
             elif self.extraction_method == ExtractionMethod.USE_ADBLOCK_PARSER:
                 values = self._parse_adblock_rules(website_data=website_data)
 
         return values
 
     async def _astart(self, website_data: WebsiteData) -> dict:
-        """
-        Intentionally left empty to force user to implement the respective function in the inheriting class.
-        :param website_data:
-        :return:
-        """
         values = self._work_html_content(website_data=website_data)
         return {VALUES: values}
 
@@ -349,16 +326,13 @@ class MetadataBase:
     async def _download_multiple_tag_lists(
         self, session: ClientSession
     ) -> list[str]:
-        tasks = []
-        for url in self.urls:
-            tasks.append(self._download_tag_list(url=url, session=session))
-
+        tasks = [
+            self._download_tag_list(url=url, session=session)
+            for url in self.urls
+        ]
         tag_lists = await asyncio.gather(*tasks)
-        complete_list = []
-        for tag_list in tag_lists:
-            complete_list += tag_list
-
-        return list(set(complete_list))
+        complete_list = list(tag for tag_list in tag_lists for tag in tag_list)
+        return complete_list
 
     async def _download_tag_list(
         self, url: str, session: ClientSession
@@ -435,7 +409,6 @@ class MetadataBase:
     def setup(self) -> None:
         """Child function."""
         asyncio.run(self._setup_downloads())
-
         if self.tag_list:
             self._extract_date_from_list()
             self._prepare_tag_list()

@@ -34,7 +34,12 @@ def _test_feature(feature_class, html, expectation) -> tuple[bool, bool]:
 
     feature = feature_class(_logger)
 
+    before = time.perf_counter()
     feature.setup()
+    print(
+        f"setup for '{feature.__class__.__name__}' took {round(time.perf_counter() - before, 2)}s."
+    )
+
     website_manager = WebsiteManager.get_instance()
 
     website_manager.load_website_data(html)
@@ -44,6 +49,7 @@ def _test_feature(feature_class, html, expectation) -> tuple[bool, bool]:
     else:
         data = feature.start()
 
+    print(data)
     website_manager.reset()
 
     try:
@@ -81,7 +87,7 @@ def test_advertisement():
     }
     expected = {
         feature.key: {
-            "values": ["/xlayer/layer.php?uid=$script"],
+            "values": ["/xlayer/layer.php?uid="],
             "runs_within": 10,  # time the evaluation may take AT MAX -> acceptance test
         },
     }
@@ -155,7 +161,7 @@ if(w.attachEvent){w.attachEvent("onload", loader);}else{w.onload = loader;}})(wi
     }
     expected = {
         feature.key: {
-            "values": ["||iubenda.com^$third-party"],
+            "values": ["https://www.iubenda.com/privacy-policy/24196256"],
             "runs_within": 10,  # time the evaluation may take AT MAX -> acceptance test}
         }
     }
@@ -189,8 +195,9 @@ src='https://cdn.fluidplayer.com/v2/current/fluidplayer.min.js?ver=5.6' id='flui
     expected = {
         feature.key: {
             "values": [
-                "||googletagmanager.com^$image,third-party",
-                "||steadfastsystem.com^$third-party",
+                "//www.googletagmanager.com",
+                "https://steadfastsystem.com/v2/0/mhduybjmgxdp_sqetgngiancnmp1jikdmyyxs_jpndk2hcg_pe_-"
+                "evqw61zu8yejn6n_tszbosci6fkr2dxbj4t-nh35nghifu1tglutsrud8vfduwh1nktjgf3-jvzwhd2mageuq",
             ],
             "excluded_values": [
                 "https://cdn.fluidplayer.com/v2/current/fluidplayer.min.js?ver=5.6"
@@ -339,8 +346,8 @@ id='share-link-js'></script>
     expected = {
         feature.key: {
             "values": [
-                "/social-icons-",
-                "/share-link/share-link.min.js?ver=3.0.15",
+                "https://canyoublockit.com/wp-content/plugins/elementor/assets/lib/share-link/share-link.min.js?ver=3.0.15",
+                "https://canyoublockit.com/wp-content/plugins/social-icons-widget-by-wpzoom/block/dist/blocks.style.build.css\n?ver=1603794146",
             ],
             "excluded_values": [],
             "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}
@@ -494,7 +501,6 @@ def test_easylist_germany():
     expected = {
         feature.key: {
             "values": [
-                "/werbung/*$third-party",
                 "/werbung/banner_",
                 ".at/werbung/",
             ],

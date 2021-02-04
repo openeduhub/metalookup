@@ -52,10 +52,8 @@ def accessibility(input_data: Input):
         stderr=subprocess.STDOUT,
     )
 
-    std_out = []
+    std_out = [line.decode() for line in iter(p.stdout.readline, b"")]
 
-    for line in iter(p.stdout.readline, b""):
-        std_out.append(line.decode())
     std_out = json.loads("".join(std_out))
 
     output = Output()

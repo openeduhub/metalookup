@@ -160,18 +160,10 @@ class ExtractFromFiles(MetadataBase):
 
     async def _work_files(self, files: list) -> dict:
         async with ClientSession() as session:
-            tasks = []
-            for file in files:
-                tasks.append(self._process_file(file, session))
+            tasks = [self._process_file(file, session) for file in files]
             extractable_files = await asyncio.gather(*tasks)
 
-        values = {VALUES: []}
-        [
-            values[VALUES].append(file)
-            for file in extractable_files
-            if file != ""
-        ]
-
+        values = {VALUES: [file for file in extractable_files if file != ""]}
         return values
 
     @staticmethod

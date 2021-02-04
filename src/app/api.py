@@ -63,6 +63,7 @@ class ListTags(BaseModel):
     accessibility: Optional[bool] = True
     g_d_p_r: Optional[bool] = True
     javascript: Optional[bool] = True
+    metatag_explorer: Optional[bool] = True
 
 
 class ExtractorTags(BaseModel):
@@ -192,6 +193,11 @@ class ExtractorTags(BaseModel):
     javascript: MetadataTags = Field(
         default=None,
         description="Alpha. Is there javascript among the files of this website?"
+        "Always False for now",
+    )
+    metatag_explorer: MetadataTags = Field(
+        default=None,
+        description="Alpha. Store meta tags to explore for interesting data"
         "Probability = "
         "Ratio fo javascript files versus all files.",
     )

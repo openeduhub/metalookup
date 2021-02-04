@@ -164,7 +164,6 @@ class WebsiteManager:
         )
 
     def _extract_raw_links(self) -> None:
-        tags = {tag.name for tag in self.website_data.soup.find_all()}
         attributes = [
             "href",
             "src",
@@ -176,16 +175,18 @@ class WebsiteManager:
 
         script_re = re.compile(r"src\=[\"|\']([\w\d\:\/\.\-\?\=]+)[\"|\']")
 
-        links = []
-        for tag in tags:
-            for el in self.website_data.soup.find_all(tag):
-                links += self._get_raw_link_from_tag_element(
-                    attributes, el, script_re, tag
-                )
+        links = {
+            link
+            for tag in self.website_data.soup.find_all()
+            for el in self.website_data.soup.find_all(tag.name)
+            for link in self._get_raw_link_from_tag_element(
+                attributes, el, script_re, tag.name
+            )
+        }
 
         self.website_data.raw_links = [
             el
-            for el in list(set(links + self.website_data.image_links))
+            for el in links | set(self.website_data.image_links)
             if el is not None
         ]
 

@@ -7,17 +7,19 @@ class Cookies(MetadataBase):
     decision_threshold = 0.5
 
     def _start(self, website_data: WebsiteData) -> dict:
-        raw_cookies = []
         try:
             data: list = website_data.har["log"]["entries"]
         except KeyError:
             data = []
-        for element in data:
-            raw_cookies += (
-                element["response"]["cookies"] + element["request"]["cookies"]
-            )
 
-        return {VALUES: [cookie for cookie in raw_cookies if cookie]}
+        raw_cookies = [
+            cookie
+            for element in data
+            for key in ("response", "request")
+            for cookie in element[key]["cookies"]
+        ]
+
+        return {VALUES: raw_cookies}
 
     def _decide(self, website_data: WebsiteData) -> tuple[bool, float]:
         insecure_cookies = []

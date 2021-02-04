@@ -43,13 +43,15 @@ def load_raw_data_and_save_to_dataframe():
         "g_d_p_r",
     ]
     row_names = ["values", "probability", "decision", "time_for_completion"]
-    col_names = []
+    col_names = [
+        f"{key}.{row_name}"
+        for row_name in row_names
+        for key in meta_feature_keys
+    ]
 
-    for key in meta_feature_keys:
-        for row_name in row_names:
-            col_names.append(f"{key}.{row_name}")
-
-    col_names += ["time_until_complete", "time_for_extraction", "exception"]
+    col_names.extend(
+        ["time_until_complete", "time_for_extraction", "exception"]
+    )
 
     print("col_names")
     print(col_names)
