@@ -64,6 +64,17 @@ def _build_and_run_docker():
 
     # time needed for docker to launch and start the REST interface
     # time_for_meta + time_for_lighthouse + time_for_running_parallel_tests
-    time.sleep(0.5 + 0.5 + 1.5)
+    maximum_wait_time = 10
+    start = time.perf_counter()
+    while time.perf_counter() - start < maximum_wait_time:
+        try:
+            subprocess.check_output(
+                "docker ps | grep 'oeh-search-meta_extractor_1'", shell=True
+            )
+        except subprocess.CalledProcessError:
+            print(
+                f"Waited {time.perf_counter() - start}s for containers to launch."
+            )
+            time.sleep(0.1)
 
     os.chdir(current_dir)

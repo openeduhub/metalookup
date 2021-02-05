@@ -18,6 +18,7 @@ from lib.constants import (
     MESSAGE_HTML,
     MESSAGE_URL,
 )
+from lib.logger import create_logger
 from lib.settings import SPLASH_HEADERS, SPLASH_URL
 
 
@@ -63,6 +64,7 @@ class WebsiteManager:
 
     def __init__(self) -> None:
         super().__init__()
+        self._logger = create_logger()
 
         self.reset()
 
@@ -103,7 +105,9 @@ class WebsiteManager:
                 url=self.website_data.url
             ).domain
         except (ConnectionError, SuffixListNotFound, ValueError) as e:
-            print(f"Cannot extract top_level_domain because '{e.args}'")
+            self._logger.error(
+                f"Cannot extract top_level_domain because '{e.args}'"
+            )
             self.website_data.top_level_domain = ""
 
     def _preprocess_header(self) -> None:
@@ -129,8 +133,7 @@ class WebsiteManager:
         header = json.loads(header)
         self.website_data.headers = header
 
-    @staticmethod
-    def _get_html_and_har(url: str) -> dict:
+    def _get_html_and_har(self, url: str) -> dict:
         splash_url = (
             f"{SPLASH_URL}/render.json?url={url}&html={1}&iframes={1}"
             f"&har={1}&response_body={1}&wait={1}"
@@ -141,7 +144,8 @@ class WebsiteManager:
                 url=splash_url, headers=SPLASH_HEADERS, params={}
             )
             data = json.loads(response.content.decode("UTF-8"))
-        except (JSONDecodeError, OSError):
+        except (JSONDecodeError, OSError) as e:
+            self._logger.error(f"Error extracting data from splash: {e.args}")
             data = {}
         except Exception:
             raise ConnectionError
@@ -163,7 +167,41 @@ class WebsiteManager:
             self.website_data.html, "html.parser"
         )
 
+    @staticmethod
+    def _get_unique_list(items: list) -> list:
+        seen = set()
+        for element in range(len(items) - 1, -1, -1):
+            item = items[element]
+            if item in seen:
+                del items[element]
+            else:
+                seen.add(item)
+        return items
+
     def _extract_raw_links(self) -> None:
+
+        script_re = re.compile(r"src\=[\"|\']([\w\d\:\/\.\-\?\=]+)[\"|\']")
+
+        links = [
+            link
+            for tag in self.website_data.soup.find_all()
+            for element in self.website_data.soup.find_all(tag.name)
+            for link in self._get_raw_link_from_tag_element(
+                element, script_re, tag.name
+            )
+            if link is not None
+        ]
+        self.website_data.raw_links = self._get_unique_list(
+            links
+            + [el for el in self.website_data.image_links if el is not None]
+        )
+
+    @staticmethod
+    def _get_raw_link_from_tag_element(
+        element: bs4.element.ResultSet,
+        script_re: re.Pattern,
+        tag: BeautifulSoup,
+    ) -> list:
         attributes = [
             "href",
             "src",
@@ -172,31 +210,6 @@ class WebsiteManager:
             "data-src",
             "data-srcset",
         ]
-
-        script_re = re.compile(r"src\=[\"|\']([\w\d\:\/\.\-\?\=]+)[\"|\']")
-
-        links = {
-            link
-            for tag in self.website_data.soup.find_all()
-            for el in self.website_data.soup.find_all(tag.name)
-            for link in self._get_raw_link_from_tag_element(
-                attributes, el, script_re, tag.name
-            )
-        }
-
-        self.website_data.raw_links = [
-            el
-            for el in links | set(self.website_data.image_links)
-            if el is not None
-        ]
-
-    @staticmethod
-    def _get_raw_link_from_tag_element(
-        attributes: list,
-        element: bs4.element.ResultSet,
-        script_re: re.Pattern,
-        tag: BeautifulSoup,
-    ) -> list:
         links = []
         if element is not None:
             if tag == "script":
@@ -222,7 +235,7 @@ class WebsiteManager:
             for link in self.website_data.raw_links
         ]
         self.website_data.extensions = [
-            x for x in list(set(file_extensions)) if x != ""
+            x for x in self._get_unique_list(file_extensions) if x != ""
         ]
 
     def _load_har(self, har: str) -> None:

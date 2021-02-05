@@ -17,7 +17,7 @@ class Accessibility(MetadataBase):
     decision_threshold = 0.8
     call_async = True
 
-    def extract_score(self, score_text: str, status_code: int) -> float:
+    def extract_score(self, score_text: str, status_code: int) -> list[float]:
         try:
             score = [float(json.loads(score_text)[SCORE])]
         except (JSONDecodeError, KeyError, ValueError, TypeError):

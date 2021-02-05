@@ -32,17 +32,14 @@ class GDPR(MetadataBase):
         return value, http_links
 
     def _get_hsts(self, website_data: WebsiteData) -> list:
-        values = []
         strict_transport_security = "strict-transport-security"
-        hsts = strict_transport_security in website_data.headers.keys()
-        sts = website_data.headers[strict_transport_security]
-
-        if hsts:
-            values.extend(["hsts"])
+        if strict_transport_security in website_data.headers.keys():
+            sts = website_data.headers[strict_transport_security]
+            values = ["hsts"]
             values.extend(self._extract_sts(sts))
             values.extend(self._extract_max_age(sts))
         else:
-            values.extend(["no_hsts"])
+            values = ["no_hsts"]
         return values
 
     @staticmethod

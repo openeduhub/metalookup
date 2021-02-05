@@ -1,9 +1,12 @@
 import json
 import os
+import time
 from json import JSONDecodeError
 
 import pytest
 import requests
+
+from lib.settings import SKIP_E2E_TESTS
 
 if "PRE_COMMIT" in os.environ:
     from test_libs import (
@@ -19,13 +22,14 @@ else:
     )
 
 
-@pytest.mark.skip(
+@pytest.mark.skipif(
+    SKIP_E2E_TESTS,
     reason="""
     This test takes a lot of time, depending on payload etc - 90s are possible (on 20210105
     Furthermore, it is not idempotent, because it depends on internet resources.
     Sometimes it time outs or data changes - simply because of internet traffic or changes in the websites used.
     Execute it manually and investigate in detail.
-    """
+    """,
 )
 def test_e2e():
     url = DOCKER_TEST_URL + "extract_meta"
@@ -67,7 +71,7 @@ def test_e2e():
     assert has_expected_advertisment_decision
 
     has_expected_easy_privacy_values = (
-        len(data["meta"]["easy_privacy"]["values"]) > 10
+        len(data["meta"]["easy_privacy"]["values"]) > 6
     )
     has_expected_easy_privacy_decision = (
         data["meta"]["easy_privacy"]["decision"] is True
@@ -125,7 +129,7 @@ def test_e2e():
     assert has_expected_accessibility_values
     assert has_expected_accessibility_decision
 
-    has_expected_g_d_p_r_values = len(data["meta"]["g_d_p_r"]["values"]) == 7
+    has_expected_g_d_p_r_values = len(data["meta"]["g_d_p_r"]["values"]) >= 7
     has_expected_g_d_p_r_decision = (
         data["meta"]["g_d_p_r"]["decision"] is False
     )

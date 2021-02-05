@@ -237,7 +237,7 @@ class MetadataBase:
         return data
 
     async def astart(self) -> dict:
-        self._logger.info(f"Starting {self.__class__.__name__}")
+        self._logger.info(f"Starting {self.__class__.__name__} async.")
         before = get_utc_now()
 
         website_data = self._prepare_website_data()
@@ -250,7 +250,7 @@ class MetadataBase:
         return data
 
     def start(self) -> dict:
-        self._logger.info(f"Starting {self.__class__.__name__}")
+        self._logger.info(f"Starting {self.__class__.__name__} sync.")
         before = get_utc_now()
 
         website_data = self._prepare_website_data()
@@ -302,7 +302,9 @@ class MetadataBase:
     def _work_html_content(self, website_data: WebsiteData) -> list:
         values = []
 
-        self._logger.info(f"{self.__class__.__name__},{len(self.tag_list)}")
+        self._logger.info(
+            f"Working on html content: {self.__class__.__name__},{len(self.tag_list)}"
+        )
         if self.tag_list:
             if self.extraction_method == ExtractionMethod.MATCH_DIRECTLY:
                 html = "".join(website_data.html)
