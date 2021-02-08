@@ -1,0 +1,6 @@
+site_name: Metadata Extractor
+nav:
+  - Home: 'index.md'
+  - Setup: 'setup.md'
+  - Config: 'config.md'
+  - Features: 'features.md'

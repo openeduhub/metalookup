@@ -21,3 +21,6 @@ SCORE = "score"
 
 METADATA_EXTRACTOR = "metadata_extractor"
 LIGHTHOUSE_EXTRACTOR = "lighthouse_extractor"
+
+# Header
+STRICT_TRANSPORT_SECURITY = "strict-transport-security"

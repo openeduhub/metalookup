@@ -179,12 +179,6 @@ class Paywalls(MetadataBase):
     decision_threshold = 0
 
 
-class ContentSecurityPolicy(MetadataBase):
-    tag_list = ["content-security-policy"]
-    evaluate_header = True
-    decision_threshold = 0
-
-
 class IFrameEmbeddable(MetadataBase):
     tag_list = ["X-Frame-Options"]
     key: str = "iframe_embeddable"

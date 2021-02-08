@@ -55,7 +55,7 @@ class ListTags(BaseModel):
     easylist_germany: Optional[bool] = True
     easylist_adult: Optional[bool] = True
     paywall: Optional[bool] = True
-    content_security_policy: Optional[bool] = True
+    security: Optional[bool] = True
     iframe_embeddable: Optional[bool] = True
     pop_up: Optional[bool] = True
     reg_wall: Optional[bool] = True
@@ -147,11 +147,11 @@ class ExtractorTags(BaseModel):
         "Probability = "
         "1 If any matching element is found, else 0.",
     )
-    content_security_policy: MetadataTags = Field(
+    security: MetadataTags = Field(
         default=None,
         description="Release. Are security policies set?"
         "Probability = "
-        "1 If any matching element is found, else 0.",
+        "Ratio of matching elements.",
     )
     iframe_embeddable: MetadataTags = Field(
         default=None,

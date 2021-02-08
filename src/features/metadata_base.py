@@ -236,31 +236,25 @@ class MetadataBase:
             )
         return data
 
-    async def astart(self) -> dict:
-        self._logger.info(f"Starting {self.__class__.__name__} async.")
+    def _prepare_start(self, key: str) -> tuple[float, WebsiteData]:
+        self._logger.info(f"Starting {self.__class__.__name__} {key}.")
         before = get_utc_now()
-
         website_data = self._prepare_website_data()
+        return before, website_data
 
+    async def astart(self) -> dict:
+        before, website_data = self._prepare_start("async")
         values = await self._astart(website_data=website_data)
-
-        data = self._processing_values(
+        return self._processing_values(
             values=values, website_data=website_data, before=before
         )
-        return data
 
     def start(self) -> dict:
-        self._logger.info(f"Starting {self.__class__.__name__} sync.")
-        before = get_utc_now()
-
-        website_data = self._prepare_website_data()
-
+        before, website_data = self._prepare_start("sync")
         values = self._start(website_data=website_data)
-
-        data = self._processing_values(
+        return self._processing_values(
             values=values, website_data=website_data, before=before
         )
-        return data
 
     def _work_header(self, header: dict) -> list:
         values = []

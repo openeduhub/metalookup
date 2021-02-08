@@ -5,7 +5,7 @@ description = ""
 authors = ["Robert Meissner <robert.meissner@codecentric.de>"]
 
 [tool.poetry.dependencies]
-python = "^3.9.0rc1"
+python = "^3.9.1"
 fastapi = "^0.63.0"
 uvicorn = "^0.13.3"
 requests = "^2.24.0"

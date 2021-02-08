@@ -55,7 +55,7 @@ def rester():
         "easylist_germany": True,
         "easylist_adult": True,
         "paywall": True,
-        "content_security_policy": True,
+        "security": True,
         "iframe_embeddable": True,
         "pop_up": True,
         "reg_wall": True,

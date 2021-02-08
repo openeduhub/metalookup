@@ -12,7 +12,6 @@ from features.gdpr import GDPR
 from features.html_based import (
     Advertisement,
     AntiAdBlock,
-    ContentSecurityPolicy,
     CookiesInHtml,
     EasylistAdult,
     EasylistGermany,
@@ -30,6 +29,7 @@ from features.javascript import Javascript
 from features.malicious_extensions import MaliciousExtensions
 from features.metadata_base import MetadataBase
 from features.metatag_explorer import MetatagExplorer
+from features.security import Security
 from features.website_manager import Singleton, WebsiteManager
 from lib.constants import MESSAGE_ALLOW_LIST
 from lib.logger import create_logger
@@ -67,7 +67,7 @@ class MetadataManager:
             EasylistGermany,
             EasylistAdult,
             Paywalls,
-            ContentSecurityPolicy,
+            Security,
             IFrameEmbeddable,
             PopUp,
             RegWall,

@@ -33,7 +33,7 @@ def load_raw_data_and_save_to_dataframe():
         "easylist_germany",
         "easylist_adult",
         "paywall",
-        "content_security_policy",
+        "security",
         "iframe_embeddable",
         "pop_up",
         "reg_wall",

@@ -2,7 +2,7 @@ import re
 
 from features.metadata_base import MetadataBase
 from features.website_manager import WebsiteData
-from lib.constants import VALUES
+from lib.constants import STRICT_TRANSPORT_SECURITY, VALUES
 
 
 class GDPR(MetadataBase):
@@ -32,9 +32,8 @@ class GDPR(MetadataBase):
         return value, http_links
 
     def _get_hsts(self, website_data: WebsiteData) -> list:
-        strict_transport_security = "strict-transport-security"
-        if strict_transport_security in website_data.headers.keys():
-            sts = website_data.headers[strict_transport_security]
+        if STRICT_TRANSPORT_SECURITY in website_data.headers.keys():
+            sts = website_data.headers[STRICT_TRANSPORT_SECURITY]
             values = ["hsts"]
             values.extend(self._extract_sts(sts))
             values.extend(self._extract_max_age(sts))

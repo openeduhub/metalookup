@@ -1,6 +1,7 @@
 import asyncio
 import os
 import time
+import traceback
 from urllib.parse import urlparse
 
 from features.cookies import Cookies
@@ -9,7 +10,6 @@ from features.gdpr import GDPR
 from features.html_based import (
     Advertisement,
     AntiAdBlock,
-    ContentSecurityPolicy,
     CookiesInHtml,
     EasylistAdult,
     EasylistGermany,
@@ -44,12 +44,19 @@ def _test_feature(feature_class, html, expectation) -> tuple[bool, bool]:
 
     website_manager.load_website_data(html)
 
-    if feature.call_async:
-        data = asyncio.run(feature.astart())
-    else:
-        data = feature.start()
+    try:
+        if feature.call_async:
+            data = asyncio.run(feature.astart())
+        else:
+            data = feature.start()
+    except Exception as e:
+        print("Exception: ", e.args)
+        traceback.print_exc()
+        data = {}
+    finally:
+        website_manager.reset()
 
-    website_manager.reset()
+    print(data)
 
     try:
         are_values_correct = set(data[feature.key]["values"]) == set(
@@ -610,35 +617,6 @@ def test_reg_wall():
         feature.key: {
             "values": ["register", "regwall", "registerbtn"],
             "excluded_values": [],
-            "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}
-        }
-    }
-
-    are_values_correct, runs_fast_enough = _test_feature(
-        feature_class=feature, html=html, expectation=expected
-    )
-    assert are_values_correct and runs_fast_enough
-
-
-"""
---------------------------------------------------------------------------------
-"""
-
-
-def test_content_security_policy():
-    feature = ContentSecurityPolicy
-    feature._create_key(feature)
-
-    html = {
-        "html": "empty_html",
-        "har": "",
-        "url": "",
-        "headers": "{'Content-Security-Policy': 'deny', 'content-security-policy': 'same_origin'}",
-    }
-    expected = {
-        feature.key: {
-            "values": ["same_origin"],
-            "excluded_values": ["deny"],
             "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}
         }
     }
