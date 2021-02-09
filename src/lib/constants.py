@@ -5,6 +5,7 @@ MESSAGE_ALLOW_LIST = "allow_list"
 MESSAGE_META = "meta"
 MESSAGE_EXCEPTION = "exception"
 MESSAGE_HAR = "har"
+MESSAGE_SHARED_MEMORY_NAME = "shared_memory_name"
 
 LOGFILE_MANAGER = "manager"
 

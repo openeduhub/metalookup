@@ -1,4 +1,5 @@
 import json
+from multiprocessing import shared_memory
 from typing import Optional
 
 from fastapi import FastAPI
@@ -12,13 +13,14 @@ from lib.constants import (
     MESSAGE_HAR,
     MESSAGE_HEADERS,
     MESSAGE_HTML,
+    MESSAGE_SHARED_MEMORY_NAME,
     MESSAGE_URL,
     METADATA_EXTRACTOR,
     PROBABILITY,
     TIME_REQUIRED,
     VALUES,
 )
-from lib.settings import VERSION
+from lib.settings import NUMBER_OF_EXTRACTORS, VERSION
 from lib.timing import get_utc_now
 
 
@@ -245,6 +247,7 @@ class Output(BaseModel):
 
 app = FastAPI(title=METADATA_EXTRACTOR, version=VERSION)
 app.communicator: QueueCommunicator
+shared_status = shared_memory.ShareableList([0])
 
 
 def _convert_dict_to_output_model(
@@ -287,6 +290,7 @@ def extract_meta(input_data: Input):
             MESSAGE_HEADERS: input_data.headers,
             MESSAGE_HAR: input_data.har,
             MESSAGE_ALLOW_LIST: allowance,
+            MESSAGE_SHARED_MEMORY_NAME: shared_status.shm.name,
         }
     )
 
@@ -319,3 +323,10 @@ def extract_meta(input_data: Input):
 @app.get("/_ping")
 def ping():
     return {"status": "ok"}
+
+
+@app.get("/get_progress")
+def get_progress():
+    return {
+        "progress": round(shared_status[0] / NUMBER_OF_EXTRACTORS, 2),
+    }

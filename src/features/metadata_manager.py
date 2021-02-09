@@ -3,6 +3,7 @@ import multiprocessing
 import traceback
 from itertools import repeat
 from logging import Logger
+from multiprocessing import shared_memory
 
 from config.config_manager import ConfigManager
 from features.accessibility import Accessibility
@@ -31,7 +32,7 @@ from features.metadata_base import MetadataBase
 from features.metatag_explorer import MetatagExplorer
 from features.security import Security
 from features.website_manager import Singleton, WebsiteManager
-from lib.constants import MESSAGE_ALLOW_LIST
+from lib.constants import MESSAGE_ALLOW_LIST, MESSAGE_SHARED_MEMORY_NAME
 from lib.logger import create_logger
 from lib.timing import get_utc_now
 
@@ -85,10 +86,17 @@ class MetadataManager:
         )
 
     async def _extract_meta_data(
-        self, allow_list: dict, config_manager: ConfigManager
+        self,
+        allow_list: dict,
+        config_manager: ConfigManager,
+        shared_memory_name: str,
     ) -> dict:
         data = {}
         tasks = []
+
+        shared_status = shared_memory.ShareableList(name=shared_memory_name)
+        shared_status[0] = 0
+
         for metadata_extractor in self.metadata_extractors:
             metadata_extractor: MetadataBase
             if allow_list[metadata_extractor.key]:
@@ -104,12 +112,15 @@ class MetadataManager:
                         )
                     )
                     data.update(extracted_metadata)
+                    shared_status[0] += 1
                 elif metadata_extractor.call_async:
                     tasks.append(metadata_extractor.astart())
                 else:
                     data.update(metadata_extractor.start())
+                    shared_status[0] += 1
 
         extracted_metadata = await asyncio.gather(*tasks)
+        shared_status[0] += len(tasks)
         [data.update(metadata) for metadata in extracted_metadata]
         return data
 
@@ -131,7 +142,9 @@ class MetadataManager:
             try:
                 extracted_meta_data = asyncio.run(
                     self._extract_meta_data(
-                        message[MESSAGE_ALLOW_LIST], config_manager
+                        allow_list=message[MESSAGE_ALLOW_LIST],
+                        config_manager=config_manager,
+                        shared_memory_name=message[MESSAGE_SHARED_MEMORY_NAME],
                     )
                 )
             except ConnectionError as e:

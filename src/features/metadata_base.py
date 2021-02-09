@@ -335,7 +335,7 @@ class MetadataBase:
     ) -> list[str]:
         taglist_path = "tag_lists/"
         if not os.path.isdir(taglist_path):
-            os.mkdir(taglist_path)
+            os.makedirs(taglist_path, exist_ok=True)
 
         filename = os.path.basename(urlparse(url).path)
         if USE_LOCAL_IF_POSSIBLE and os.path.isfile(taglist_path + filename):
