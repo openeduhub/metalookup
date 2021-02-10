@@ -3,7 +3,7 @@ Topics:
 
 - [Setup](setup.md)
 - [Config](config.md)
-- [Features](Features.md)
+- [Features](features.md)
 
 # Definition of Done:
 

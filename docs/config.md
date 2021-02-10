@@ -2,14 +2,13 @@
 
 ## Settings
 
-Some general settings.
-
 File:
 
 `src/lib/settings.py`
 
+Some general settings.
 
-## Top level demain defaults
+## Top level domain defaults
 
 File:
 

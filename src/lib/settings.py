@@ -21,7 +21,7 @@ API_RETRIES = 180
 
 # Performance
 WANT_PROFILING = False
-VERSION = 0.2
+VERSION = 1.0
 
 # Tests
 SKIP_E2E_TESTS = True

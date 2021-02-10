@@ -1,7 +1,7 @@
 
 # Install
 
-You will need poetry and python3.9:
+You will need poetry and python3.9.1:
 
 `sudo apt-get install python3.9`     
 `python3.9 -m pip3 install poetry`
@@ -13,8 +13,8 @@ Update the dependencies and rebuild the containers regularly.
 
 # Launching the container
 
-1. Start the container by executing `run.sh` from the main folder, not from `src`
-2. The container can be reached on `http://0.0.0.0:5057`
+1. Start the containers by executing `run.sh` from the main folder, not from `src`
+2. The main container can be reached on `http://0.0.0.0:5057`
 
 # Accessing the Swagger UI
 
