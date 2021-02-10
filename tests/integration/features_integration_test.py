@@ -14,6 +14,7 @@ from features.html_based import (
     EasylistAdult,
     EasylistGermany,
     EasyPrivacy,
+    FanboyAnnoyance,
     FanboyNotification,
     FanboySocialMedia,
     IFrameEmbeddable,
@@ -589,6 +590,42 @@ def test_anti_adblock():
 
 def test_fanboy_notification():
     feature = FanboyNotification
+    feature._create_key(feature)
+
+    html = {
+        "html": """
+<link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='/build/push.js' type='text/css' media='all' />
+<link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='/notification-ext.' type='text/css' media='all' />
+<link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='indianexpress.com' type='text/css' media='all' />
+""",
+        "har": "",
+        "url": "",
+        "headers": "{}",
+    }
+    expected = {
+        feature.key: {
+            "values": [
+                "/build/push.js",
+                "/notification-ext.",
+            ],
+            "excluded_values": [],
+            "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}
+        }
+    }
+
+    are_values_correct, runs_fast_enough = _test_feature(
+        feature_class=feature, html=html, expectation=expected
+    )
+    assert are_values_correct and runs_fast_enough
+
+
+"""
+--------------------------------------------------------------------------------
+"""
+
+
+def test_fanboy_annoyance():
+    feature = FanboyAnnoyance
     feature._create_key(feature)
 
     html = {
