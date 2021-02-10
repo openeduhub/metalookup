@@ -15,6 +15,7 @@ security_tags = {
     "content-security-policy": ["same_origin"],
     "x-xss-protection": ["1,mode=block"],
     "strict-transport-security": ["max-age=15768000"],
+    "referrer-policy": ["unsafe-url"],
 }
 
 
@@ -35,6 +36,7 @@ def test_start():
                 "content-security-policy",
                 "x-xss-protection",
                 "strict-transport-security",
+                "referrer-policy",
             ],
             "excluded_values": [],
             "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}
@@ -63,6 +65,7 @@ def test_decide():
         "content-security-policy",
         "vary",
         "x-xss-protection",
+        "referrer-policy",
     ]
     expected_decision = True
     expected_probability = 1.0

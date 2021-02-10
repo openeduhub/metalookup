@@ -18,6 +18,7 @@ TIME_REQUIRED = "time_required"
 
 ACCESSIBILITY = "accessibility"
 DESKTOP = "desktop"
+MOBILE = "mobile"
 SCORE = "score"
 
 METADATA_EXTRACTOR = "metadata_extractor"

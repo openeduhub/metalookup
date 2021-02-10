@@ -22,17 +22,12 @@ class Cookies(MetadataBase):
         return {VALUES: raw_cookies}
 
     def _decide(self, website_data: WebsiteData) -> tuple[bool, float]:
-        insecure_cookies = []
+        insecure_cookies = [
+            cookie
+            for cookie in website_data.values
+            if not cookie["httpOnly"] or not cookie["secure"]
+        ]
 
-        for cookie in website_data.values:
-            http_only = cookie["httpOnly"]
-            secure = cookie["secure"]
-
-            if not http_only and not secure:
-                insecure_cookies.append(cookie)
-
-        probability = 0
-        if len(insecure_cookies) > 0:
-            probability = 1
+        probability = 1 if insecure_cookies else 0
         decision = probability > self.decision_threshold
         return decision, probability

@@ -151,7 +151,8 @@ class ExtractorTags(BaseModel):
     )
     security: MetadataTags = Field(
         default=None,
-        description="Release. Are security policies set?"
+        description="Alpha. Are security policies set? "
+        "This feature is currently checking many parameters, which are partially new. "
         "Probability = "
         "Ratio of matching elements.",
     )

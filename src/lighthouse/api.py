@@ -5,7 +5,13 @@ import uvicorn as uvicorn
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
-from lib.constants import ACCESSIBILITY, DESKTOP, LIGHTHOUSE_EXTRACTOR, SCORE
+from lib.constants import (
+    ACCESSIBILITY,
+    DESKTOP,
+    LIGHTHOUSE_EXTRACTOR,
+    MOBILE,
+    SCORE,
+)
 from lib.settings import LIGHTHOUSE_API_PORT, VERSION
 
 app = FastAPI(title=LIGHTHOUSE_EXTRACTOR, version=str(VERSION))
@@ -22,7 +28,7 @@ class Input(BaseModel):
     url: str = Field(..., description="The base url of the scraped website.")
     strategy: str = Field(
         default=DESKTOP,
-        description="Whether to use mobile or desktop.",
+        description=f"Whether to use {MOBILE} or {DESKTOP}.",
     )
     category: str = Field(
         default=ACCESSIBILITY,
@@ -32,38 +38,40 @@ class Input(BaseModel):
 
 @app.get(f"/{ACCESSIBILITY}", response_model=Output)
 def accessibility(input_data: Input):
-    url = input_data.url
-    strategy = input_data.strategy
-    category = input_data.category
-    cmd = [
+    lighthouse_command = [
         "lighthouse",
-        url,
+        input_data.url,
         "--enable-error-reporting",
         "--chrome-flags='--headless --no-sandbox --disable-gpu'",
-        f"--emulated-form-factor={strategy}",
-        f"--only-categories={category}",
+        f"--emulated-form-factor={input_data.strategy}",
+        f"--only-categories={input_data.category}",
         "--output=json",
         "--quiet",
     ]
 
-    p = subprocess.Popen(
-        cmd,
+    lighthouse_process = subprocess.Popen(
+        lighthouse_command,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
 
-    std_out = [line.decode() for line in iter(p.stdout.readline, b"")]
-
-    std_out = json.loads("".join(std_out))
+    lighthouse_output = "".join(
+        [
+            line.decode()
+            for line in iter(lighthouse_process.stdout.readline, b"")
+        ]
+    )
+    lighthouse_output = json.loads(lighthouse_output)
 
     output = Output()
+    output.score = [-1]
     try:
-        if "runtimeError" in std_out.keys():
-            output.score = [-1]
-        else:
-            output.score = std_out["categories"][category][SCORE]
+        if "runtimeError" not in lighthouse_output.keys():
+            output.score = lighthouse_output["categories"][
+                input_data.category
+            ][SCORE]
     except KeyError:
-        output.score = [-1]
+        pass
 
     return output
 

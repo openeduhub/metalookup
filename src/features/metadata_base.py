@@ -4,7 +4,6 @@ import re
 from collections import OrderedDict
 from enum import Enum
 from logging import Logger
-from typing import Callable
 from urllib.parse import urlparse
 
 import adblockparser
@@ -159,16 +158,14 @@ class MetadataBase:
     def _decide_single_occurrence(
         self, website_data: WebsiteData
     ) -> tuple[float, float]:
-        probability = (
-            1 if (website_data.values and len(website_data.values) > 0) else 0
-        )
+        probability = 1 if (website_data.values and website_data.values) else 0
         decision = self._get_decision(probability)
         return decision, probability
 
     def _decide_first_value(
         self, website_data: WebsiteData
     ) -> tuple[float, float]:
-        if len(website_data.values) >= 1:
+        if website_data.values:
             probability = self._calculate_probability_from_ratio(
                 website_data.values[0]
             )
@@ -180,7 +177,7 @@ class MetadataBase:
     def _decide_mean_value(
         self, website_data: WebsiteData
     ) -> tuple[float, float]:
-        if len(website_data.values) >= 1:
+        if website_data.values:
             mean = round(
                 sum(website_data.values) / (len(website_data.values)), 2
             )
@@ -281,17 +278,6 @@ class MetadataBase:
             )
         ]
         return values
-
-    def _get_list_matches(
-        self, url: str, list_re: Callable, list_with_options: list
-    ) -> list:
-        matches = [el.group() for el in list_re(url)]
-        matches += [
-            rule.raw_rule_text
-            for rule in list_with_options
-            if rule.match_url(url, self.adblockparser_options)
-        ]
-        return matches
 
     def _work_html_content(self, website_data: WebsiteData) -> list:
         values = []
@@ -409,4 +395,6 @@ class MetadataBase:
             self._extract_date_from_list()
             self._prepare_tag_list()
             if self.extraction_method == ExtractionMethod.USE_ADBLOCK_PARSER:
-                self.match_rules = adblockparser.AdblockRules(self.tag_list)
+                self.match_rules = adblockparser.AdblockRules(
+                    self.tag_list, skip_unsupported_rules=False
+                )

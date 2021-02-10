@@ -36,7 +36,6 @@ class WebsiteData:
     url: str = field(default_factory=str)
     top_level_domain: str = field(default_factory=str)
     har: dict = field(default_factory=dict)
-    cookies: list = field(default_factory=list)
 
 
 class Singleton:
@@ -62,6 +61,8 @@ class Singleton:
 @Singleton
 class WebsiteManager:
     website_data: WebsiteData
+
+    source_regex = re.compile(r"src\=[\"|\']([\w\d\:\/\.\-\?\=]+)[\"|\']")
 
     def __init__(self) -> None:
         super().__init__()
@@ -210,14 +211,13 @@ class WebsiteManager:
 
     def _extract_raw_links(self) -> None:
 
-        script_re = re.compile(r"src\=[\"|\']([\w\d\:\/\.\-\?\=]+)[\"|\']")
-
+        source_regex = self.source_regex.findall
         links = [
             link
             for tag in self.website_data.soup.find_all()
             for element in self.website_data.soup.find_all(tag.name)
             for link in self._get_raw_link_from_tag_element(
-                element, script_re, tag.name
+                element, source_regex, tag.name
             )
             if link is not None
         ]
@@ -229,7 +229,7 @@ class WebsiteManager:
     @staticmethod
     def _get_raw_link_from_tag_element(
         element: bs4.element.ResultSet,
-        script_re: re.Pattern,
+        source_regex,
         tag: BeautifulSoup,
     ) -> list:
         attributes = [
@@ -243,8 +243,8 @@ class WebsiteManager:
         links = []
         if element is not None:
             if tag == "script":
-                matches = script_re.findall(str(element).replace("\n", ""))
-                if len(matches) > 0:
+                matches = source_regex(str(element).replace("\n", ""))
+                if matches:
                     links += matches
             links += [
                 element.attrs.get(attribute)

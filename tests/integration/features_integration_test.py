@@ -24,6 +24,7 @@ from features.html_based import (
 )
 from features.javascript import Javascript
 from features.malicious_extensions import MaliciousExtensions
+from features.metatag_explorer import MetatagExplorer
 from features.website_manager import WebsiteManager
 from lib.constants import VALUES
 from lib.logger import create_logger
@@ -58,16 +59,39 @@ def _test_feature(feature_class, html, expectation) -> tuple[bool, bool]:
 
     print(data)
 
+    are_values_correct = False
     try:
-        are_values_correct = set(data[feature.key]["values"]) == set(
-            expectation[feature.key]["values"]
-        )
+        if data[feature.key]["values"]:
+            if isinstance(data[feature.key]["values"][0], dict):
+                value_names = [
+                    value["name"] for value in data[feature.key]["values"]
+                ]
+                expected_value_names = [
+                    value["name"]
+                    for value in expectation[feature.key]["values"]
+                ]
+                are_values_correct = set(value_names) == set(
+                    expected_value_names
+                )
+            elif isinstance(data[feature.key]["values"][0], list):
+                values = [
+                    element
+                    for value in data[feature.key]["values"]
+                    for element in value
+                ]
+                are_values_correct = set(values) == set(
+                    expectation[feature.key]["values"]
+                )
+            else:
+                are_values_correct = set(data[feature.key]["values"]) == set(
+                    expectation[feature.key]["values"]
+                )
+        else:
+            are_values_correct = set(data[feature.key]["values"]) == set(
+                expectation[feature.key]["values"]
+            )
     except TypeError:
-        value_names = [value["name"] for value in data[feature.key]["values"]]
-        expected_value_names = [
-            value["name"] for value in expectation[feature.key]["values"]
-        ]
-        are_values_correct = set(value_names) == set(expected_value_names)
+        pass
 
     if are_values_correct and "excluded_values" in expectation[feature.key]:
         are_values_correct = (
@@ -469,7 +493,6 @@ format("svg");font-weight: normal;font-style: normal;font-display: fallback;}
                 "do_not_preload",
                 "max_age",
                 "found_fonts,https://canyoublockit.com/wp-content/themes/astra/assets/fonts/astra.svg#astra",
-                "no_referrerpolicy",
                 "no-referrer",
                 "found_inputs,button,datetime",
                 "impressum",
@@ -724,6 +747,58 @@ def test_cookies():
             "values": [
                 {"name": "test_response_cookie"},
                 {"name": "test_request_cookie"},
+            ],
+            "excluded_values": [],
+            "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}
+        }
+    }
+
+    are_values_correct, runs_fast_enough = _test_feature(
+        feature_class=feature, html=html, expectation=expected
+    )
+    assert are_values_correct and runs_fast_enough
+
+
+"""
+--------------------------------------------------------------------------------
+"""
+
+
+def test_metatag_explorer():
+    feature = MetatagExplorer
+    feature._create_key(feature)
+
+    html = {
+        "html": """
+<html lang="en-GB"><head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+<meta name="description" content="Organmething is in a process.">
+<meta name="viewport" content="maximum-scale=1,width=device-width,initial-scale=1,user-scalable=0">
+<meta name="apple-itunes-app" content="app-id=461504587"><meta name="slack-app-id" content="A074YH40Z">
+<meta name="robots" content="noarchive">
+<meta name="referrer" content="origin-when-cross-origin">
+</head></html>
+""",
+        "har": "",
+        "url": "",
+        "headers": "",
+    }
+    expected = {
+        feature.key: {
+            "values": [
+                "description",
+                "organmething is in a process.",
+                "viewport",
+                "maximum-scale=1,width=device-width,initial-scale=1,user-scalable=0",
+                "apple-itunes-app",
+                "app-id=461504587",
+                "slack-app-id",
+                "a074yh40z",
+                "robots",
+                "noarchive",
+                "referrer",
+                "origin-when-cross-origin",
             ],
             "excluded_values": [],
             "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}

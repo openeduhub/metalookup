@@ -6,7 +6,14 @@ from aiohttp import ClientConnectorError, ClientSession
 
 from features.metadata_base import MetadataBase, ProbabilityDeterminationMethod
 from features.website_manager import WebsiteData
-from lib.constants import ACCESSIBILITY, DESKTOP, MESSAGE_URL, SCORE, VALUES
+from lib.constants import (
+    ACCESSIBILITY,
+    DESKTOP,
+    MESSAGE_URL,
+    MOBILE,
+    SCORE,
+    VALUES,
+)
 from lib.settings import LIGHTHOUSE_API_PORT
 
 
@@ -17,14 +24,12 @@ class Accessibility(MetadataBase):
     decision_threshold = 0.8
     call_async = True
 
-    def extract_score(self, score_text: str, status_code: int) -> list[float]:
+    def extract_score(self, score_text: str) -> float:
         try:
-            score = [float(json.loads(score_text)[SCORE])]
+            score = float(json.loads(score_text)[SCORE])
         except (JSONDecodeError, KeyError, ValueError, TypeError):
-            self._logger.exception(
-                f"Score output was: '{score_text}'. HTML response code was '{status_code}'"
-            )
-            score = [-1]
+            self._logger.exception(f"Score output was faulty: '{score_text}'.")
+            score = -1
         return score
 
     async def _execute_api_call(
@@ -32,7 +37,7 @@ class Accessibility(MetadataBase):
         website_data: WebsiteData,
         session: ClientSession,
         strategy: str = DESKTOP,
-    ) -> list:
+    ) -> float:
         params = {
             MESSAGE_URL: website_data.url,
             "category": ACCESSIBILITY,
@@ -49,28 +54,22 @@ class Accessibility(MetadataBase):
         except (ClientConnectorError, ConnectionRefusedError, OSError):
             raise ConnectionError("No connection to accessibility container.")
 
-        status_code = process.status
-
-        if status_code == 200:
+        score = -1
+        if process.status == 200:
             score_text = await process.text()
-        else:
-            score_text = ""
-
-        return self.extract_score(score_text, status_code)
+            score = self.extract_score(score_text)
+        return score
 
     async def _astart(self, website_data: WebsiteData) -> dict:
         async with ClientSession() as session:
             score = await asyncio.gather(
-                self._execute_api_call(
-                    website_data=website_data,
-                    session=session,
-                    strategy=DESKTOP,
-                ),
-                self._execute_api_call(
-                    website_data=website_data,
-                    session=session,
-                    strategy="mobile",
-                ),
+                *[
+                    self._execute_api_call(
+                        website_data=website_data,
+                        session=session,
+                        strategy=strategy,
+                    )
+                    for strategy in [DESKTOP, MOBILE]
+                ]
             )
-        score = [element for sublist in score for element in sublist]
         return {VALUES: score}

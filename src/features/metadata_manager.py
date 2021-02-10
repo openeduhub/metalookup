@@ -1,6 +1,7 @@
 import asyncio
 import multiprocessing
 import traceback
+from collections import ChainMap
 from itertools import repeat
 from logging import Logger
 from multiprocessing import shared_memory
@@ -47,7 +48,7 @@ def _parallel_setup(
 
 @Singleton
 class MetadataManager:
-    metadata_extractors: list = []
+    metadata_extractors: list[type(MetadataBase)] = []
 
     def __init__(self) -> None:
         self._logger = create_logger()
@@ -98,7 +99,6 @@ class MetadataManager:
         shared_status[0] = 0
 
         for metadata_extractor in self.metadata_extractors:
-            metadata_extractor: MetadataBase
             if allow_list[metadata_extractor.key]:
                 if (
                     config_manager.is_host_predefined()
@@ -121,7 +121,7 @@ class MetadataManager:
 
         extracted_metadata = await asyncio.gather(*tasks)
         shared_status[0] += len(tasks)
-        [data.update(metadata) for metadata in extracted_metadata]
+        data = {**data, **dict(ChainMap(*extracted_metadata))}
         return data
 
     def start(self, message: dict) -> dict:

@@ -87,10 +87,6 @@ def regex_cookie_parameter(cookie: str, parameter: str = "name"):
     matches = []
     if not isinstance(cookie, float):
         matches = regex.findall(cookie)
-
-    if not matches:
-        matches = []
-
     return matches
 
 

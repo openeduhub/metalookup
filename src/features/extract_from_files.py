@@ -128,8 +128,7 @@ class ExtractFromFiles(MetadataBase):
             extracted_content = []
             images = []
 
-        content = {"extracted_content": extracted_content, "images": images}
-        return content
+        return {"extracted_content": extracted_content, "images": images}
 
     async def _download_file(
         self, file_url: str, filename: str, session: ClientSession
@@ -154,17 +153,16 @@ class ExtractFromFiles(MetadataBase):
 
         os.remove(filename)
 
-        if len(content["extracted_content"]) > 0:
-            return filename
-        return ""
+        if len(content["extracted_content"]) == 0:
+            filename = ""
+        return filename
 
     async def _work_files(self, files: list) -> dict:
         async with ClientSession() as session:
             tasks = [self._process_file(file, session) for file in files]
             extractable_files = await asyncio.gather(*tasks)
 
-        values = {VALUES: [file for file in extractable_files if file != ""]}
-        return values
+        return {VALUES: [file for file in extractable_files if file != ""]}
 
     @staticmethod
     def _get_extractable_files(website_data: WebsiteData) -> list:
@@ -189,7 +187,7 @@ class ExtractFromFiles(MetadataBase):
         probability = 0
         extractable_files = self._get_extractable_files(website_data)
 
-        if len(website_data.values) > 0:
+        if website_data.values:
             probability = len(extractable_files) / len(website_data.values)
 
         decision = probability > self.decision_threshold
