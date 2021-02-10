@@ -68,6 +68,14 @@ class WebsiteManager:
         super().__init__()
         self._logger = create_logger()
 
+        try:
+            self.tld_extractor = TLDExtract(cache_dir=False)
+        except (ConnectionError, SuffixListNotFound) as e:
+            self._logger.error(
+                f"Cannot extract top_level_domain because '{e.args}'"
+            )
+            self.tld_extractor = None
+
         self.reset()
 
     def load_website_data(self, message: dict = None) -> None:
@@ -105,10 +113,10 @@ class WebsiteManager:
 
     def _extract_top_level_domain(self) -> None:
         try:
-            extractor = TLDExtract(cache_dir=False)
-            self.website_data.top_level_domain = extractor(
-                url=self.website_data.url
-            ).domain
+            if self.tld_extractor is not None:
+                self.website_data.top_level_domain = self.tld_extractor(
+                    url=self.website_data.url
+                ).domain
         except (ConnectionError, SuffixListNotFound, ValueError) as e:
             self._logger.error(
                 f"Cannot extract top_level_domain because '{e.args}'"
