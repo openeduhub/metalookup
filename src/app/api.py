@@ -278,7 +278,11 @@ def _convert_allow_list_to_dict(allow_list: ListTags) -> dict:
     return json.loads(allow_list.json())
 
 
-@app.post("/extract_meta", response_model=Output)
+@app.post(
+    "/extract_meta",
+    response_model=Output,
+    description="The main endpoint for metadata extraction.",
+)
 def extract_meta(input_data: Input):
     starting_extraction = get_utc_now()
 
@@ -321,12 +325,15 @@ def extract_meta(input_data: Input):
     return out
 
 
-@app.get("/_ping")
+@app.get("/_ping", description="Ping function for automatic health check.")
 def ping():
     return {"status": "ok"}
 
 
-@app.get("/get_progress")
+@app.get(
+    "/get_progress",
+    description="Returns progress of the metadata extraction. From 0 to 1 (=100%).",
+)
 def get_progress():
     return {
         "progress": round(shared_status[0] / NUMBER_OF_EXTRACTORS, 2),
