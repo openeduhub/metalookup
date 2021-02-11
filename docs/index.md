@@ -4,6 +4,7 @@ Topics:
 - [Setup](setup.md)
 - [Config](config.md)
 - [Features](features.md)
+- [Acceptance](acceptance.md)
 
 # Definition of Done:
 
