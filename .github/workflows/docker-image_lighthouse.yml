@@ -1,0 +1,24 @@
+name: Lighthouse Docker Image
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Build the Docker image
+      run: docker build -f dockerfile_lighthouse -t oeh-search-meta_lighthouse:latest .
+    - uses: actions/checkout@v2     
+      with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          repository: codecentric/metadata_picker/oeh-search-meta
+          tag_with_ref: true
