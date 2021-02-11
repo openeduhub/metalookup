@@ -13,9 +13,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Build the Docker image
+    - name: Debug
+      run: ls && pwd
     - uses: actions/checkout@v2
-    - name: Building
+    - name: Build the Docker image
       run: docker build -f dockerfile_lighthouse -t oeh-search-meta_lighthouse:latest .  
     - uses: actions/checkout@v2
       with:
