@@ -1,0 +1,22 @@
+{
+    "testing_top_level_domain_1": {
+        "advertisement": {"values": [], "probability": 1.0, "decision": false},
+        "iframe_embeddable": {
+            "values": ["test_shennanigan"],
+            "probability": 1.0,
+            "decision": false
+        }
+    },
+    "testing_top_level_domain_2": {
+        "advertisement": {
+            "values": ["random_ads"],
+            "probability": 1.0,
+            "decision": false
+        },
+        "iframe_embeddable": {
+            "values": ["test_shenanigan"],
+            "probability": 1.0,
+            "decision": false
+        }
+    }
+}
