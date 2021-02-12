@@ -14,9 +14,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Build the Docker image
+    - name: Build the Lighthouse image
       run: docker build -f dockerfile_lighthouse -t oeh-search-meta_lighthouse:latest .  
-    - uses: actions/checkout@v2
+    - name: Build the Docker image
+      uses: docker/build-push-action@v1
       with:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}

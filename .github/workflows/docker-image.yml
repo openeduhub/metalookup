@@ -13,10 +13,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build the Docker image
-      uses: docker/build-push-action@v1
+      uses: docker/build-push-action@v2
       with:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: docker.pkg.github.com
           repository: codecentric/metadata_picker/oeh-search-meta
-          tag_with_ref: true
+          tags: codecentric/metadata_picker/oeh-search-meta_meta:latest
