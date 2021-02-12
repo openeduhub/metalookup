@@ -15,13 +15,13 @@ jobs:
     - name: Build the Docker image
       uses: docker/build-push-action@v2
       with:
-          context: .
-          file: ./dockerfile
-          push: true
-          tags: |
-            oeh-search-meta:latest
-#          username: ${{ github.actor }}
-#          password: ${{ secrets.GITHUB_TOKEN }}
-#          registry: docker.pkg.github.com
-#          repository: codecentric/metadata_picker/meta
-#          tag_with_ref: true
+#          context: .
+#          file: ./dockerfile
+#          push: true
+#          tags: |
+#            oeh-search-meta:latest
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          repository: codecentric/metadata_picker/meta
+          tag_with_ref: true
