@@ -19,4 +19,4 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: docker.pkg.github.com
           repository: codecentric/metadata_picker/oeh-search-meta
-          tag_with_ref: true
+          tags: codecentric/metadata_picker/oeh-search-meta_meta:latest
