@@ -199,6 +199,7 @@ class PopUp(MetadataBase):
         "modal-dialog",
         "interstitial",
         "Interstitial",
+        "ToSeeWithEyesUncloudedByHate",
     ]
     decision_threshold = 0
 
