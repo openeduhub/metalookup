@@ -20,10 +20,10 @@ services:
     image: scrapinghub/splash:master
     command: --maxrss 4000
     restart: always
-    ports:
-      - "5060:8050"
+    expose:
+      - "8050"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5060/_ping"]
+      test: ["CMD", "curl", "-f", "http://localhost:8050/_ping"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -33,10 +33,10 @@ services:
   accessibility:
     image: oeh-search-meta_lighthouse:latest
     restart: always
-    ports:
-      - "5058:5058"
+    expose:
+      - "5058"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5080/_ping"]
+      test: ["CMD", "curl", "-f", "http://localhost:5058/_ping"]
       interval: 30s
       timeout: 5s
       retries: 3
