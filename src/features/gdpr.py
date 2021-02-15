@@ -127,8 +127,7 @@ class GDPR(MetadataBase):
         return [inputs]
 
     def _start(self, website_data: WebsiteData) -> dict:
-        impressum = super()._start(website_data=website_data)[VALUES]
-        values = impressum
+        values = super()._start(website_data=website_data)[VALUES]
 
         for func in [
             self._check_https_in_url,
