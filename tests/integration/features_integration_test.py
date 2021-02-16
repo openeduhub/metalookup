@@ -153,14 +153,17 @@ def test_easylist_adult():
     feature = EasylistAdult
     feature._create_key(feature)
     html = {
-        "html": "adlook.net\nver-pelis.net\n,geobanner.fuckbookhookups.com\n 22pixx.xyz \n trkinator.com \n soonbigo",
+        "html": """
+<link href='sexgalaxy.net/pop'/>
+<link href='geobanner.fuckbookhookups.com'/>
+""",
         "har": "",
         "url": "",
         "headers": "{}",
     }
     expected = {
         feature.key: {
-            "values": [],
+            "values": ["sexgalaxy.net/pop", "geobanner.fuckbookhookups.com"],
             "runs_within": 10,  # time the evaluation may take AT MAX -> acceptance test}
         }
     }
