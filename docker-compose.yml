@@ -2,9 +2,10 @@ version: '3.4'
 
 services:
   extractor:
+    dns: 8.8.8.8
     image: oeh-search-meta:latest
     ports:
-      - "5057"
+      - "5057:5057"
     links:
       - splash
       - accessibility
@@ -17,13 +18,14 @@ services:
     networks:
       - backend
   splash:
+    dns: 8.8.8.8
     image: scrapinghub/splash:master
     command: --maxrss 4000
     restart: always
-    expose:
-      - "8050"
+    ports:
+      - "8050:8050"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8050/_ping"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8050/_ping" ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -31,12 +33,13 @@ services:
     networks:
       - backend
   accessibility:
+    dns: 8.8.8.8
     image: oeh-search-meta_lighthouse:latest
     restart: always
-    expose:
-      - "5058"
+    ports:
+      - "5058:5058"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5058/_ping"]
+      test: [ "CMD", "curl", "-f", "http://localhost:5058/_ping" ]
       interval: 30s
       timeout: 5s
       retries: 3

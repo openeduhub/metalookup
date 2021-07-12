@@ -44,10 +44,11 @@ def accessibility(input_data: Input):
         input_data.url,
         "--enable-error-reporting",
         "--chrome-flags='--headless --no-sandbox --disable-gpu'",
-        f"--emulated-form-factor={input_data.strategy}",
+        f"--formFactor=desktop",
         f"--only-categories={input_data.category}",
         "--output=json",
         "--quiet",
+        "--screenEmulation.mobile=false",
     ]
 
     lighthouse_process = subprocess.Popen(
@@ -74,6 +75,8 @@ def accessibility(input_data: Input):
             output.score = lighthouse_output["categories"][
                 input_data.category
             ][SCORE]
+            if isinstance(output.score, float):
+                output.score = [output.score]
     except KeyError:
         pass
 
