@@ -1,5 +1,6 @@
 import json
 import subprocess
+from typing import List
 
 import uvicorn as uvicorn
 from fastapi import FastAPI
@@ -18,8 +19,8 @@ app = FastAPI(title=LIGHTHOUSE_EXTRACTOR, version=str(VERSION))
 
 
 class Output(BaseModel):
-    score: float = Field(
-        default=-1,
+    score: List[float] = Field(
+        default=[-1.0],
         description=f"The {ACCESSIBILITY} score.",
     )
 
@@ -61,10 +62,13 @@ def accessibility(input_data: Input):
             for line in iter(lighthouse_process.stdout.readline, b"")
         ]
     )
-    lighthouse_output = json.loads(lighthouse_output)
+    try:
+        lighthouse_output = json.loads(lighthouse_output)
+    except json.decoder.JSONDecodeError as e:
+        lighthouse_output = {"runtimeError": None}
 
     output = Output()
-    output.score = [-1]
+    output.score = [-1.0]
     try:
         if "runtimeError" not in lighthouse_output.keys():
             output.score = lighthouse_output["categories"][
