@@ -14,7 +14,7 @@ from lib.constants import (
     SCORE,
     VALUES,
 )
-from lib.settings import LIGHTHOUSE_API_PORT
+from lib.settings import ACCESSIBILITY_URL
 
 
 class Accessibility(MetadataBase):
@@ -43,9 +43,7 @@ class Accessibility(MetadataBase):
             "category": ACCESSIBILITY,
             "strategy": strategy,
         }
-        container_url = (
-            f"http://{ACCESSIBILITY}:{LIGHTHOUSE_API_PORT}/{ACCESSIBILITY}"
-        )
+        container_url = f"{ACCESSIBILITY_URL}/{ACCESSIBILITY}"
 
         try:
             process = await session.get(
