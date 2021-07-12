@@ -11,9 +11,12 @@ class ConfigManager:
         self._load_config()
 
     def _load_config(self) -> None:
-        with open("config/config.json", "r") as json_file:
-            text = "".join(json_file.readlines())
-            self.hosts: dict = json.loads(text)
+        try:
+            with open("config/config.json", "r") as json_file:
+                text = "".join(json_file.readlines())
+                self.hosts: dict = json.loads(text)
+        except FileNotFoundError:
+            self.hosts = {}
 
     def is_host_predefined(self) -> bool:
         return self.top_level_domain in self.hosts.keys()

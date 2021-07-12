@@ -4,7 +4,7 @@ services:
   extractor:
     image: oeh-search-meta:latest
     ports:
-      - "5057:5057"
+      - "5057"
     links:
       - splash
       - accessibility

@@ -378,7 +378,7 @@ class MetadataBase:
         self.tag_list = list(OrderedDict.fromkeys(tag_list))
 
     async def _setup_downloads(self) -> None:
-        async with ClientSession() as session:
+        async with ClientSession(trust_env=True) as session:
             if self.urls:
                 self.tag_list = await self._download_multiple_tag_lists(
                     session=session

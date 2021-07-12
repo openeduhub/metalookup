@@ -143,7 +143,9 @@ class WebsiteManager:
                 + header[idx + 2 : idx + bracket_idx - 2].replace('"', " ")
                 + header[idx + bracket_idx - 1 :]
             )
-        self.website_data.headers = json.loads(header)
+
+        if len(header) > 0:
+            self.website_data.headers = json.loads(header)
 
     @staticmethod
     def _transform_raw_header(raw_headers: list) -> dict:
