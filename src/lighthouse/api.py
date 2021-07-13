@@ -48,7 +48,7 @@ def accessibility(input_data: Input):
         f"--only-categories={input_data.category}",
         "--output=json",
         "--quiet",
-        f"--screenEmulation.mobile={True if input_data.strategy == MOBILE  else False}",
+        f"{'--screenEmulation.mobile=true' if input_data.strategy == MOBILE else '--no-screenEmulation.mobile'}",
     ]
 
     lighthouse_process = subprocess.Popen(
