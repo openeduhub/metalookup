@@ -49,11 +49,19 @@ class Accessibility(MetadataBase):
             process = await session.get(
                 url=container_url, timeout=60, json=params
             )
-        except (ClientConnectorError, ConnectionRefusedError, OSError):
-            raise ConnectionError("No connection to accessibility container.")
+        except (
+            asyncio.exceptions.TimeoutError,
+            ClientConnectorError,
+            ConnectionRefusedError,
+            OSError,
+        ) as e:
+            self._logger.exception(
+                f"Timeout for url {container_url} after 60s: {e.args}"
+            )
+            process = None
 
         score = -1
-        if process.status == 200:
+        if process is not None and process.status == 200:
             score_text = await process.text()
             score = self.extract_score(score_text)
         return score
