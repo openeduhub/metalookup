@@ -177,7 +177,7 @@ class WebsiteManager:
             raw_headers = data["har"]["log"]["entries"][0]["response"][
                 "headers"
             ]
-        except KeyError:
+        except (KeyError, IndexError):
             raw_headers = []
 
         html = ""
