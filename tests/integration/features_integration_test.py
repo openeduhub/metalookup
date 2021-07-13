@@ -484,8 +484,8 @@ format("svg");font-weight: normal;font-style: normal;font-display: fallback;}
 """,
         "har": "",
         "url": "https://www.tutory.de",
-        "headers": "{b'Referrer-Policy': [b'no-referrer'],"
-        "b'Strict-Transport-Security': [b'max-age=15724800; includeSubDomains']}",
+        "headers": '{b"Referrer-Policy": [b"no-referrer"],'
+        'b"Strict-Transport-Security": [b"max-age=15724800; includeSubDomains"]}',
     }
     expected = {
         feature.key: {
@@ -703,7 +703,7 @@ def test_iframe_embeddable():
         "html": "empty_html",
         "har": "",
         "url": "",
-        "headers": "{'X-Frame-Options': 'deny', 'x-frame-options': 'same_origin'}",
+        "headers": '{"X-Frame-Options": "deny", "x-frame-options": "same_origin"}',
     }
     expected = {
         feature.key: {

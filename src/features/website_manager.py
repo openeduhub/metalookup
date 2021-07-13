@@ -126,25 +126,15 @@ class WebsiteManager:
     def _preprocess_header(self) -> None:
         header: str = self.website_data.raw_header.lower()
 
-        header = (
-            header.replace("b'", '"')
-            .replace("/'", '"')
-            .replace("'", '"')
-            .replace('""', '"')
-            .replace('/"', "/")
-        )
-
-        idx = header.find('b"')
-        if idx >= 0 and header[idx - 1] == "[":
-            bracket_idx = header[idx:].find("]")
-            header = (
-                header[:idx]
-                + '"'
-                + header[idx + 2 : idx + bracket_idx - 2].replace('"', " ")
-                + header[idx + bracket_idx - 1 :]
-            )
-
         if len(header) > 0:
+            header = (
+                header.replace("b'", '"')
+                .replace('b"', '"')
+                .replace("/'", '"')
+                .replace("'", '"')
+                .replace('""', '"')
+                .replace('/"', "/")
+            )
             self.website_data.headers = json.loads(header)
 
     @staticmethod
