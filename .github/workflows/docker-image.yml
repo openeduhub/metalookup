@@ -17,10 +17,6 @@ jobs:
 
       - name: Log in to edu sharing
         run: docker login community.docker.edu-sharing.com -u ${{ secrets.DOCKER_EDU_HUB_REGISTRY_USERNAME }} -p ${{ secrets.DOCKER_EDU_HUB_REGISTRY_PASSWORD }}
-        with:
-          repository: community.docker.edu-sharing.com
-          username: ${{ secrets.DOCKER_EDU_HUB_REGISTRY_USERNAME }}
-          password: ${{ secrets.DOCKER_EDU_HUB_REGISTRY_PASSWORD }}
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
