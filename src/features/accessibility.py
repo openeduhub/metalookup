@@ -26,8 +26,8 @@ class Accessibility(MetadataBase):
 
     def extract_score(self, score_text: str) -> float:
         try:
-            score = float(json.loads(score_text)[SCORE])
-        except (JSONDecodeError, KeyError, ValueError, TypeError):
+            score = float(json.loads(score_text)[SCORE][0])
+        except (KeyError, ValueError, TypeError):
             self._logger.exception(f"Score output was faulty: '{score_text}'.")
             score = -1
         return score

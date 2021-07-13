@@ -44,11 +44,11 @@ def accessibility(input_data: Input):
         input_data.url,
         "--enable-error-reporting",
         "--chrome-flags='--headless --no-sandbox --disable-gpu'",
-        f"--formFactor=desktop",
+        f"--formFactor={input_data.strategy}",
         f"--only-categories={input_data.category}",
         "--output=json",
         "--quiet",
-        "--screenEmulation.mobile=false",
+        f"--screenEmulation.mobile={True if input_data.strategy == MOBILE  else False}",
     ]
 
     lighthouse_process = subprocess.Popen(
@@ -66,7 +66,7 @@ def accessibility(input_data: Input):
     try:
         lighthouse_output = json.loads(lighthouse_output)
     except json.decoder.JSONDecodeError as e:
-        lighthouse_output = {"runtimeError": None}
+        lighthouse_output = {"runtimeError": e.args}
 
     output = Output()
     output.score = [-1.0]
