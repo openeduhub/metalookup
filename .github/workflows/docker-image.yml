@@ -6,10 +6,14 @@ on:
       - develop
       - create_ci_pipeline
       - main
+  pull_request:
+    branches:
+      - develop
+      - main
 
 jobs:
-  build:
-    name: Push Docker image to GitHub Packages
+  build-and-push:
+    name: Build and Push Docker image to community edu hub
     runs-on: ubuntu-latest
 
     steps:
