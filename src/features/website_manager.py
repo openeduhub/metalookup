@@ -126,7 +126,8 @@ class WebsiteManager:
     def _preprocess_header(self) -> None:
         header: str = self.website_data.raw_header.lower()
 
-        if len(header) > 0:
+        idx = header.find('b"')
+        if idx >= 0:
             header = (
                 header.replace("b'", '"')
                 .replace('b"', '"')
@@ -135,6 +136,8 @@ class WebsiteManager:
                 .replace('""', '"')
                 .replace('/"', "/")
             )
+
+        if len(header) > 0:
             self.website_data.headers = json.loads(header)
 
     @staticmethod
@@ -160,8 +163,8 @@ class WebsiteManager:
         except (JSONDecodeError, OSError) as e:
             self._logger.error(f"Error extracting data from splash: {e.args}")
             data = {}
-        except Exception:
-            raise ConnectionError
+        except Exception as e:
+            raise ConnectionError from e
 
         try:
             raw_headers = data["har"]["log"]["entries"][0]["response"][
@@ -180,7 +183,7 @@ class WebsiteManager:
         except KeyError as e:
             exception = (
                 f"Key error from splash container data: '{e.args}'. "
-                f"{''.join(traceback.format_exception(None, e, e.__traceback__))}"
+                "".join(traceback.format_exception(None, e, e.__traceback__))
             )
             self._logger.exception(
                 exception,
@@ -285,7 +288,8 @@ class WebsiteManager:
 
     def reset(self) -> None:
         """
-        Since the manager works on many websites consecutively, the website manager needs to be reset.
+        Since the manager works on many websites consecutively,
+        the website manager needs to be reset.
 
         """
         self.website_data = WebsiteData()
