@@ -8,6 +8,7 @@ class Explanation(str, Enum):
     none = "NoExplanation"
     NoHTTPS = "NoHTTPS"
     AccessibilityTooLow = "AccessibilityTooLow"
+    FoundAds = "FoundAds"
 
 
 class MetadataTags(BaseModel):
