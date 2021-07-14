@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - develop
-      - create_ci_pipeline
       - main
   pull_request:
     branches:
