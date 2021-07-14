@@ -1,21 +1,18 @@
+# CI Pipeline
 
-# Install
+The pipeline is launched by merging the branch into dev or main.
+The pipeline builds the images and pushes them to the private repository.
+Any - even rejected - push to main will trigger an event on the virtual machine to pull from that private repository.
+The pipeline is a bit rough and is going to change in the future.
+
+# Local install
 
 You will need poetry and python3.9.1:
 
 `sudo apt-get install python3.9`     
 `python3.9 -m pip3 install poetry`
 
-# Staying up to date
-
-The repository and docker containers do not auto update.
-Update the dependencies and rebuild the containers regularly.
-
-## CI Pipeline
-
-WIP
-
-# Launching the container
+## Launching the container
 
 1. Start the containers by executing `run.sh` from the main folder, not from `src`
 2. The main container can be reached on `http://0.0.0.0:5057`
