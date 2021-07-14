@@ -11,7 +11,7 @@ from features.accessibility import Accessibility
     "score_text, expected_score",
     [
         ("", -1),
-        ('{"score": 3}', 3),
+        ('{"score": [3]}', 3),
     ],
 )
 def test_accessibility(mocker, score_text, expected_score):

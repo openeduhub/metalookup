@@ -125,24 +125,20 @@ class WebsiteManager:
 
     def _preprocess_header(self) -> None:
         header: str = self.website_data.raw_header.lower()
+
         idx = header.find('b"')
-        if idx >= 0 and header[idx - 1] == "[":
+        if idx >= 0:
             header = (
                 header.replace("b'", '"')
-                    .replace("/'", '"')
-                    .replace("'", '"')
-                    .replace('""', '"')
-                    .replace('/"', "/")
+                .replace('b"', '"')
+                .replace("/'", '"')
+                .replace("'", '"')
+                .replace('""', '"')
+                .replace('/"', "/")
             )
-            bracket_idx = header[idx:].find("]")
-            header = (
-                header[:idx]
-                + '"'
-                + header[idx + 2 : idx + bracket_idx - 2].replace('"', " ")
-                + header[idx + bracket_idx - 1 :]
-            )
-            print(header)
-        self.website_data.headers = json.loads(header)
+
+        if len(header) > 0:
+            self.website_data.headers = json.loads(header)
 
     @staticmethod
     def _transform_raw_header(raw_headers: list) -> dict:
@@ -167,14 +163,14 @@ class WebsiteManager:
         except (JSONDecodeError, OSError) as e:
             self._logger.error(f"Error extracting data from splash: {e.args}")
             data = {}
-        except Exception:
-            raise ConnectionError
+        except Exception as e:
+            raise ConnectionError from e
 
         try:
             raw_headers = data["har"]["log"]["entries"][0]["response"][
                 "headers"
             ]
-        except KeyError:
+        except (KeyError, IndexError):
             raw_headers = []
 
         html = ""
@@ -187,7 +183,7 @@ class WebsiteManager:
         except KeyError as e:
             exception = (
                 f"Key error from splash container data: '{e.args}'. "
-                f"{''.join(traceback.format_exception(None, e, e.__traceback__))}"
+                "".join(traceback.format_exception(None, e, e.__traceback__))
             )
             self._logger.exception(
                 exception,
@@ -292,7 +288,8 @@ class WebsiteManager:
 
     def reset(self) -> None:
         """
-        Since the manager works on many websites consecutively, the website manager needs to be reset.
+        Since the manager works on many websites consecutively,
+        the website manager needs to be reset.
 
         """
         self.website_data = WebsiteData()
