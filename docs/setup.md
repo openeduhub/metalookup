@@ -11,6 +11,10 @@ You will need poetry and python3.9.1:
 The repository and docker containers do not auto update.
 Update the dependencies and rebuild the containers regularly.
 
+## CI Pipeline
+
+WIP
+
 # Launching the container
 
 1. Start the containers by executing `run.sh` from the main folder, not from `src`
