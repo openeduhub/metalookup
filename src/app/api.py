@@ -2,8 +2,9 @@ import json
 from multiprocessing import shared_memory
 from typing import List
 
-from fastapi import FastAPI, Depends
+from fastapi import Depends, FastAPI
 from fastapi.encoders import jsonable_encoder
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from app import db_models
@@ -17,7 +18,7 @@ from app.models import (
     MetadataTags,
     Output,
 )
-from db.db import create_server_connection, get_db, engine, SessionLocal
+from db.db import SessionLocal, create_server_connection, engine, get_db
 from lib.constants import (
     DECISION,
     MESSAGE_ALLOW_LIST,
@@ -36,12 +37,19 @@ from lib.settings import NUMBER_OF_EXTRACTORS, VERSION
 from lib.timing import get_utc_now
 
 app = FastAPI(title=METADATA_EXTRACTOR, version=VERSION)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.communicator: QueueCommunicator
 shared_status = shared_memory.ShareableList([0])
 
 
 def _convert_dict_to_output_model(
-        meta: dict, debug: bool = False
+    meta: dict, debug: bool = False
 ) -> ExtractorTags:
     extractor_tags = ExtractorTags()
     for key in ExtractorTags.__fields__.keys():
@@ -78,7 +86,9 @@ def extract_meta(input_data: Input):
 
     allowance = _convert_allow_list_to_dict(input_data.allow_list)
 
-    write_request_to_db(starting_extraction, input_data=input_data, allowance=allowance)
+    write_request_to_db(
+        starting_extraction, input_data=input_data, allowance=allowance
+    )
 
     uuid = app.communicator.send_message(
         {
@@ -115,7 +125,13 @@ def extract_meta(input_data: Input):
         time_until_complete=end_time - starting_extraction,
     )
 
-    write_response_to_db(starting_extraction, end_time, input_data=input_data, allowance=allowance, output=out)
+    write_response_to_db(
+        starting_extraction,
+        end_time,
+        input_data=input_data,
+        allowance=allowance,
+        output=out,
+    )
     return out
 
 
@@ -125,11 +141,20 @@ db_models.Base.metadata.create_all(bind=engine)
 def write_request_to_db(timestamp: float, input_data: Input, allowance: dict):
     print("Writing to db")
     db = SessionLocal()
-    new_input = db_models.Record(timestamp=timestamp, action="REQUEST", url=input_data.url, start_time=-1,
-                                 debug=input_data.debug,
-                                 html=input_data.html, headers=input_data.headers, har=input_data.har,
-                                 allow_list=json.dumps(allowance), meta="", exception="",
-                                 time_until_complete=0)
+    new_input = db_models.Record(
+        timestamp=timestamp,
+        action="REQUEST",
+        url=input_data.url,
+        start_time=-1,
+        debug=input_data.debug,
+        html=input_data.html,
+        headers=input_data.headers,
+        har=input_data.har,
+        allow_list=json.dumps(allowance),
+        meta="",
+        exception="",
+        time_until_complete=0,
+    )
 
     db.add(new_input)
     db.commit()
@@ -137,19 +162,33 @@ def write_request_to_db(timestamp: float, input_data: Input, allowance: dict):
     print("Wrote request: ", new_input)
 
 
-def write_response_to_db(timestamp: float, end_time: float, input_data: Input, allowance: dict, output: Output):
+def write_response_to_db(
+    timestamp: float,
+    end_time: float,
+    input_data: Input,
+    allowance: dict,
+    output: Output,
+):
     print("Writing to db")
     print(f"Writing to db with meta {output.meta}")
 
     json_compatible_item_data = jsonable_encoder(output.meta)
     print(f"Writing to db with json {json_compatible_item_data}")
     db = SessionLocal()
-    new_input = db_models.Record(timestamp=end_time, action="RESPONSE", url=input_data.url, start_time=timestamp,
-                                 debug=input_data.debug,
-                                 html=input_data.html, headers=input_data.headers, har=input_data.har,
-                                 allow_list=json.dumps(allowance), meta=json.dumps(json_compatible_item_data),
-                                 exception=output.exception,
-                                 time_until_complete=output.time_until_complete)
+    new_input = db_models.Record(
+        timestamp=end_time,
+        action="RESPONSE",
+        url=input_data.url,
+        start_time=timestamp,
+        debug=input_data.debug,
+        html=input_data.html,
+        headers=input_data.headers,
+        har=input_data.har,
+        allow_list=json.dumps(allowance),
+        meta=json.dumps(json_compatible_item_data),
+        exception=output.exception,
+        time_until_complete=output.time_until_complete,
+    )
 
     db.add(new_input)
     db.commit()
@@ -161,7 +200,13 @@ def write_response_to_db(timestamp: float, end_time: float, input_data: Input, a
 def show_records(db: Session = Depends(get_db)):
     records = db.query(db_models.Record).all()
     for record in records:
-        print("record id:", record.timestamp, record, record.allow_list, record.action)
+        print(
+            "record id:",
+            record.timestamp,
+            record,
+            record.allow_list,
+            record.action,
+        )
     print("records", records)
     return records
 
