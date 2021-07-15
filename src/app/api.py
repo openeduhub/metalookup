@@ -5,8 +5,9 @@ from typing import List
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 
-from app import models
+from app import db_models
 from app.communication import QueueCommunicator
+from app.db_models import RecordSchema
 from app.models import (
     Explanation,
     ExtractorTags,
@@ -113,12 +114,26 @@ def extract_meta(input_data: Input):
     return out
 
 
-models.Base.metadata.create_all(bind=engine)
+db_models.Base.metadata.create_all(bind=engine)
 
 
-@app.get("/records/", response_model=List[Input])
-def show_records(db: Session = Depends(get_db)):
-    records = db.query(models.InputRecord).all()
+@app.post("/records/", response_model=List[RecordSchema])
+def show_records(input_data: Input, db: Session = Depends(get_db)):
+
+    new_input = db_models.Record(timestamp=int(get_utc_now()), action="REQUEST", url=input_data.url,
+                                 debug=input_data.debug,
+                                 html=input_data.html, headers=input_data.headers, har=input_data.har,
+                                 allow_list={}, meta="", exception="",
+                                 time_until_complete=-1)
+
+    db.add(new_input)
+    db.commit()
+    records = db.query(db_models.Record).all()
+    for record in records:
+        print("record id:", record.timestamp, record, record.allow_list)
+    print("records", records)
+    db.close()
+
     return records
 
 

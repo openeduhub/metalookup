@@ -2,9 +2,6 @@ from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel, Field
-from sqlalchemy import Column, Integer
-
-from db.db import Base
 
 
 class Explanation(str, Enum):
@@ -222,11 +219,6 @@ class Input(BaseModel):
         default=True,
         description="Developer flag to receive more information through API",
     )
-
-
-class InputRecord(Base):
-    __tablename__ = "InputRecord"
-    id = Column(Integer, primary_key=True, index=True)
 
 
 class Output(BaseModel):
