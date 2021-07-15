@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
 from app.communication import QueueCommunicator
+from fastapi.middleware.cors import CORSMiddleware
 from lib.constants import (
     DECISION,
     MESSAGE_ALLOW_LIST,
@@ -247,6 +248,13 @@ class Output(BaseModel):
 
 
 app = FastAPI(title=METADATA_EXTRACTOR, version=VERSION)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.communicator: QueueCommunicator
 shared_status = shared_memory.ShareableList([0])
 
