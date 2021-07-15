@@ -4,6 +4,7 @@ from multiprocessing import shared_memory
 from fastapi import FastAPI
 
 from app.communication import QueueCommunicator
+from fastapi.middleware.cors import CORSMiddleware
 from app.models import (
     Explanation,
     ExtractorTags,
@@ -30,6 +31,13 @@ from lib.settings import NUMBER_OF_EXTRACTORS, VERSION
 from lib.timing import get_utc_now
 
 app = FastAPI(title=METADATA_EXTRACTOR, version=VERSION)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.communicator: QueueCommunicator
 shared_status = shared_memory.ShareableList([0])
 
