@@ -2,26 +2,26 @@ name: Metadata Extractor Docker Image
 
 on:
   push:
-    branches: main
+    branches:
+      - develop
+      - main
+  pull_request:
+    branches:
+      - develop
 
 jobs:
-
-  build:
-    name: Push Docker image to GitHub Packages
+  build-and-push:
+    name: Build and Push Docker image to community edu hub
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Build the Docker image
-      uses: docker/build-push-action@v2
-      with:
-#          context: .
-#          file: ./dockerfile
-#          push: true
-#          tags: |
-#            oeh-search-meta:latest
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          registry: docker.pkg.github.com
-          repository: codecentric/metadata_picker/meta
-          tag_with_ref: true
+      - uses: actions/checkout@v2
+
+      - name: Log in to edu sharing
+        run: docker login community.docker.edu-sharing.com -u ${{ secrets.DOCKER_EDU_HUB_REGISTRY_USERNAME }} -p ${{ secrets.DOCKER_EDU_HUB_REGISTRY_PASSWORD }}
+
+      - name: Build the container
+        run: docker build -t community.docker.edu-sharing.com/oeh-search-meta:latest .
+
+      - name: Push the Docker image
+        run: docker push community.docker.edu-sharing.com/oeh-search-meta:latest

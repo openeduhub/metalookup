@@ -17,6 +17,7 @@ DECISION = "decision"
 TIME_REQUIRED = "time_required"
 
 ACCESSIBILITY = "accessibility"
+SPLASH = "splash"
 DESKTOP = "desktop"
 MOBILE = "mobile"
 SCORE = "score"

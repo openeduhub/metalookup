@@ -2,25 +2,27 @@ name: Lighthouse Docker Image
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - develop
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - develop
+      - main
 
 jobs:
-
-  build:
-
+  build-and-push:
+    name: Build and Push Docker image to community edu hub
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Build the Lighthouse image
-      run: docker build -f dockerfile_lighthouse -t oeh-search-meta_lighthouse:latest .  
-    - name: Build the Docker image
-      uses: docker/build-push-action@v1
-      with:
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-          registry: docker.pkg.github.com
-          repository: codecentric/metadata_picker/oeh-search-meta
-          tag_with_ref: true
+      - uses: actions/checkout@v2
+
+      - name: Log in to edu sharing
+        run: docker login community.docker.edu-sharing.com -u ${{ secrets.DOCKER_EDU_HUB_REGISTRY_USERNAME }} -p ${{ secrets.DOCKER_EDU_HUB_REGISTRY_PASSWORD }}
+
+      - name: Build the container
+        run: docker build -f dockerfile_lighthouse -t community.docker.edu-sharing.com/oeh-search-meta_lighthouse:latest .
+
+      - name: Push the Docker image
+        run: docker push community.docker.edu-sharing.com/oeh-search-meta_lighthouse:latest

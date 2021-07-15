@@ -29,20 +29,23 @@ def _build_and_run_docker():
 
     subprocess.call(
         [
-            "docker stop $(docker ps -a -q --filter ancestor=oeh-search-meta:latest --format='{{.ID}}')"
+            "docker stop $(docker ps -a -q --filter ancestor=community.docker.edu-sharing.com/oeh-search-meta:latest --format='{{.ID}}')"
         ],
         shell=True,
     )
     subprocess.call(
         [
-            "docker stop $(docker ps -a -q --filter ancestor=oeh-search-meta_lighthouse:latest --format='{{.ID}}')"
+            "docker stop $(docker ps -a -q --filter ancestor=community.docker.edu-sharing.com/oeh-search-meta_lighthouse:latest --format='{{.ID}}')"
         ],
         shell=True,
     )
 
     print("building docker")
     process = subprocess.call(
-        ["docker build -t oeh-search-meta:latest ."], shell=True
+        [
+            "docker build -t community.docker.edu-sharing.com/oeh-search-meta:latest ."
+        ],
+        shell=True,
     )
 
     print(f"process after building docker: {process}")
@@ -50,7 +53,7 @@ def _build_and_run_docker():
     print("building lighthouse docker")
     process = subprocess.call(
         [
-            "docker build -f dockerfile_lighthouse -t oeh-search-meta_lighthouse:latest ."
+            "docker build -f dockerfile_lighthouse -t community.docker.edu-sharing.com/oeh-search-meta_lighthouse:latest ."
         ],
         shell=True,
     )

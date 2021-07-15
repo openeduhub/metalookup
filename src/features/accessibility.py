@@ -14,7 +14,7 @@ from lib.constants import (
     SCORE,
     VALUES,
 )
-from lib.settings import LIGHTHOUSE_API_PORT
+from lib.settings import ACCESSIBILITY_URL
 
 
 class Accessibility(MetadataBase):
@@ -26,8 +26,8 @@ class Accessibility(MetadataBase):
 
     def extract_score(self, score_text: str) -> float:
         try:
-            score = float(json.loads(score_text)[SCORE])
-        except (JSONDecodeError, KeyError, ValueError, TypeError):
+            score = float(json.loads(score_text)[SCORE][0])
+        except (KeyError, ValueError, TypeError):
             self._logger.exception(f"Score output was faulty: '{score_text}'.")
             score = -1
         return score
@@ -43,19 +43,25 @@ class Accessibility(MetadataBase):
             "category": ACCESSIBILITY,
             "strategy": strategy,
         }
-        container_url = (
-            f"http://{ACCESSIBILITY}:{LIGHTHOUSE_API_PORT}/{ACCESSIBILITY}"
-        )
+        container_url = f"{ACCESSIBILITY_URL}/{ACCESSIBILITY}"
 
         try:
             process = await session.get(
                 url=container_url, timeout=60, json=params
             )
-        except (ClientConnectorError, ConnectionRefusedError, OSError):
-            raise ConnectionError("No connection to accessibility container.")
+        except (
+            asyncio.exceptions.TimeoutError,
+            ClientConnectorError,
+            ConnectionRefusedError,
+            OSError,
+        ) as e:
+            self._logger.exception(
+                f"Timeout for url {container_url} after 60s: {e.args}"
+            )
+            process = None
 
         score = -1
-        if process.status == 200:
+        if process is not None and process.status == 200:
             score_text = await process.text()
             score = self.extract_score(score_text)
         return score
