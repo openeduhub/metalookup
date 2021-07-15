@@ -3,6 +3,7 @@ from multiprocessing import shared_memory
 from typing import List
 
 from fastapi import FastAPI, Depends
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import Session
 
 from app import db_models
@@ -114,7 +115,7 @@ def extract_meta(input_data: Input):
         time_until_complete=end_time - starting_extraction,
     )
 
-    write_response_to_db(end_time, input_data=input_data, allowance=allowance, output=out)
+    write_response_to_db(starting_extraction, end_time, input_data=input_data, allowance=allowance, output=out)
     return out
 
 
@@ -124,7 +125,7 @@ db_models.Base.metadata.create_all(bind=engine)
 def write_request_to_db(timestamp: float, input_data: Input, allowance: dict):
     print("Writing to db")
     db = SessionLocal()
-    new_input = db_models.Record(timestamp=timestamp, action="REQUEST", url=input_data.url,
+    new_input = db_models.Record(timestamp=timestamp, action="REQUEST", url=input_data.url, start_time=-1,
                                  debug=input_data.debug,
                                  html=input_data.html, headers=input_data.headers, har=input_data.har,
                                  allow_list=json.dumps(allowance), meta="", exception="",
@@ -136,13 +137,17 @@ def write_request_to_db(timestamp: float, input_data: Input, allowance: dict):
     print("Wrote request: ", new_input)
 
 
-def write_response_to_db(timestamp: float, input_data: Input, allowance: dict, output: Output):
+def write_response_to_db(timestamp: float, end_time: float, input_data: Input, allowance: dict, output: Output):
     print("Writing to db")
+    print(f"Writing to db with meta {output.meta}")
+
+    json_compatible_item_data = jsonable_encoder(output.meta)
+    print(f"Writing to db with json {json_compatible_item_data}")
     db = SessionLocal()
-    new_input = db_models.Record(timestamp=timestamp, action="RESPONSE", url=input_data.url,
+    new_input = db_models.Record(timestamp=end_time, action="RESPONSE", url=input_data.url, start_time=timestamp,
                                  debug=input_data.debug,
                                  html=input_data.html, headers=input_data.headers, har=input_data.har,
-                                 allow_list=json.dumps(allowance), meta=json.dumps(output.meta),
+                                 allow_list=json.dumps(allowance), meta=json.dumps(json_compatible_item_data),
                                  exception=output.exception,
                                  time_until_complete=output.time_until_complete)
 

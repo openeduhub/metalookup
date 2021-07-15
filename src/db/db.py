@@ -4,6 +4,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
+from lib.settings import USED_IN_PRODUCTION
+
 
 def get_db():
     try:
@@ -24,8 +26,10 @@ def create_server_connection(host_name, user_name, user_password):
 
 
 # TODO: use debug flag or similar
-engine = create_server_connection("db", "postgres", "postgres")
-# engine = create_server_connection("localhost", "postgres", "postgres")
+if USED_IN_PRODUCTION:
+    engine = create_server_connection("db", "postgres", "postgres")
+else:
+    engine = create_server_connection("localhost", "postgres", "postgres")
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
