@@ -16,7 +16,7 @@ from app.models import (
     MetadataTags,
     Output,
 )
-from db.db import create_server_connection, get_db, engine
+from db.db import create_server_connection, get_db, engine, SessionLocal
 from lib.constants import (
     DECISION,
     MESSAGE_ALLOW_LIST,
@@ -77,6 +77,8 @@ def extract_meta(input_data: Input):
 
     allowance = _convert_allow_list_to_dict(input_data.allow_list)
 
+    write_request_to_db(starting_extraction, input_data=input_data, allowance=allowance)
+
     uuid = app.communicator.send_message(
         {
             MESSAGE_URL: input_data.url,
@@ -104,36 +106,58 @@ def extract_meta(input_data: Input):
         extractor_tags = None
         exception = f"No response from {METADATA_EXTRACTOR}."
 
+    end_time = get_utc_now()
     out = Output(
         url=input_data.url,
         meta=extractor_tags,
         exception=exception,
-        time_until_complete=get_utc_now() - starting_extraction,
+        time_until_complete=end_time - starting_extraction,
     )
 
+    write_response_to_db(end_time, input_data=input_data, allowance=allowance, output=out)
     return out
 
 
 db_models.Base.metadata.create_all(bind=engine)
 
 
-@app.post("/records/", response_model=List[RecordSchema])
-def show_records(input_data: Input, db: Session = Depends(get_db)):
-
-    new_input = db_models.Record(timestamp=int(get_utc_now()), action="REQUEST", url=input_data.url,
+def write_request_to_db(timestamp: float, input_data: Input, allowance: dict):
+    print("Writing to db")
+    db = SessionLocal()
+    new_input = db_models.Record(timestamp=timestamp, action="REQUEST", url=input_data.url,
                                  debug=input_data.debug,
                                  html=input_data.html, headers=input_data.headers, har=input_data.har,
-                                 allow_list={}, meta="", exception="",
-                                 time_until_complete=-1)
+                                 allow_list=json.dumps(allowance), meta="", exception="",
+                                 time_until_complete=0)
 
     db.add(new_input)
     db.commit()
+    db.close()
+    print("Wrote request: ", new_input)
+
+
+def write_response_to_db(timestamp: float, input_data: Input, allowance: dict, output: Output):
+    print("Writing to db")
+    db = SessionLocal()
+    new_input = db_models.Record(timestamp=timestamp, action="RESPONSE", url=input_data.url,
+                                 debug=input_data.debug,
+                                 html=input_data.html, headers=input_data.headers, har=input_data.har,
+                                 allow_list=json.dumps(allowance), meta=json.dumps(output.meta),
+                                 exception=output.exception,
+                                 time_until_complete=output.time_until_complete)
+
+    db.add(new_input)
+    db.commit()
+    db.close()
+    print("Wrote response: ", new_input)
+
+
+@app.get("/records/", response_model=List[RecordSchema])
+def show_records(db: Session = Depends(get_db)):
     records = db.query(db_models.Record).all()
     for record in records:
-        print("record id:", record.timestamp, record, record.allow_list)
+        print("record id:", record.timestamp, record, record.allow_list, record.action)
     print("records", records)
-    db.close()
-
     return records
 
 
