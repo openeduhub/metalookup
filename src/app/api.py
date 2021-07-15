@@ -1,8 +1,11 @@
 import json
 from multiprocessing import shared_memory
+from typing import List
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
+from sqlalchemy.orm import Session
 
+from app import models
 from app.communication import QueueCommunicator
 from app.models import (
     Explanation,
@@ -12,6 +15,7 @@ from app.models import (
     MetadataTags,
     Output,
 )
+from db.db import create_server_connection, get_db, engine
 from lib.constants import (
     DECISION,
     MESSAGE_ALLOW_LIST,
@@ -35,7 +39,7 @@ shared_status = shared_memory.ShareableList([0])
 
 
 def _convert_dict_to_output_model(
-    meta: dict, debug: bool = False
+        meta: dict, debug: bool = False
 ) -> ExtractorTags:
     extractor_tags = ExtractorTags()
     for key in ExtractorTags.__fields__.keys():
@@ -109,8 +113,30 @@ def extract_meta(input_data: Input):
     return out
 
 
+models.Base.metadata.create_all(bind=engine)
+
+
+@app.get("/records/", response_model=List[Input])
+def show_records(db: Session = Depends(get_db)):
+    records = db.query(models.InputRecord).all()
+    return records
+
+
 @app.get("/_ping", description="Ping function for automatic health check.")
 def ping():
+    connection = create_server_connection("db", "postgres", "postgres")
+    print("connection: ", connection)
+    """
+    create_db = "CREATE DATABASE storage"
+    create_database(connection, create_db)
+    create_database(connection, "TEST")
+    execute_query(connection, "TEST")
+
+    create_request_table = "CREATE TABLE request (id INT PRIMARY KEY);"
+    create_request_table = "CREATE TABLE request (timestamp INT PRIMARY KEY, action VARCHAR(10) NOT NULL, request);"
+
+    execute_query(connection, create_request_table)
+    """
     return {"status": "ok"}
 
 

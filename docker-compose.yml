@@ -48,18 +48,18 @@ services:
     networks:
       - backend
   db:
-      image: postgres
-      container_name: oeh-search-meta_db_volume
-      ports:
-        - "5432:5432"
-      environment:
-        - POSTGRES_USER=postgres
-        - POSTGRES_PASSWORD=postgres
-        - POSTGRES_DB=storage
-      volumes:
-        - db_volume:/var/lib/mysql
-      networks:
-        - backend
+    image: postgres
+    container_name: oeh-search-meta_db_volume
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=storage
+    volumes:
+      - db_volume:/var/lib/postgresql/data
+    networks:
+      - backend
 
 volumes:
   db_volume:
