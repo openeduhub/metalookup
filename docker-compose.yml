@@ -9,6 +9,7 @@ services:
     links:
       - splash
       - accessibility
+      - db
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:5057/_ping" ]
       interval: 30s
@@ -46,6 +47,23 @@ services:
       start_period: 40s
     networks:
       - backend
+  db:
+      image: postgres
+      container_name: oeh-search-meta_db_volume
+      ports:
+        - "5432:5432"
+      environment:
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=postgres
+        - POSTGRES_DB=storage
+      volumes:
+        - db_volume:/var/lib/mysql
+      networks:
+        - backend
+
+volumes:
+  db_volume:
+
 networks:
   backend:
     driver: bridge
