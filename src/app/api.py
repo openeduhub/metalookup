@@ -2,12 +2,13 @@ import json
 from multiprocessing import shared_memory
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.communication import QueueCommunicator
-from fastapi.middleware.cors import CORSMiddleware
 from app.models import (
     Explanation,
     ExtractorTags,
+    HappyCase,
     Input,
     ListTags,
     MetadataTags,
@@ -57,7 +58,7 @@ def _convert_dict_to_output_model(
                 MetadataTags(
                     values=meta[key][VALUES],
                     probability=meta[key][PROBABILITY],
-                    decision=meta[key][DECISION],
+                    isHappyCase=HappyCase.UNKNOWN,  # TODO: resolve properly, formerly meta[key][DECISION],
                     time_for_completion=meta[key][TIME_REQUIRED],
                     explanation=[Explanation.none, Explanation.NoHTTPS],
                 ),

@@ -42,7 +42,7 @@ def load_raw_data_and_save_to_dataframe():
         "cookies",
         "g_d_p_r",
     ]
-    row_names = ["values", "probability", "decision", "time_for_completion"]
+    row_names = ["values", "probability", "isHappyCase", "time_for_completion"]
     col_names = [
         f"{key}.{row_name}"
         for row_name in row_names
