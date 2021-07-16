@@ -1,8 +1,10 @@
 import json
 from multiprocessing import shared_memory
+from urllib.request import Request
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.responses import JSONResponse
 
 from app.communication import QueueCommunicator
 from app.models import (
@@ -15,7 +17,6 @@ from app.models import (
     Output,
 )
 from lib.constants import (
-    DECISION,
     MESSAGE_ALLOW_LIST,
     MESSAGE_EXCEPTION,
     MESSAGE_HAR,
@@ -35,7 +36,7 @@ app = FastAPI(title=METADATA_EXTRACTOR, version=VERSION)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -69,6 +70,14 @@ def _convert_dict_to_output_model(
 
 def _convert_allow_list_to_dict(allow_list: ListTags) -> dict:
     return json.loads(allow_list.json())
+
+
+@app.middleware("http")
+async def allow_options_middleware(request: Request, call_next):
+    if request.method == "OPTIONS":
+        return JSONResponse(content=None)
+    response = await call_next(request)
+    return response
 
 
 @app.post(
