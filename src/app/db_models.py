@@ -21,9 +21,7 @@ def create_server_connection(host_name, user_name, user_password):
     sql_url = (
         f"postgresql://{user_name}:{user_password}@{host_name}/{database_name}"
     )
-    connection = create_engine(sql_url)
-    print("connection: ", connection)
-    return connection
+    return create_engine(sql_url)
 
 
 engine = create_server_connection(STORAGE_HOST_NAME, "postgres", "postgres")
@@ -61,16 +59,17 @@ class RecordSchema(Output, Input):
     start_time: float = Field(
         default=-1, description="timestamp of start in milliseconds"
     )
-    action: str = Field(default="", description="TBD")
-    url: str = Field(default="", description="TBD")
-    html: str = Field(default="", description="TBD")
-    headers: str = Field(default="", description="TBD")
-    har: str = Field(default="", description="TBD")
-    debug: str = Field(default=False, description="TBD")
-    allow_list: str = Field(default="", description="TBD")
-    meta: str = Field(default="", description="TBD")
-    exception: Optional[str] = Field(default="", description="TBD")
-    time_until_complete: float = Field(default=-1, description="TBD")
+    action: str = Field(
+        default="", description="Either 'response' or 'request'"
+    )
+    allow_list: str = Field(
+        default="",
+        description="Overwrite of original allow_list. Storing as json string",
+    )
+    meta: str = Field(
+        default="",
+        description="Overwrite of original meta. Storing as json string",
+    )
 
     class Config:
         orm_mode = True

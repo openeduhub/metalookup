@@ -152,15 +152,6 @@ def extract_meta(input_data: Input):
 def show_records(db: Session = Depends(get_db)):
     try:
         records = db.query(db_models.Record).all()
-        for record in records:
-            print(
-                "record id:",
-                record.timestamp,
-                record,
-                record.allow_list,
-                record.action,
-            )
-        print("records", records)
     except OperationalError as err:
         dummy_record = create_dummy_record()
         dummy_record.exception = f"Database exception: {err.args}"
