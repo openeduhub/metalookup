@@ -39,3 +39,9 @@ VERSION = 1.0
 SKIP_E2E_TESTS = True
 
 NUMBER_OF_EXTRACTORS = 22
+
+# Database
+if USED_IN_PRODUCTION:
+    STORAGE_HOST_NAME = "db"
+else:
+    STORAGE_HOST_NAME = "localhost"

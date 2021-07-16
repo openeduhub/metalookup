@@ -1,11 +1,39 @@
 from typing import Optional
 
 from pydantic import Field
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Float,
+    Integer,
+    UnicodeText,
+    create_engine,
+)
+from sqlalchemy.exc import OperationalError
+from sqlalchemy.orm import declarative_base
 
-from sqlalchemy import Column, Integer, Text, Float, Boolean, JSON, UnicodeText, BigInteger
+from app.models import Input, Output
+from lib.settings import STORAGE_HOST_NAME
 
-from app.models import Output, Input
-from db.db import Base
+
+def create_server_connection(host_name, user_name, user_password):
+    database_name = "storage"
+    sql_url = (
+        f"postgresql://{user_name}:{user_password}@{host_name}/{database_name}"
+    )
+    connection = create_engine(sql_url)
+    print("connection: ", connection)
+    return connection
+
+
+engine = create_server_connection(STORAGE_HOST_NAME, "postgres", "postgres")
+
+Base = declarative_base()
+
+try:
+    Base.metadata.create_all(bind=engine)
+except OperationalError as err:
+    print(f"Exception with database: {err.args}")
 
 
 class Record(Base):
@@ -27,8 +55,12 @@ class Record(Base):
 
 class RecordSchema(Output, Input):
     id: int = Field(default=-1, description="Primary key")
-    timestamp: float = Field(default=-1, description="timestamp in milliseconds")
-    start_time: float = Field(default=-1, description="timestamp of start in milliseconds")
+    timestamp: float = Field(
+        default=-1, description="timestamp in milliseconds"
+    )
+    start_time: float = Field(
+        default=-1, description="timestamp of start in milliseconds"
+    )
     action: str = Field(default="", description="TBD")
     url: str = Field(default="", description="TBD")
     html: str = Field(default="", description="TBD")

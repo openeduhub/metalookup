@@ -3,8 +3,8 @@ from multiprocessing import shared_memory
 from typing import List
 
 from fastapi import Depends, FastAPI
-from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 from app import db_models
@@ -18,7 +18,12 @@ from app.models import (
     MetadataTags,
     Output,
 )
-from db.db import SessionLocal, create_server_connection, engine, get_db
+from db.db import (
+    create_dummy_record,
+    create_request_record,
+    create_response_record,
+    get_db,
+)
 from lib.constants import (
     DECISION,
     MESSAGE_ALLOW_LIST,
@@ -86,9 +91,13 @@ def extract_meta(input_data: Input):
 
     allowance = _convert_allow_list_to_dict(input_data.allow_list)
 
-    write_request_to_db(
-        starting_extraction, input_data=input_data, allowance=allowance
-    )
+    database_exception = ""
+    try:
+        create_request_record(
+            starting_extraction, input_data=input_data, allowance=allowance
+        )
+    except OperationalError as err:
+        database_exception += "\nDatabase exception: " + str(err.args)
 
     uuid = app.communicator.send_message(
         {
@@ -111,7 +120,7 @@ def extract_meta(input_data: Input):
         if MESSAGE_EXCEPTION in meta_data.keys():
             exception = meta_data[MESSAGE_EXCEPTION]
         else:
-            exception = None
+            exception = ""
 
     else:
         extractor_tags = None
@@ -121,111 +130,46 @@ def extract_meta(input_data: Input):
     out = Output(
         url=input_data.url,
         meta=extractor_tags,
-        exception=exception,
+        exception=exception + database_exception,
         time_until_complete=end_time - starting_extraction,
     )
+    try:
+        create_response_record(
+            starting_extraction,
+            end_time,
+            input_data=input_data,
+            allowance=allowance,
+            output=out,
+        )
+    except OperationalError as err:
+        database_exception += "\nDatabase exception: " + str(err.args)
+        out.exception += database_exception
 
-    write_response_to_db(
-        starting_extraction,
-        end_time,
-        input_data=input_data,
-        allowance=allowance,
-        output=out,
-    )
     return out
-
-
-db_models.Base.metadata.create_all(bind=engine)
-
-
-def write_request_to_db(timestamp: float, input_data: Input, allowance: dict):
-    print("Writing to db")
-    db = SessionLocal()
-    new_input = db_models.Record(
-        timestamp=timestamp,
-        action="REQUEST",
-        url=input_data.url,
-        start_time=-1,
-        debug=input_data.debug,
-        html=input_data.html,
-        headers=input_data.headers,
-        har=input_data.har,
-        allow_list=json.dumps(allowance),
-        meta="",
-        exception="",
-        time_until_complete=0,
-    )
-
-    db.add(new_input)
-    db.commit()
-    db.close()
-    print("Wrote request: ", new_input)
-
-
-def write_response_to_db(
-    timestamp: float,
-    end_time: float,
-    input_data: Input,
-    allowance: dict,
-    output: Output,
-):
-    print("Writing to db")
-    print(f"Writing to db with meta {output.meta}")
-
-    json_compatible_item_data = jsonable_encoder(output.meta)
-    print(f"Writing to db with json {json_compatible_item_data}")
-    db = SessionLocal()
-    new_input = db_models.Record(
-        timestamp=end_time,
-        action="RESPONSE",
-        url=input_data.url,
-        start_time=timestamp,
-        debug=input_data.debug,
-        html=input_data.html,
-        headers=input_data.headers,
-        har=input_data.har,
-        allow_list=json.dumps(allowance),
-        meta=json.dumps(json_compatible_item_data),
-        exception=output.exception,
-        time_until_complete=output.time_until_complete,
-    )
-
-    db.add(new_input)
-    db.commit()
-    db.close()
-    print("Wrote response: ", new_input)
 
 
 @app.get("/records/", response_model=List[RecordSchema])
 def show_records(db: Session = Depends(get_db)):
-    records = db.query(db_models.Record).all()
-    for record in records:
-        print(
-            "record id:",
-            record.timestamp,
-            record,
-            record.allow_list,
-            record.action,
-        )
-    print("records", records)
+    try:
+        records = db.query(db_models.Record).all()
+        for record in records:
+            print(
+                "record id:",
+                record.timestamp,
+                record,
+                record.allow_list,
+                record.action,
+            )
+        print("records", records)
+    except OperationalError as err:
+        dummy_record = create_dummy_record()
+        dummy_record.exception = f"Database exception: {err.args}"
+        records = [dummy_record]
     return records
 
 
 @app.get("/_ping", description="Ping function for automatic health check.")
 def ping():
-    connection = create_server_connection("db", "postgres", "postgres")
-    print("connection: ", connection)
-    """
-    create_db = "CREATE DATABASE storage"
-    create_database(connection, create_db)
-    create_database(connection, "TEST")
-    execute_query(connection, "TEST")
-
-    create_request_table = "CREATE TABLE request (id INT PRIMARY KEY);"
-    create_request_table = "CREATE TABLE request (timestamp INT PRIMARY KEY, action VARCHAR(10) NOT NULL, request);"
-
-    execute_query(connection, create_request_table)
-    """
     return {"status": "ok"}
 
 
