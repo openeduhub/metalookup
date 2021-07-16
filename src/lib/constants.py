@@ -1,3 +1,5 @@
+from enum import Enum
+
 MESSAGE_URL = "url"
 MESSAGE_HTML = "html"
 MESSAGE_HEADERS = "headers"
@@ -27,3 +29,9 @@ LIGHTHOUSE_EXTRACTOR = "lighthouse_extractor"
 
 # Header
 STRICT_TRANSPORT_SECURITY = "strict-transport-security"
+
+
+# Database
+class ActionEnum(Enum):
+    RESPONSE = "response"
+    REQUEST = "request"
