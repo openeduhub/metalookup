@@ -3,20 +3,20 @@ from multiprocessing import shared_memory
 from urllib.request import Request
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 
 from app.communication import QueueCommunicator
-from fastapi.middleware.cors import CORSMiddleware
 from app.models import (
     Explanation,
     ExtractorTags,
+    HappyCase,
     Input,
     ListTags,
     MetadataTags,
     Output,
 )
 from lib.constants import (
-    DECISION,
     MESSAGE_ALLOW_LIST,
     MESSAGE_EXCEPTION,
     MESSAGE_HAR,
@@ -59,7 +59,7 @@ def _convert_dict_to_output_model(
                 MetadataTags(
                     values=meta[key][VALUES],
                     probability=meta[key][PROBABILITY],
-                    decision=meta[key][DECISION],
+                    isHappyCase=HappyCase.UNKNOWN,  # TODO: resolve properly, formerly meta[key][DECISION],
                     time_for_completion=meta[key][TIME_REQUIRED],
                     explanation=[Explanation.none, Explanation.NoHTTPS],
                 ),
@@ -71,12 +71,14 @@ def _convert_dict_to_output_model(
 def _convert_allow_list_to_dict(allow_list: ListTags) -> dict:
     return json.loads(allow_list.json())
 
+
 @app.middleware("http")
-async def allowOptionsMiddleware(request: Request, call_next):
-    if request.method == 'OPTIONS':
-        return JSONResponse(content = None)
+async def allow_options_middleware(request: Request, call_next):
+    if request.method == "OPTIONS":
+        return JSONResponse(content=None)
     response = await call_next(request)
     return response
+
 
 @app.post(
     "/extract_meta",

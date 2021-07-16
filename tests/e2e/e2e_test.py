@@ -65,7 +65,7 @@ def test_e2e():
         len(data["meta"]["advertisement"]["values"]) > 10
     )
     has_expected_advertisment_decision = (
-        data["meta"]["advertisement"]["decision"] is True
+        data["meta"]["advertisement"]["isHappyCase"] is True
     )
     assert has_expected_advertisment_values
     assert has_expected_advertisment_decision
@@ -74,7 +74,7 @@ def test_e2e():
         len(data["meta"]["easy_privacy"]["values"]) > 6
     )
     has_expected_easy_privacy_decision = (
-        data["meta"]["easy_privacy"]["decision"] is True
+        data["meta"]["easy_privacy"]["isHappyCase"] is True
     )
     assert has_expected_easy_privacy_values
     assert has_expected_easy_privacy_decision
@@ -83,7 +83,7 @@ def test_e2e():
         len(data["meta"]["malicious_extensions"]["values"]) == 2
     )
     has_expected_malicious_extensions_decision = (
-        data["meta"]["malicious_extensions"]["decision"] is True
+        data["meta"]["malicious_extensions"]["isHappyCase"] is True
     )
     assert has_expected_malicious_extensions_values
     assert has_expected_malicious_extensions_decision
@@ -92,7 +92,7 @@ def test_e2e():
         len(data["meta"]["cookies_in_html"]["values"]) >= 1
     )
     has_expected_cookies_in_html_decision = (
-        data["meta"]["cookies_in_html"]["decision"] is True
+        data["meta"]["cookies_in_html"]["isHappyCase"] is True
     )
     assert has_expected_cookies_in_html_values
     assert has_expected_cookies_in_html_decision
@@ -101,7 +101,7 @@ def test_e2e():
         len(data["meta"]["fanboy_annoyance"]["values"]) >= 10
     )
     has_expected_fanboy_annoyance_decision = (
-        data["meta"]["fanboy_annoyance"]["decision"] is True
+        data["meta"]["fanboy_annoyance"]["isHappyCase"] is True
     )
     assert has_expected_fanboy_annoyance_values
     assert has_expected_fanboy_annoyance_decision
@@ -110,13 +110,15 @@ def test_e2e():
         len(data["meta"]["easylist_adult"]["values"]) == 2
     )
     has_expected_easylist_adult_decision = (
-        data["meta"]["easylist_adult"]["decision"] is True
+        data["meta"]["easylist_adult"]["isHappyCase"] is True
     )
     assert has_expected_easylist_adult_values
     assert has_expected_easylist_adult_decision
 
     has_expected_pop_up_values = len(data["meta"]["pop_up"]["values"]) == 2
-    has_expected_pop_up_decision = data["meta"]["pop_up"]["decision"] is True
+    has_expected_pop_up_decision = (
+        data["meta"]["pop_up"]["isHappyCase"] is True
+    )
     assert has_expected_pop_up_values
     assert has_expected_pop_up_decision
 
@@ -124,14 +126,14 @@ def test_e2e():
         "values"
     ] == [0.98, 0.98]
     has_expected_accessibility_decision = (
-        data["meta"]["accessibility"]["decision"] is True
+        data["meta"]["accessibility"]["isHappyCase"] is True
     )
     assert has_expected_accessibility_values
     assert has_expected_accessibility_decision
 
     has_expected_g_d_p_r_values = len(data["meta"]["g_d_p_r"]["values"]) >= 7
     has_expected_g_d_p_r_decision = (
-        data["meta"]["g_d_p_r"]["decision"] is False
+        data["meta"]["g_d_p_r"]["isHappyCase"] is False
     )
     assert has_expected_g_d_p_r_values
     assert has_expected_g_d_p_r_decision
@@ -140,12 +142,14 @@ def test_e2e():
         len(data["meta"]["javascript"]["values"]) > 10
     )
     has_expected_javascript_decision = (
-        data["meta"]["javascript"]["decision"] is True
+        data["meta"]["javascript"]["isHappyCase"] is True
     )
     assert has_expected_javascript_values
     assert has_expected_javascript_decision
 
     has_expected_cookies_values = len(data["meta"]["cookies"]["values"]) > 10
-    has_expected_cookies_decision = data["meta"]["cookies"]["decision"] is True
+    has_expected_cookies_decision = (
+        data["meta"]["cookies"]["isHappyCase"] is True
+    )
     assert has_expected_cookies_values
     assert has_expected_cookies_decision
