@@ -4,8 +4,9 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy.orm import sessionmaker
 
 from app import db_models
-from app.db_models import RecordSchema, engine
+from app.db_models import RecordSchema
 from app.models import Input, Output
+from db.base import engine
 from lib.constants import ActionEnum
 
 
@@ -80,7 +81,7 @@ def create_dummy_record() -> RecordSchema:
         id=-1,
         timestamp=-1,
         start_time=-1,
-        action="",
+        action=ActionEnum.NONE,
         url="",
         html="",
         headers="",

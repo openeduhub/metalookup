@@ -1,5 +1,5 @@
-from typing import Optional
-
+from psycopg2._psycopg import AsIs
+from psycopg2.extensions import register_adapter
 from pydantic import Field
 from sqlalchemy import (
     Boolean,
@@ -7,31 +7,11 @@ from sqlalchemy import (
     Float,
     Integer,
     UnicodeText,
-    create_engine,
 )
-from sqlalchemy.exc import OperationalError
-from sqlalchemy.orm import declarative_base
 
 from app.models import Input, Output
-from lib.settings import STORAGE_HOST_NAME
-
-
-def create_server_connection(host_name, user_name, user_password):
-    database_name = "storage"
-    sql_url = (
-        f"postgresql://{user_name}:{user_password}@{host_name}/{database_name}"
-    )
-    return create_engine(sql_url)
-
-
-engine = create_server_connection(STORAGE_HOST_NAME, "postgres", "postgres")
-
-Base = declarative_base()
-
-try:
-    Base.metadata.create_all(bind=engine)
-except OperationalError as err:
-    print(f"Exception with database: {err.args}")
+from db.base import Base
+from lib.constants import ActionEnum
 
 
 class Record(Base):
@@ -51,6 +31,13 @@ class Record(Base):
     time_until_complete = Column(Float)
 
 
+def adapt_action_enum(action):
+    return AsIs(repr(action.value))
+
+
+register_adapter(ActionEnum, adapt_action_enum)
+
+
 class RecordSchema(Output, Input):
     id: int = Field(default=-1, description="Primary key")
     timestamp: float = Field(
@@ -62,8 +49,8 @@ class RecordSchema(Output, Input):
     action: str = Field(
         default="", description="Either 'response' or 'request'"
     )
-    allow_list: str = Field(
-        default="",
+    allow_list: ActionEnum = Field(
+        default=ActionEnum.NONE,
         description="Overwrite of original allow_list. Storing as json string",
     )
     meta: str = Field(

@@ -40,6 +40,7 @@ from lib.constants import (
 )
 from lib.settings import NUMBER_OF_EXTRACTORS, VERSION
 from lib.timing import get_utc_now
+import db.base
 
 app = FastAPI(title=METADATA_EXTRACTOR, version=VERSION)
 app.add_middleware(
@@ -51,10 +52,11 @@ app.add_middleware(
 )
 app.communicator: QueueCommunicator
 shared_status = shared_memory.ShareableList([0])
+db.base.create_metadata()
 
 
 def _convert_dict_to_output_model(
-    meta: dict, debug: bool = False
+        meta: dict, debug: bool = False
 ) -> ExtractorTags:
     extractor_tags = ExtractorTags()
     for key in ExtractorTags.__fields__.keys():

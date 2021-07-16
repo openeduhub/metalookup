@@ -33,5 +33,9 @@ STRICT_TRANSPORT_SECURITY = "strict-transport-security"
 
 # Database
 class ActionEnum(Enum):
+    def __str__(self):
+        return str(self.value)
+    
+    NONE = "none"
     RESPONSE = "response"
     REQUEST = "request"
