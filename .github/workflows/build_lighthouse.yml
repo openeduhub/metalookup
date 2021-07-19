@@ -4,15 +4,13 @@ on:
   push:
     branches:
       - dev
-      - main
   pull_request:
     branches:
       - dev
-      - main
 
 jobs:
   build-and-push:
-    name: Build and Push Docker image to community edu hub
+    name: Build docker image
     runs-on: ubuntu-latest
 
     steps:
@@ -23,6 +21,3 @@ jobs:
 
       - name: Build the container
         run: docker build -f dockerfile_lighthouse -t community.docker.edu-sharing.com/oeh-search-meta_lighthouse:latest .
-
-      - name: Push the Docker image
-        run: docker push community.docker.edu-sharing.com/oeh-search-meta_lighthouse:latest
