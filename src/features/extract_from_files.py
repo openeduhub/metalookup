@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 from pdfminer.high_level import extract_text
 from PyPDF2.utils import PdfReadError
 
+from app.models import DecisionCase
 from features.metadata_base import MetadataBase, ProbabilityDeterminationMethod
 from features.website_manager import WebsiteData
 from lib.constants import VALUES
@@ -183,12 +184,11 @@ class ExtractFromFiles(MetadataBase):
         values = await self._work_files(files=extractable_files)
         return {**values}
 
-    def _decide(self, website_data: WebsiteData) -> tuple[bool, float]:
+    def _decide(self, website_data: WebsiteData) -> tuple[DecisionCase, float]:
         probability = 0
         extractable_files = self._get_extractable_files(website_data)
 
         if website_data.values:
             probability = len(extractable_files) / len(website_data.values)
-
-        decision = probability > self.decision_threshold
+        decision = self._get_decision(probability)
         return decision, probability

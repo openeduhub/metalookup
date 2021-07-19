@@ -4,8 +4,8 @@ services:
   extractor:
     dns: 8.8.8.8
     image: community.docker.edu-sharing.com/oeh-search-meta:latest
-    expose:
-      - "5057"
+    ports:
+      - "5057:5057"
     links:
       - splash
       - accessibility
@@ -23,10 +23,10 @@ services:
     deploy:
       labels:
         - traefik.frontend.rule=Host:metalookup.openeduhub.net
-# 2.0
+        # 2.0
         #- "traefik.http.middlewares.testheader.headers.accesscontrolalloworigin=*"
         #- "traefik.http.middlewares.testheader.headers.addvaryheader=false"
-# 1.7
+        # 1.7
         #- "traefik.frontend.headers.customResponseHeaders=Access-Control-Allow-Origin:*||Access-Control-Allow-Methods:*"
         #- traefik.frontend.headers.customResponseHeaders=Access-Control-Allow-Methods:*
         - traefik.enable=true
@@ -53,8 +53,8 @@ services:
     dns: 8.8.8.8
     image: community.docker.edu-sharing.com/oeh-search-meta_lighthouse:latest
     restart: always
-    expose:
-      - "5058"
+    ports:
+      - "5058:5058"
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:5058/_ping" ]
       interval: 30s
@@ -64,9 +64,8 @@ services:
       - traefik-public
   db:
     image: postgres
-    container_name: oeh-search-meta_db_volume
-    expose:
-      - "5432"
+    ports:
+      - "5432:5432"
     restart: always
     environment:
       - POSTGRES_USER=postgres
@@ -76,6 +75,10 @@ services:
       - db_volume:/var/lib/postgresql/data
     networks:
       - traefik-public
+
+volumes:
+  db_volume:
+
 networks:
   traefik-public:
     external: true

@@ -11,7 +11,7 @@ class Explanation(str, Enum):
     FoundAds = "FoundAds"
 
 
-class HappyCase(Enum):
+class DecisionCase(Enum):
     TRUE = "true"
     FALSE = "false"
     UNKNOWN = "unknown"
@@ -25,9 +25,9 @@ class MetadataTags(BaseModel):
         default=0,
         description="The calculated probability that the isHappyCase is certain.",
     )
-    isHappyCase: HappyCase = Field(
-        default=HappyCase.UNKNOWN,
-        description="A user friendly decision whether or not the happy case is fulfilled,"
+    isHappyCase: DecisionCase = Field(
+        default=DecisionCase.UNKNOWN,
+        description="A user friendly decision whether or not the happy case is fulfilled"
         " or whether everything is unclear",
     )
     explanation: list[Explanation] = Field(

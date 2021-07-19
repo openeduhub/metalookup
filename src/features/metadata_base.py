@@ -10,6 +10,7 @@ import adblockparser
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 
+from app.models import DecisionCase
 from features.website_manager import WebsiteData, WebsiteManager
 from lib.constants import DECISION, PROBABILITY, TIME_REQUIRED, VALUES
 from lib.settings import USE_LOCAL_IF_POSSIBLE
@@ -109,14 +110,16 @@ class MetadataBase:
             else 0
         )
 
-    def _get_decision(self, decision_indicator: float) -> bool:
-        return (
-            decision_indicator > self.decision_threshold
-            if self.decision_threshold != -1
-            else False
-        )
+    def _get_decision(self, probability: float) -> DecisionCase:
+        decision = DecisionCase.UNKNOWN
+        if probability > 0 and self.decision_threshold != -1:
+            if probability > self.decision_threshold:
+                decision = DecisionCase.TRUE
+            else:
+                decision = DecisionCase.FALSE
+        return decision
 
-    def _decide(self, website_data: WebsiteData) -> tuple[bool, float]:
+    def _decide(self, website_data: WebsiteData) -> tuple[DecisionCase, float]:
         if (
             self.probability_determination_method
             == ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
@@ -157,14 +160,18 @@ class MetadataBase:
 
     def _decide_single_occurrence(
         self, website_data: WebsiteData
-    ) -> tuple[float, float]:
-        probability = 1 if (website_data.values and website_data.values) else 0
+    ) -> tuple[DecisionCase, float]:
+        probability = (
+            1.0
+            if (website_data.values and len(website_data.values) > 0)
+            else 0.0
+        )
         decision = self._get_decision(probability)
         return decision, probability
 
     def _decide_first_value(
         self, website_data: WebsiteData
-    ) -> tuple[float, float]:
+    ) -> tuple[DecisionCase, float]:
         if website_data.values:
             probability = self._calculate_probability_from_ratio(
                 website_data.values[0]
@@ -176,7 +183,7 @@ class MetadataBase:
 
     def _decide_mean_value(
         self, website_data: WebsiteData
-    ) -> tuple[float, float]:
+    ) -> tuple[DecisionCase, float]:
         if website_data.values:
             mean = round(
                 sum(website_data.values) / (len(website_data.values)), 2
@@ -189,19 +196,20 @@ class MetadataBase:
 
     def _decide_false_list(
         self, website_data: WebsiteData
-    ) -> tuple[float, float]:
+    ) -> tuple[DecisionCase, float]:
         probability = 1
-        decision = True
+        decision = DecisionCase.UNKNOWN
         for false_element in self.false_list:
             if false_element in website_data.values:
-                decision = False
+                decision = DecisionCase.FALSE
                 break
+        # TODO: If for is run through without break, then decision could be TRUE
         return decision, probability
 
     @staticmethod
-    def _get_default_decision() -> tuple[float, float]:
+    def _get_default_decision() -> tuple[DecisionCase, float]:
         probability = 0
-        decision = False
+        decision = DecisionCase.UNKNOWN
         return decision, probability
 
     @staticmethod
