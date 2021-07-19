@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Log in to edu sharing
-        run: docker login community.docker.edu-sharing.com -u ${{ secrets.DOCKER_EDU_HUB_REGISTRY_USERNAME }} -p ${{ secrets.DOCKER_EDU_HUB_REGISTRY_PASSWORD }}
+        run: docker login community.docker.edu-sharing.com -u DOCKER_EDU_HUB_REGISTRY_USERNAME -p DOCKER_EDU_HUB_REGISTRY_PASSWORD
 
       - name: Build the container
         run: docker build -t community.docker.edu-sharing.com/oeh-search-meta:latest .
