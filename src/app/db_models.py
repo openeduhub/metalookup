@@ -40,11 +40,11 @@ class RecordSchema(Output, Input):
     start_time: float = Field(
         default=-1, description="timestamp of start in milliseconds"
     )
-    action: str = Field(
-        default="", description="Either 'response' or 'request'"
+    action: ActionEnum = Field(
+        default=ActionEnum.NONE, description="Either 'response' or 'request'"
     )
-    allow_list: ActionEnum = Field(
-        default=ActionEnum.NONE,
+    allow_list: str = Field(
+        default="",
         description="Overwrite of original allow_list. Storing as json string",
     )
     meta: str = Field(
