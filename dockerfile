@@ -7,6 +7,11 @@ WORKDIR /home/extractor
 RUN apk add --update --no-cache --virtual .build-deps g++ python3-dev libxml2 libxml2-dev libffi-dev openssl-dev
 RUN apk add libxslt-dev curl
 
+# Needed for psycopg2
+RUN apk update && \
+    apk add --virtual build-deps gcc musl-dev && \
+    apk add postgresql-dev
+
 COPY requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 RUN apk del .build-deps

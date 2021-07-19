@@ -1,4 +1,6 @@
-poetry export -o requirements.txt
+poetry export --without-hashes -o requirements.txt
+
+docker volume create db_volume
 
 docker build -t community.docker.edu-sharing.com/oeh-search-meta:latest .
 

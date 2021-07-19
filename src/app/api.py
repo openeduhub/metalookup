@@ -1,12 +1,18 @@
 import json
 from multiprocessing import shared_memory
+from typing import List
 from urllib.request import Request
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.exc import OperationalError
+from sqlalchemy.orm import Session
 from starlette.responses import JSONResponse
 
+import db.base
+from app import db_models
 from app.communication import QueueCommunicator
+from app.db_models import RecordSchema
 from app.models import (
     Explanation,
     ExtractorTags,
@@ -15,6 +21,12 @@ from app.models import (
     ListTags,
     MetadataTags,
     Output,
+)
+from db.db import (
+    create_dummy_record,
+    create_request_record,
+    create_response_record,
+    get_db,
 )
 from lib.constants import (
     MESSAGE_ALLOW_LIST,
@@ -42,6 +54,7 @@ app.add_middleware(
 )
 app.communicator: QueueCommunicator
 shared_status = shared_memory.ShareableList([0])
+db.base.create_metadata()
 
 
 def _convert_dict_to_output_model(
@@ -90,6 +103,14 @@ def extract_meta(input_data: Input):
 
     allowance = _convert_allow_list_to_dict(input_data.allow_list)
 
+    database_exception = ""
+    try:
+        create_request_record(
+            starting_extraction, input_data=input_data, allowance=allowance
+        )
+    except OperationalError as err:
+        database_exception += "\nDatabase exception: " + str(err.args)
+
     uuid = app.communicator.send_message(
         {
             MESSAGE_URL: input_data.url,
@@ -111,20 +132,43 @@ def extract_meta(input_data: Input):
         if MESSAGE_EXCEPTION in meta_data.keys():
             exception = meta_data[MESSAGE_EXCEPTION]
         else:
-            exception = None
+            exception = ""
 
     else:
         extractor_tags = None
         exception = f"No response from {METADATA_EXTRACTOR}."
 
+    end_time = get_utc_now()
     out = Output(
         url=input_data.url,
         meta=extractor_tags,
-        exception=exception,
-        time_until_complete=get_utc_now() - starting_extraction,
+        exception=exception + database_exception,
+        time_until_complete=end_time - starting_extraction,
     )
+    try:
+        create_response_record(
+            starting_extraction,
+            end_time,
+            input_data=input_data,
+            allowance=allowance,
+            output=out,
+        )
+    except OperationalError as err:
+        database_exception += "\nDatabase exception: " + str(err.args)
+        out.exception += database_exception
 
     return out
+
+
+@app.get("/records/", response_model=List[RecordSchema])
+def show_records(db: Session = Depends(get_db)):
+    try:
+        records = db.query(db_models.Record).all()
+    except OperationalError as err:
+        dummy_record = create_dummy_record()
+        dummy_record.exception = f"Database exception: {err.args}"
+        records = [dummy_record]
+    return records
 
 
 @app.get("/_ping", description="Ping function for automatic health check.")
