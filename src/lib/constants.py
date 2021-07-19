@@ -15,7 +15,7 @@ LOGFILE_MANAGER = "manager"
 
 VALUES = "values"
 PROBABILITY = "probability"
-DECISION = "decision"
+DECISION = "isHappyCase"
 TIME_REQUIRED = "time_required"
 
 ACCESSIBILITY = "accessibility"
@@ -35,7 +35,7 @@ STRICT_TRANSPORT_SECURITY = "strict-transport-security"
 class ActionEnum(Enum):
     def __str__(self):
         return str(self.value)
-    
+
     NONE = "none"
     RESPONSE = "response"
     REQUEST = "request"

@@ -1,13 +1,7 @@
 from psycopg2._psycopg import AsIs
 from psycopg2.extensions import register_adapter
 from pydantic import Field
-from sqlalchemy import (
-    Boolean,
-    Column,
-    Float,
-    Integer,
-    UnicodeText,
-)
+from sqlalchemy import Boolean, Column, Float, Integer, UnicodeText
 
 from app.models import Input, Output
 from db.base import Base

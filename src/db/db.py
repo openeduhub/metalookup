@@ -22,7 +22,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def create_request_record(
-        timestamp: float, input_data: Input, allowance: dict
+    timestamp: float, input_data: Input, allowance: dict
 ):
     print("Writing request to db")
     db = SessionLocal()
@@ -47,11 +47,11 @@ def create_request_record(
 
 
 def create_response_record(
-        timestamp: float,
-        end_time: float,
-        input_data: Input,
-        allowance: dict,
-        output: Output,
+    timestamp: float,
+    end_time: float,
+    input_data: Input,
+    allowance: dict,
+    output: Output,
 ):
     print("Writing response to db")
     json_compatible_meta = jsonable_encoder(output.meta)

@@ -11,22 +11,29 @@ class Explanation(str, Enum):
     FoundAds = "FoundAds"
 
 
+class HappyCase(Enum):
+    TRUE = "true"
+    FALSE = "false"
+    UNKNOWN = "unknown"
+
+
 class MetadataTags(BaseModel):
     values: list = Field(
         default=[], description="Raw values found by the metadata extractors."
     )
     probability: float = Field(
         default=0,
-        description="The calculated probability that the decision is certain.",
+        description="The calculated probability that the isHappyCase is certain.",
     )
-    decision: bool = Field(
-        default=False,
-        description="A user friendly decision whether or not this metadata is present in the website.",
+    isHappyCase: HappyCase = Field(
+        default=HappyCase.UNKNOWN,
+        description="A user friendly decision whether or not the happy case is fulfilled,"
+        " or whether everything is unclear",
     )
     explanation: list[Explanation] = Field(
         default=Explanation.none,
         description="A brief explanation to be displayed in the frontend what"
-        " reasons the code had for its decision.",
+        " reasons the code had for its isHappyCase.",
     )
     time_for_completion: Optional[float] = Field(
         default=-1,

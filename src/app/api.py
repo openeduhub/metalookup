@@ -1,18 +1,22 @@
 import json
 from multiprocessing import shared_memory
 from typing import List
+from urllib.request import Request
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
+from starlette.responses import JSONResponse
 
+import db.base
 from app import db_models
 from app.communication import QueueCommunicator
 from app.db_models import RecordSchema
 from app.models import (
     Explanation,
     ExtractorTags,
+    HappyCase,
     Input,
     ListTags,
     MetadataTags,
@@ -25,7 +29,6 @@ from db.db import (
     get_db,
 )
 from lib.constants import (
-    DECISION,
     MESSAGE_ALLOW_LIST,
     MESSAGE_EXCEPTION,
     MESSAGE_HAR,
@@ -40,13 +43,12 @@ from lib.constants import (
 )
 from lib.settings import NUMBER_OF_EXTRACTORS, VERSION
 from lib.timing import get_utc_now
-import db.base
 
 app = FastAPI(title=METADATA_EXTRACTOR, version=VERSION)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -56,7 +58,7 @@ db.base.create_metadata()
 
 
 def _convert_dict_to_output_model(
-        meta: dict, debug: bool = False
+    meta: dict, debug: bool = False
 ) -> ExtractorTags:
     extractor_tags = ExtractorTags()
     for key in ExtractorTags.__fields__.keys():
@@ -70,7 +72,7 @@ def _convert_dict_to_output_model(
                 MetadataTags(
                     values=meta[key][VALUES],
                     probability=meta[key][PROBABILITY],
-                    decision=meta[key][DECISION],
+                    isHappyCase=HappyCase.UNKNOWN,  # TODO: resolve properly, formerly meta[key][DECISION],
                     time_for_completion=meta[key][TIME_REQUIRED],
                     explanation=[Explanation.none, Explanation.NoHTTPS],
                 ),
@@ -81,6 +83,14 @@ def _convert_dict_to_output_model(
 
 def _convert_allow_list_to_dict(allow_list: ListTags) -> dict:
     return json.loads(allow_list.json())
+
+
+@app.middleware("http")
+async def allow_options_middleware(request: Request, call_next):
+    if request.method == "OPTIONS":
+        return JSONResponse(content=None)
+    response = await call_next(request)
+    return response
 
 
 @app.post(
