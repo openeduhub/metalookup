@@ -13,7 +13,9 @@ def create_database_engine(host_name, user_name, user_password):
     return create_engine(sql_url)
 
 
-database_engine = create_database_engine(STORAGE_HOST_NAME, "postgres", "postgres")
+database_engine = create_database_engine(
+    STORAGE_HOST_NAME, "postgres", "postgres"
+)
 
 Base = declarative_base()
 

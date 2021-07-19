@@ -18,7 +18,9 @@ def get_db():
         db.close()
 
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=database_engine)
+SessionLocal = sessionmaker(
+    autocommit=False, autoflush=False, bind=database_engine
+)
 
 
 def create_request_record(
@@ -86,7 +88,7 @@ def create_dummy_record() -> RecordSchema:
         html="",
         headers="",
         har="",
-        debug="",
+        debug=False,
         allow_list="",
         meta="",
         exception="",
