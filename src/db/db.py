@@ -6,7 +6,7 @@ from sqlalchemy.orm import sessionmaker
 from app import db_models
 from app.db_models import RecordSchema
 from app.models import Input, Output
-from db.base import engine
+from db.base import database_engine
 from lib.constants import ActionEnum
 
 
@@ -18,7 +18,7 @@ def get_db():
         db.close()
 
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=database_engine)
 
 
 def create_request_record(

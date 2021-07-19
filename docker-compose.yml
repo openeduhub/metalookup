@@ -10,6 +10,8 @@ services:
       - splash
       - accessibility
       - db
+    depends_on:
+      - db
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:5057/_ping" ]
       interval: 30s
