@@ -1,3 +1,4 @@
+from app.models import HappyCase
 from features.metadata_base import MetadataBase
 from features.website_manager import WebsiteData
 from lib.constants import VALUES
@@ -21,7 +22,7 @@ class Cookies(MetadataBase):
 
         return {VALUES: raw_cookies}
 
-    def _decide(self, website_data: WebsiteData) -> tuple[bool, float]:
+    def _decide(self, website_data: WebsiteData) -> tuple[HappyCase, float]:
         insecure_cookies = [
             cookie
             for cookie in website_data.values
@@ -29,5 +30,5 @@ class Cookies(MetadataBase):
         ]
 
         probability = 1 if insecure_cookies else 0
-        decision = probability > self.decision_threshold
+        decision = self._get_decision_by_probability(probability)
         return decision, probability

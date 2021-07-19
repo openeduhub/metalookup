@@ -1,13 +1,11 @@
 import json
 from multiprocessing import shared_memory
 from typing import List
-from urllib.request import Request
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
-from starlette.responses import JSONResponse
 
 import db.base
 from app import db_models
@@ -52,7 +50,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# noinspection PyTypeHints
 app.communicator: QueueCommunicator
+
 shared_status = shared_memory.ShareableList([0])
 db.base.create_metadata()
 
@@ -83,14 +83,6 @@ def _convert_dict_to_output_model(
 
 def _convert_allow_list_to_dict(allow_list: ListTags) -> dict:
     return json.loads(allow_list.json())
-
-
-@app.middleware("http")
-async def allow_options_middleware(request: Request, call_next):
-    if request.method == "OPTIONS":
-        return JSONResponse(content=None)
-    response = await call_next(request)
-    return response
 
 
 @app.post(
@@ -161,9 +153,9 @@ def extract_meta(input_data: Input):
 
 
 @app.get("/records/", response_model=List[RecordSchema])
-def show_records(db: Session = Depends(get_db)):
+def show_records(database: Session = Depends(get_db)):
     try:
-        records = db.query(db_models.Record).all()
+        records = database.query(db_models.Record).all()
     except OperationalError as err:
         dummy_record = create_dummy_record()
         dummy_record.exception = f"Database exception: {err.args}"

@@ -10,6 +10,7 @@ import adblockparser
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 
+from app.models import HappyCase
 from features.website_manager import WebsiteData, WebsiteManager
 from lib.constants import DECISION, PROBABILITY, TIME_REQUIRED, VALUES
 from lib.settings import USE_LOCAL_IF_POSSIBLE
@@ -109,14 +110,17 @@ class MetadataBase:
             else 0
         )
 
-    def _get_decision(self, decision_indicator: float) -> bool:
-        return (
-            decision_indicator > self.decision_threshold
-            if self.decision_threshold != -1
-            else False
-        )
+    def _get_decision(self, decision_indicator: float) -> HappyCase:
+        decision = HappyCase.UNKNOWN
+        if self.decision_threshold != -1:
+            if decision_indicator > self.decision_threshold:
+                decision = HappyCase.TRUE
+            else:
+                decision = HappyCase.FALSE
 
-    def _decide(self, website_data: WebsiteData) -> tuple[bool, float]:
+        return decision
+
+    def _decide(self, website_data: WebsiteData) -> tuple[HappyCase, float]:
         if (
             self.probability_determination_method
             == ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
@@ -127,44 +131,48 @@ class MetadataBase:
             probability = self._calculate_probability_from_ratio(
                 decision_indicator
             )
-            decision = self._get_decision(decision_indicator)
+            is_happy_case = self._get_decision(decision_indicator)
         elif (
             self.probability_determination_method
             == ProbabilityDeterminationMethod.SINGLE_OCCURRENCE
         ):
-            decision, probability = self._decide_single_occurrence(
+            is_happy_case, probability = self._decide_single_occurrence(
                 website_data
             )
         elif (
             self.probability_determination_method
             == ProbabilityDeterminationMethod.FIRST_VALUE
         ):
-            decision, probability = self._decide_first_value(website_data)
+            is_happy_case, probability = self._decide_first_value(website_data)
         elif (
             self.probability_determination_method
             == ProbabilityDeterminationMethod.MEAN_VALUE
         ):
-            decision, probability = self._decide_mean_value(website_data)
+            is_happy_case, probability = self._decide_mean_value(website_data)
         elif (
             self.probability_determination_method
             == ProbabilityDeterminationMethod.FALSE_LIST
         ):
-            decision, probability = self._decide_false_list(website_data)
+            is_happy_case, probability = self._decide_false_list(website_data)
         else:
-            decision, probability = self._get_default_decision()
+            is_happy_case, probability = self._get_default_decision()
 
-        return decision, probability
+        return is_happy_case, probability
 
     def _decide_single_occurrence(
         self, website_data: WebsiteData
-    ) -> tuple[float, float]:
-        probability = 1 if (website_data.values and website_data.values) else 0
+    ) -> tuple[HappyCase, float]:
+        probability = (
+            1.0
+            if (website_data.values and len(website_data.values) > 0)
+            else 0.0
+        )
         decision = self._get_decision(probability)
         return decision, probability
 
     def _decide_first_value(
         self, website_data: WebsiteData
-    ) -> tuple[float, float]:
+    ) -> tuple[HappyCase, float]:
         if website_data.values:
             probability = self._calculate_probability_from_ratio(
                 website_data.values[0]
@@ -176,7 +184,7 @@ class MetadataBase:
 
     def _decide_mean_value(
         self, website_data: WebsiteData
-    ) -> tuple[float, float]:
+    ) -> tuple[HappyCase, float]:
         if website_data.values:
             mean = round(
                 sum(website_data.values) / (len(website_data.values)), 2
@@ -189,20 +197,29 @@ class MetadataBase:
 
     def _decide_false_list(
         self, website_data: WebsiteData
-    ) -> tuple[float, float]:
+    ) -> tuple[HappyCase, float]:
         probability = 1
-        decision = True
+        decision = HappyCase.UNKNOWN
         for false_element in self.false_list:
             if false_element in website_data.values:
-                decision = False
+                decision = HappyCase.FALSE
                 break
+        # TODO: If for is run through without break, then decision could be TRUE
         return decision, probability
 
     @staticmethod
-    def _get_default_decision() -> tuple[float, float]:
+    def _get_default_decision() -> tuple[HappyCase, float]:
         probability = 0
-        decision = False
+        decision = HappyCase.UNKNOWN
         return decision, probability
+
+    def _get_decision_by_probability(self, probability: float) -> HappyCase:
+        decision = HappyCase.FALSE
+        if probability == 0:
+            decision = HappyCase.UNKNOWN
+        elif probability > self.decision_threshold:
+            decision = HappyCase.TRUE
+        return decision
 
     @staticmethod
     def _prepare_website_data() -> WebsiteData:
