@@ -3,7 +3,7 @@ from unittest import mock
 import adblockparser
 import pytest
 
-from app.models import HappyCase
+from app.models import DecisionCase
 from features.metadata_base import MetadataBase, ProbabilityDeterminationMethod
 from features.website_manager import WebsiteData
 
@@ -195,29 +195,29 @@ def test_easylist_filter():
 @pytest.mark.parametrize(
     "values, decision_threshold, expected_decision, expected_probability",
     [
-        ([], -1, HappyCase.UNKNOWN, 0),
+        ([], -1, DecisionCase.UNKNOWN, 0),
         (
             [0.5],
             -1,
-            HappyCase.UNKNOWN,
+            DecisionCase.UNKNOWN,
             1,
         ),
         (
             [0.5, 1],
             -1,
-            HappyCase.UNKNOWN,
+            DecisionCase.UNKNOWN,
             1,
         ),
         (
             [0.5],
             0.5,
-            HappyCase.TRUE,
+            DecisionCase.TRUE,
             1,
         ),
         (
             [0.5],
             1,
-            HappyCase.FALSE,
+            DecisionCase.FALSE,
             1,
         ),
     ],
@@ -253,28 +253,28 @@ def test_decide_single(
         (
             [0.5],
             0,
-            HappyCase.FALSE,
+            DecisionCase.UNKNOWN,
             0,
             [],
         ),
         (
             [0.5, 1, 1, 1],
             0,
-            HappyCase.TRUE,
+            DecisionCase.TRUE,
             1,
             [1, 1, 1, 1],
         ),
         (
             [0.5],
             0,
-            HappyCase.TRUE,
+            DecisionCase.TRUE,
             0.25,
             [1, 1, 1, 1],
         ),
         (
             [0.5],
             0.5,
-            HappyCase.FALSE,
+            DecisionCase.FALSE,
             0.5,
             [1, 1, 1, 1],
         ),
@@ -313,19 +313,19 @@ def test_decide_number_of_elements(
         (
             [0.5],
             0,
-            HappyCase.TRUE,
+            DecisionCase.TRUE,
             0.5,
         ),
         (
             [0.5],
             0.5,
-            HappyCase.FALSE,
+            DecisionCase.FALSE,
             0,
         ),
         (
             [0.75, 0.1],
             0.5,
-            HappyCase.TRUE,
+            DecisionCase.TRUE,
             0.5,
         ),
     ],
@@ -361,25 +361,25 @@ def test_first_value(
         (
             [0.5],
             0,
-            HappyCase.TRUE,
+            DecisionCase.TRUE,
             0.5,
         ),
         (
             [0.5],
             0.5,
-            HappyCase.FALSE,
+            DecisionCase.FALSE,
             0,
         ),
         (
             [0.75, 0.25],
             0.5,
-            HappyCase.FALSE,
+            DecisionCase.FALSE,
             0,
         ),
         (
             [0.6, 0.8],
             0.5,
-            HappyCase.TRUE,
+            DecisionCase.TRUE,
             0.4,
         ),
     ],
@@ -412,12 +412,12 @@ def test_mean_value(
 @pytest.mark.parametrize(
     "values, decision_threshold, expected_decision, expected_probability, false_list",
     [
-        ([0.5], 1, HappyCase.UNKNOWN, 1, [0]),
-        ([0.5], 1, HappyCase.FALSE, 1, [0.5]),
-        ([0.5, 0.1, 0, "hello"], 1, HappyCase.FALSE, 1, ["hello"]),
-        ([0.5, 0.1, 0, "hello"], 1, HappyCase.UNKNOWN, 1, ["hell"]),
-        ([0.5, 0.1, 0, "hello"], 1, HappyCase.UNKNOWN, 1, ["0"]),
-        ([0.5, 0.1, 0, "hello"], 1, HappyCase.FALSE, 1, ["0", "hello"]),
+        ([0.5], 1, DecisionCase.UNKNOWN, 1, [0]),
+        ([0.5], 1, DecisionCase.FALSE, 1, [0.5]),
+        ([0.5, 0.1, 0, "hello"], 1, DecisionCase.FALSE, 1, ["hello"]),
+        ([0.5, 0.1, 0, "hello"], 1, DecisionCase.UNKNOWN, 1, ["hell"]),
+        ([0.5, 0.1, 0, "hello"], 1, DecisionCase.UNKNOWN, 1, ["0"]),
+        ([0.5, 0.1, 0, "hello"], 1, DecisionCase.FALSE, 1, ["0", "hello"]),
     ],
 )
 def test_false_list(

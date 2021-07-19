@@ -1,7 +1,7 @@
 import json
 import os
 
-from app.models import HappyCase
+from app.models import DecisionCase
 from features.security import Security
 from features.website_manager import WebsiteData
 from lib.logger import create_logger
@@ -68,7 +68,7 @@ def test_decide():
         "x-xss-protection",
         "referrer-policy",
     ]
-    expected_decision = HappyCase.TRUE
+    expected_decision = DecisionCase.TRUE
     expected_probability = 1.0
 
     security.expected_headers = security_tags

@@ -12,9 +12,9 @@ from app import db_models
 from app.communication import QueueCommunicator
 from app.db_models import RecordSchema
 from app.models import (
+    DecisionCase,
     Explanation,
     ExtractorTags,
-    HappyCase,
     Input,
     ListTags,
     MetadataTags,
@@ -72,7 +72,7 @@ def _convert_dict_to_output_model(
                 MetadataTags(
                     values=meta[key][VALUES],
                     probability=meta[key][PROBABILITY],
-                    isHappyCase=HappyCase.UNKNOWN,  # TODO: resolve properly, formerly meta[key][DECISION],
+                    isHappyCase=DecisionCase.UNKNOWN,  # TODO: resolve properly, formerly meta[key][DECISION],
                     time_for_completion=meta[key][TIME_REQUIRED],
                     explanation=[Explanation.none, Explanation.NoHTTPS],
                 ),
