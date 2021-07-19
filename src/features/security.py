@@ -1,10 +1,11 @@
+from app.models import DecisionCase
 from features.metadata_base import MetadataBase
 from features.website_manager import WebsiteData
 from lib.constants import STRICT_TRANSPORT_SECURITY, VALUES
 
 
 class Security(MetadataBase):
-    decision_threshold = 1
+    decision_threshold = 0.99
 
     expected_headers: dict = {
         "cache-control": {0: ["no-cache", "no-store"]},
@@ -93,9 +94,9 @@ class Security(MetadataBase):
                 greater_than_zero = True
         return greater_than_zero
 
-    def _decide(self, website_data: WebsiteData) -> tuple[bool, float]:
+    def _decide(self, website_data: WebsiteData) -> tuple[DecisionCase, float]:
         probability = len(website_data.values) / len(
             self.expected_headers.keys()
         )
-        decision = probability >= self.decision_threshold
+        decision = self._get_decision(probability)
         return decision, probability

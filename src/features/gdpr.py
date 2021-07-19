@@ -1,5 +1,6 @@
 import re
 
+from app.models import DecisionCase
 from features.metadata_base import MetadataBase
 from features.website_manager import WebsiteData
 from lib.constants import STRICT_TRANSPORT_SECURITY, VALUES
@@ -147,21 +148,21 @@ class GDPR(MetadataBase):
 
         return {VALUES: list(set(flat_values))}
 
-    def _decide(self, website_data: WebsiteData) -> tuple[bool, float]:
-        decision_indicator = 0.5
+    def _decide(self, website_data: WebsiteData) -> tuple[DecisionCase, float]:
+        probability = 0.5
 
         if (
             "https_in_url" not in website_data.values
             or "hsts" not in website_data.values
             or "impressum" not in website_data.values
         ):
-            decision_indicator = 0
+            probability = 0
         elif (
             "max_age" not in website_data.values
             or "found_no_fonts" in website_data.values
             or "found_no_inputs" in website_data.values
         ):
-            decision_indicator -= 0.1
+            probability -= 0.1
 
-        decision = decision_indicator > self.decision_threshold
-        return decision, decision_indicator
+        decision = self._get_decision(probability)
+        return decision, probability
