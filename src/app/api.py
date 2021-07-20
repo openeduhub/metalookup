@@ -1,6 +1,5 @@
 import json
 from multiprocessing import shared_memory
-from typing import List
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,7 +9,7 @@ from sqlalchemy.orm import Session
 import db.base
 from app import db_models
 from app.communication import QueueCommunicator
-from app.db_models import RecordSchema, RecordsOutput
+from app.db_models import RecordSchema
 from app.models import (
     DecisionCase,
     Explanation,
@@ -58,7 +57,7 @@ db.base.create_metadata(db.base.database_engine)
 
 
 def _convert_dict_to_output_model(
-        meta: dict, debug: bool = False
+    meta: dict, debug: bool = False
 ) -> ExtractorTags:
     extractor_tags = ExtractorTags()
     for key in ExtractorTags.__fields__.keys():
@@ -164,10 +163,22 @@ def show_records(database: Session = Depends(get_db)):
     out = []
     for record in records:
         out.append(
-            RecordSchema(id=record.id, timestamp=record.timestamp, start_time=record.start_time, action=record.action,
-                         allow_list=record.allow_list, meta=record.meta, url=record.url, html=record.html,
-                         headers=record.headers, har=record.har, debug=record.debug, exception=record.exception,
-                         time_until_complete=record.time_until_complete))
+            RecordSchema(
+                id=record.id,
+                timestamp=record.timestamp,
+                start_time=record.start_time,
+                action=record.action,
+                allow_list=record.allow_list,
+                meta=record.meta,
+                url=record.url,
+                html=record.html,
+                headers=record.headers,
+                har=record.har,
+                debug=record.debug,
+                exception=record.exception,
+                time_until_complete=record.time_until_complete,
+            )
+        )
     print("out ", out)
     return {"out": records}
 

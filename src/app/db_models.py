@@ -2,7 +2,7 @@ from typing import List
 
 from psycopg2._psycopg import AsIs
 from psycopg2.extensions import register_adapter
-from pydantic import Field, BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import Boolean, Column, Float, Integer, UnicodeText
 
 from app.models import Input, Output
