@@ -129,10 +129,17 @@ def extract_meta(input_data: Input):
         extractor_tags = None
         exception = f"No response from {METADATA_EXTRACTOR}."
 
-    if exception != "":
-        raise HTTPException(status_code=400, detail=exception)
-    
     end_time = get_utc_now()
+    if exception != "":
+        raise HTTPException(
+            status_code=400,
+            detail={
+                MESSAGE_EXCEPTION: exception,
+                "time_until_complete": end_time - starting_extraction,
+                MESSAGE_URL: input_data.url,
+            },
+        )
+
     out = Output(
         url=input_data.url,
         meta=extractor_tags,
