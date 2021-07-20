@@ -1,6 +1,5 @@
 import json
 from multiprocessing import shared_memory
-from typing import List
 
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -54,7 +53,7 @@ app.add_middleware(
 app.communicator: QueueCommunicator
 
 shared_status = shared_memory.ShareableList([0])
-db.base.create_metadata()
+db.base.create_metadata(db.base.database_engine)
 
 
 def _convert_dict_to_output_model(
@@ -152,7 +151,7 @@ def extract_meta(input_data: Input):
     return out
 
 
-@app.get("/records/", response_model=List[RecordSchema])
+@app.get("/records/")
 def show_records(database: Session = Depends(get_db)):
     try:
         records = database.query(db_models.Record).all()
@@ -160,7 +159,27 @@ def show_records(database: Session = Depends(get_db)):
         dummy_record = create_dummy_record()
         dummy_record.exception = f"Database exception: {err.args}"
         records = [dummy_record]
-    return records
+
+    out = []
+    for record in records:
+        out.append(
+            RecordSchema(
+                id=record.id,
+                timestamp=record.timestamp,
+                start_time=record.start_time,
+                action=record.action,
+                allow_list=record.allow_list,
+                meta=record.meta,
+                url=record.url,
+                html=record.html,
+                headers=record.headers,
+                har=record.har,
+                debug=record.debug,
+                exception=record.exception,
+                time_until_complete=record.time_until_complete,
+            )
+        )
+    return {"out": records}
 
 
 @app.get("/_ping", description="Ping function for automatic health check.")
