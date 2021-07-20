@@ -1,4 +1,5 @@
 import json
+import sys
 
 import requests
 from sqlalchemy import inspect
@@ -40,6 +41,7 @@ def download_remote_records():
         print(
             f"Exception when loading records with {err.args}.\nPotentially due to outdated record schema. "
         )
+        sys.exit(1)
     print("Number of records loaded: ", len(records))
 
     db = ProfilerSession()

@@ -22,8 +22,6 @@ services:
       - backend
   local_record:
     image: postgres
-    ports:
-      - "5324:5432"
     restart: always
     environment:
       - POSTGRES_USER=postgres

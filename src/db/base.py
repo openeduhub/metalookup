@@ -7,10 +7,10 @@ from lib.settings import STORAGE_HOST_NAME
 
 
 def create_database_engine(
-    host_name: str, user_name: str, user_password: str, port: str = "5432"
+    host_name: str, user_name: str, user_password: str
 ):
     database_name = "storage"
-    sql_url = f"postgresql://{user_name}:{user_password}@{host_name}:{port}/{database_name}"
+    sql_url = f"postgresql://{user_name}:{user_password}@{host_name}/{database_name}"
     return create_engine(sql_url)
 
 

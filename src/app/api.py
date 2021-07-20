@@ -159,7 +159,7 @@ def show_records(database: Session = Depends(get_db)):
         dummy_record = create_dummy_record()
         dummy_record.exception = f"Database exception: {err.args}"
         records = [dummy_record]
-    print("records", records)
+
     out = []
     for record in records:
         out.append(
@@ -179,7 +179,6 @@ def show_records(database: Session = Depends(get_db)):
                 time_until_complete=record.time_until_complete,
             )
         )
-    print("out ", out)
     return {"out": records}
 
 
