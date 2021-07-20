@@ -1,7 +1,7 @@
 import json
 from multiprocessing import shared_memory
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
@@ -57,7 +57,7 @@ db.base.create_metadata(db.base.database_engine)
 
 
 def _convert_dict_to_output_model(
-    meta: dict, debug: bool = False
+        meta: dict, debug: bool = False
 ) -> ExtractorTags:
     extractor_tags = ExtractorTags()
     for key in ExtractorTags.__fields__.keys():
@@ -129,6 +129,9 @@ def extract_meta(input_data: Input):
         extractor_tags = None
         exception = f"No response from {METADATA_EXTRACTOR}."
 
+    if exception != "":
+        raise HTTPException(status_code=400, detail=exception)
+    
     end_time = get_utc_now()
     out = Output(
         url=input_data.url,
