@@ -262,9 +262,19 @@ class WebsiteManager:
             for image in self.website_data.soup.findAll("img")
         ]
 
+    def _get_extension_from_link(self, link: str):
+        try:
+            output = os.path.splitext(urlparse(link)[2])[-1]
+        except ValueError as err:
+            self._logger.exception(
+                f"Could not parse file extension from link {link}. Exception: {err.args}"
+            )
+            output = ""
+        return output
+
     def _extract_extensions(self) -> None:
         file_extensions = [
-            os.path.splitext(urlparse(link)[2])[-1]
+            self._get_extension_from_link(link)
             for link in self.website_data.raw_links
         ]
         self.website_data.extensions = [
