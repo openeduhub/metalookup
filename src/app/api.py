@@ -57,7 +57,7 @@ db.base.create_metadata(db.base.database_engine)
 
 
 def _convert_dict_to_output_model(
-        meta: dict, debug: bool = False
+    meta: dict, debug: bool = False
 ) -> ExtractorTags:
     extractor_tags = ExtractorTags()
     for key in ExtractorTags.__fields__.keys():
