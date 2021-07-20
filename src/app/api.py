@@ -54,7 +54,7 @@ app.add_middleware(
 app.communicator: QueueCommunicator
 
 shared_status = shared_memory.ShareableList([0])
-db.base.create_metadata()
+db.base.create_metadata(db.base.database_engine)
 
 
 def _convert_dict_to_output_model(

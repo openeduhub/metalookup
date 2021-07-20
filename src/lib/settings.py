@@ -47,4 +47,4 @@ if USED_IN_PRODUCTION:
 else:
     STORAGE_HOST_NAME = "localhost"
 
-PROFILING_HOST_NAME = "localhost"
+PROFILING_HOST_NAME = "local_record"
