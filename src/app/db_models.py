@@ -1,6 +1,8 @@
+from typing import List
+
 from psycopg2._psycopg import AsIs
 from psycopg2.extensions import register_adapter
-from pydantic import Field
+from pydantic import Field, BaseModel
 from sqlalchemy import Boolean, Column, Float, Integer, UnicodeText
 
 from app.models import Input, Output
@@ -52,5 +54,10 @@ class RecordSchema(Output, Input):
         description="Overwrite of original meta. Storing as json string",
     )
 
+
+class RecordsOutput(BaseModel):
+    records: List[RecordSchema] = Field(default="[]")
+
     class Config:
         orm_mode = True
+        arbitrary_types_allowed = True

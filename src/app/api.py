@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 import db.base
 from app import db_models
 from app.communication import QueueCommunicator
-from app.db_models import RecordSchema
+from app.db_models import RecordSchema, RecordsOutput
 from app.models import (
     DecisionCase,
     Explanation,
@@ -58,7 +58,7 @@ db.base.create_metadata()
 
 
 def _convert_dict_to_output_model(
-    meta: dict, debug: bool = False
+        meta: dict, debug: bool = False
 ) -> ExtractorTags:
     extractor_tags = ExtractorTags()
     for key in ExtractorTags.__fields__.keys():
@@ -152,7 +152,7 @@ def extract_meta(input_data: Input):
     return out
 
 
-@app.get("/records/", response_model=List[RecordSchema])
+@app.get("/records/")
 def show_records(database: Session = Depends(get_db)):
     try:
         records = database.query(db_models.Record).all()
@@ -160,7 +160,16 @@ def show_records(database: Session = Depends(get_db)):
         dummy_record = create_dummy_record()
         dummy_record.exception = f"Database exception: {err.args}"
         records = [dummy_record]
-    return records
+    print("records", records)
+    out = []
+    for record in records:
+        out.append(
+            RecordSchema(id=record.id, timestamp=record.timestamp, start_time=record.start_time, action=record.action,
+                         allow_list=record.allow_list, meta=record.meta, url=record.url, html=record.html,
+                         headers=record.headers, har=record.har, debug=record.debug, exception=record.exception,
+                         time_until_complete=record.time_until_complete))
+    print("out ", out)
+    return {"out": records}
 
 
 @app.get("/_ping", description="Ping function for automatic health check.")

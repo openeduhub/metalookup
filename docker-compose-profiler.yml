@@ -1,0 +1,45 @@
+version: '3.4'
+
+services:
+  downloader:
+    dns: 8.8.8.8
+    image: oeh-search-meta_downloader:latest
+    ports:
+      - "5059:5059"
+    links:
+      - local_record
+    depends_on:
+      - local_record
+    restart: always
+    environment:
+      - PYTHONPATH=/home/downloader
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:5059/_ping" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    networks:
+      - backend
+  local_record:
+    image: postgres
+    ports:
+      - "5324:5432"
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=storage
+    volumes:
+      - local_record_volume:/var/lib/postgresql/data
+    networks:
+      - backend
+
+volumes:
+  local_record_volume:
+
+networks:
+  backend:
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1450

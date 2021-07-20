@@ -19,7 +19,7 @@ else:
 
 SPLASH_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36"
+                  "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36"
 }
 
 LOG_LEVEL = logging.DEBUG
@@ -46,3 +46,5 @@ if USED_IN_PRODUCTION:
     STORAGE_HOST_NAME = "db"
 else:
     STORAGE_HOST_NAME = "localhost"
+
+PROFILING_HOST_NAME = "localhost"
