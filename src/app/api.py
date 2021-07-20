@@ -1,7 +1,7 @@
 import json
 from multiprocessing import shared_memory
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
@@ -147,6 +147,17 @@ def extract_meta(input_data: Input):
     except OperationalError as err:
         database_exception += "\nDatabase exception: " + str(err.args)
         out.exception += database_exception
+
+    if exception != "":
+        raise HTTPException(
+            status_code=400,
+            detail={
+                MESSAGE_URL: input_data.url,
+                "meta": extractor_tags,
+                MESSAGE_EXCEPTION: exception,
+                "time_until_complete": end_time - starting_extraction,
+            },
+        )
 
     return out
 
