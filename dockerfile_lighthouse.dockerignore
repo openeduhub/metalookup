@@ -1,0 +1,12 @@
+local_tools
+setup.cfg
+scraped
+logs
+developer_tools
+.github
+.git
+.pytest_cache
+src/tools/dev
+htmlcov
+.idea
+tests
