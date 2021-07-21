@@ -17,14 +17,17 @@ class ConfigManager:
                 self.hosts: dict = json.loads(text)
         except FileNotFoundError:
             self.hosts = {}
+        print("hosts: ", self.hosts)
 
     def is_host_predefined(self) -> bool:
+        print("is_host_predef", self.top_level_domain, self.hosts.keys())
         return self.top_level_domain in self.hosts.keys()
 
     def is_metadata_predefined(self, key: str) -> bool:
         return (
             key in self.hosts[self.top_level_domain].keys()
-            if self.top_level_domain != ""
+            if self.top_level_domain != "" and self.top_level_domain in self.hosts.keys() and key in self.hosts[
+                self.top_level_domain].keys()
             else False
         )
 

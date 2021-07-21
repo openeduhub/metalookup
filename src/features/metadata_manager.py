@@ -39,7 +39,7 @@ from lib.timing import get_utc_now
 
 
 def _parallel_setup(
-    extractor_class: type(MetadataBase), logger: Logger
+        extractor_class: type(MetadataBase), logger: Logger
 ) -> MetadataBase:
     extractor = extractor_class(logger)
     extractor.setup()

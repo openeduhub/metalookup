@@ -3,7 +3,7 @@ from multiprocessing import shared_memory
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import OperationalError, ProgrammingError
 from sqlalchemy.orm import Session
 
 import db.base
@@ -166,7 +166,7 @@ def extract_meta(input_data: Input):
 def show_records(database: Session = Depends(get_db)):
     try:
         records = database.query(db_models.Record).all()
-    except OperationalError as err:
+    except (OperationalError, ProgrammingError) as err:
         dummy_record = create_dummy_record()
         dummy_record.exception = f"Database exception: {err.args}"
         records = [dummy_record]
