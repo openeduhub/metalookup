@@ -6,6 +6,7 @@ import requests
 from sqlalchemy import inspect
 from sqlalchemy.orm import Session, sessionmaker
 
+import db.models
 from app import db_models
 from db.base import create_database_engine, create_metadata
 from features.website_manager import WebsiteManager
@@ -52,7 +53,7 @@ def download_remote_records():
         if PROFILER_DEBUG:
             print("Writing record #", record["id"])
 
-        db_record = db_models.Record(
+        db_record = db.models.Record(
             timestamp=record["timestamp"],
             action=record["action"],
             url=record["url"],
@@ -121,7 +122,9 @@ def parse_meta():
             if key not in time_per_feature.keys():
                 time_per_feature.update({key: []})
             if value is not None:
-                time_per_feature[key].append(float(value["time_for_completion"]))
+                time_per_feature[key].append(
+                    float(value["time_for_completion"])
+                )
 
     for key, value in time_per_feature.items():
         print(f"total time per feature {key}: {sum(value)}")
@@ -141,7 +144,7 @@ def get_std_dev(values: list) -> float:
 def print_accessibility_per_domain():
     database: Session = ProfilerSession()
 
-    query = database.query(db_models.Record.url, db_models.Record.meta)
+    query = database.query(db.models.Record.url, db.models.Record.meta)
 
     website_manager = WebsiteManager.get_instance()
 
@@ -174,7 +177,11 @@ def print_accessibility_per_domain():
     print("print_data:", print_data)
     for domain in print_data.keys():
         if domain != "" and len(print_data) > 0:
-            print(domain, get_mean(print_data[domain]), get_std_dev(print_data[domain]))
+            print(
+                domain,
+                get_mean(print_data[domain]),
+                get_std_dev(print_data[domain]),
+            )
 
 
 PROFILER_DEBUG = False

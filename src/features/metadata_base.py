@@ -12,7 +12,13 @@ from bs4 import BeautifulSoup
 
 from app.models import DecisionCase, Explanation
 from features.website_manager import WebsiteData, WebsiteManager
-from lib.constants import DECISION, PROBABILITY, TIME_REQUIRED, VALUES, EXPLANATION
+from lib.constants import (
+    DECISION,
+    EXPLANATION,
+    PROBABILITY,
+    TIME_REQUIRED,
+    VALUES,
+)
 from lib.settings import USE_LOCAL_IF_POSSIBLE
 from lib.timing import get_utc_now
 

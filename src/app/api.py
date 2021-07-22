@@ -16,12 +16,9 @@ from app.models import (
     MetadataTags,
     Output,
 )
-from db.db import (
-    create_request_record,
-    create_response_record,
-    load_records,
-)
+from db.db import create_request_record, create_response_record, load_records
 from lib.constants import (
+    EXPLANATION,
     MESSAGE_ALLOW_LIST,
     MESSAGE_EXCEPTION,
     MESSAGE_HAR,
@@ -32,7 +29,7 @@ from lib.constants import (
     METADATA_EXTRACTOR,
     PROBABILITY,
     TIME_REQUIRED,
-    VALUES, EXPLANATION,
+    VALUES,
 )
 from lib.settings import NUMBER_OF_EXTRACTORS, VERSION
 from lib.timing import get_utc_now
@@ -53,7 +50,7 @@ db.base.create_metadata(db.base.database_engine)
 
 
 def _convert_dict_to_output_model(
-        meta: dict, debug: bool = False
+    meta: dict, debug: bool = False
 ) -> ExtractorTags:
     extractor_tags = ExtractorTags()
     for key in ExtractorTags.__fields__.keys():
