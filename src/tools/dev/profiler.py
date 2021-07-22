@@ -6,8 +6,7 @@ import requests
 from sqlalchemy import inspect
 from sqlalchemy.orm import Session, sessionmaker
 
-import db.models
-from app import db_models
+import db.models as db_models
 from db.base import create_database_engine, create_metadata
 from features.website_manager import WebsiteManager
 from lib.constants import ACCESSIBILITY, VALUES
@@ -53,7 +52,7 @@ def download_remote_records():
         if PROFILER_DEBUG:
             print("Writing record #", record["id"])
 
-        db_record = db.models.Record(
+        db_record = db_models.Record(
             timestamp=record["timestamp"],
             action=record["action"],
             url=record["url"],
@@ -144,7 +143,7 @@ def get_std_dev(values: list) -> float:
 def print_accessibility_per_domain():
     database: Session = ProfilerSession()
 
-    query = database.query(db.models.Record.url, db.models.Record.meta)
+    query = database.query(db_models.Record.url, db_models.Record.meta)
 
     website_manager = WebsiteManager.get_instance()
 

@@ -1,4 +1,5 @@
 import json
+import random
 from multiprocessing import shared_memory
 
 from fastapi import FastAPI, HTTPException
@@ -7,7 +8,6 @@ from sqlalchemy.exc import OperationalError
 
 import db.base
 from app.communication import QueueCommunicator
-from app.db_models import RecordSchema
 from app.models import (
     DecisionCase,
     ExtractorTags,
@@ -16,7 +16,14 @@ from app.models import (
     MetadataTags,
     Output,
 )
-from db.db import create_request_record, create_response_record, load_records
+from app.schemas import RecordSchema
+from db.db import (
+    create_cache_entry,
+    create_request_record,
+    create_response_record,
+    load_cache,
+    load_records,
+)
 from lib.constants import (
     EXPLANATION,
     MESSAGE_ALLOW_LIST,
@@ -193,3 +200,8 @@ def get_progress():
     return {
         "progress": round(shared_status[0] / NUMBER_OF_EXTRACTORS, 2),
     }
+
+
+@app.get("/cache/")
+def get_cache():
+    return {"cache": load_cache()}

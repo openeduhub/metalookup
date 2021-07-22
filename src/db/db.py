@@ -1,12 +1,14 @@
 import json
+from typing import List
 
 from fastapi.encoders import jsonable_encoder
+from sqlalchemy.engine import ChunkedIteratorResult
 from sqlalchemy.exc import OperationalError, ProgrammingError
 from sqlalchemy.orm import Session, sessionmaker
 
 import db.models as db_models
-from app.db_models import RecordSchema
 from app.models import Input, Output
+from app.schemas import RecordSchema
 from db.base import database_engine
 from lib.constants import ActionEnum
 
@@ -106,3 +108,25 @@ def load_records(database: Session = SessionLocal()) -> RecordSchema:
         dummy_record.exception = f"Database exception: {err.args}"
         records = [dummy_record]
     return records
+
+
+def load_cache(database: Session = SessionLocal()):
+    try:
+        cache = database.query(db_models.CacheEntry).all()
+    except (OperationalError, ProgrammingError) as err:
+        print("Error while loading cache:", err.args)
+        cache = []
+    return cache
+
+
+def create_cache_entry(top_level_domain: str, accessibility: List[float]):
+    print("Writing to cache")
+
+    database = SessionLocal()
+
+    database.query(db_models.CacheEntry).filter_by(
+        top_level_domain=top_level_domain
+    ).update({"accessibility": accessibility})
+
+    database.commit()
+    database.close()
