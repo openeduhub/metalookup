@@ -2,7 +2,6 @@ import json
 from typing import List
 
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy.engine import ChunkedIteratorResult
 from sqlalchemy.exc import OperationalError, ProgrammingError
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -100,7 +99,7 @@ def create_dummy_record() -> RecordSchema:
     return record
 
 
-def load_records(database: Session = SessionLocal()) -> RecordSchema:
+def load_records(database: Session = SessionLocal()) -> [db_models.Record]:
     try:
         records = database.query(db_models.Record).all()
     except (OperationalError, ProgrammingError) as err:
@@ -119,14 +118,22 @@ def load_cache(database: Session = SessionLocal()):
     return cache
 
 
-def create_cache_entry(top_level_domain: str, accessibility: List[float]):
-    print("Writing to cache")
+def create_cache_entry(
+    top_level_domain: str, feature: str, values: dict, logger
+):
+    logger.debug("Writing to cache")
 
     database = SessionLocal()
 
-    database.query(db_models.CacheEntry).filter_by(
-        top_level_domain=top_level_domain
-    ).update({"accessibility": accessibility})
+    logger.debug(f"values {values}")
+
+    query = (
+        database.query(db_models.CacheEntry)
+        .filter_by(top_level_domain=top_level_domain)
+        .update({feature: json.dumps(values)})
+    )
+    logger.debug(f"query:{query}")
 
     database.commit()
     database.close()
+    logger.debug("Writing done")

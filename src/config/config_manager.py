@@ -1,6 +1,10 @@
 import json
 
+from sqlalchemy.engine import ChunkedIteratorResult
+
+import db.models as db_models
 from app.models import Explanation
+from db.db import SessionLocal
 from features.website_manager import Singleton
 from lib.constants import EXPLANATION, TIME_REQUIRED
 
@@ -10,7 +14,8 @@ class ConfigManager:
     def __init__(self):
         super().__init__()
         self.top_level_domain: str = ""
-        self._load_config()
+        self.hosts = {}
+        # self._load_config()
 
     def _load_config(self) -> None:
         try:
@@ -22,7 +27,13 @@ class ConfigManager:
         print("hosts: ", self.hosts)
 
     def is_host_predefined(self) -> bool:
-        print("is_host_predef", self.top_level_domain, self.hosts.keys())
+        database = SessionLocal()
+        query: ChunkedIteratorResult = database.query(
+            db_models.CacheEntry.top_level_domain
+        ).filter_by(top_level_domain=self.top_level_domain)
+        print("query:", self.top_level_domain)
+        print("query:", query.all())
+
         return self.top_level_domain in self.hosts.keys()
 
     def is_metadata_predefined(self, key: str) -> bool:

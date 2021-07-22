@@ -405,6 +405,7 @@ class MetadataBase:
 
     def setup(self) -> None:
         """Child function."""
+        return
         asyncio.run(self._setup_downloads())
         if self.tag_list:
             self._extract_date_from_list()

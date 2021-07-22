@@ -18,6 +18,7 @@ PROBABILITY = "probability"
 DECISION = "isHappyCase"
 TIME_REQUIRED = "time_required"
 EXPLANATION = "explanation"
+TIMESTAMP = "timestamp"
 
 ACCESSIBILITY = "accessibility"
 SPLASH = "splash"

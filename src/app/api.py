@@ -25,6 +25,7 @@ from db.db import (
     load_records,
 )
 from lib.constants import (
+    ACCESSIBILITY,
     EXPLANATION,
     MESSAGE_ALLOW_LIST,
     MESSAGE_EXCEPTION,

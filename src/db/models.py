@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, Float, Integer, UnicodeText
+from sqlalchemy import JSON, Boolean, Column, Float, Integer, UnicodeText
 from sqlalchemy.dialects.postgresql import ARRAY
 
 from db.base import Base
@@ -43,7 +43,7 @@ class CacheEntry(Base):
     pop_up = Column(ARRAY(UnicodeText, dimensions=1), default=[])
     reg_wall = Column(ARRAY(UnicodeText, dimensions=1), default=[])
     log_in_out = Column(ARRAY(UnicodeText, dimensions=1), default=[])
-    accessibility = Column(ARRAY(Float, dimensions=1), default=[])
+    accessibility = Column(ARRAY(UnicodeText, dimensions=1), default=[])
     g_d_p_r = Column(ARRAY(UnicodeText, dimensions=1), default=[])
     javascript = Column(ARRAY(UnicodeText, dimensions=1), default=[])
     metatag_explorer = Column(ARRAY(UnicodeText, dimensions=1), default=[])
