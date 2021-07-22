@@ -7,6 +7,7 @@ from itertools import repeat
 from logging import Logger
 from multiprocessing import shared_memory
 
+from app.models import Explanation
 from config.config_manager import ConfigManager
 from db.db import create_cache_entry
 from features.accessibility import Accessibility
@@ -36,6 +37,7 @@ from features.metatag_explorer import MetatagExplorer
 from features.security import Security
 from features.website_manager import Singleton, WebsiteManager
 from lib.constants import (
+    ACCESSIBILITY,
     DECISION,
     EXPLANATION,
     MESSAGE_ALLOW_LIST,
@@ -143,22 +145,31 @@ class MetadataManager:
         self, extracted_metadata: dict, config_manager: ConfigManager
     ):
         for feature, meta_data in extracted_metadata.items():
-            data_to_be_cached = {
-                VALUES: meta_data[VALUES],
-                PROBABILITY: meta_data[PROBABILITY],
-                DECISION: meta_data[DECISION],
-                TIMESTAMP: get_utc_now(),
-                EXPLANATION: meta_data[EXPLANATION],
-            }
-            self._logger.debug(
-                f"data_to_be_cached: {feature}, {data_to_be_cached}"
-            )
-            create_cache_entry(
-                config_manager.top_level_domain,
-                feature,
-                data_to_be_cached,
-                self._logger,
-            )
+            if Explanation.Cached not in meta_data[EXPLANATION]:
+                values = []
+                if feature == ACCESSIBILITY:
+                    values = meta_data[VALUES]
+
+                data_to_be_cached = {
+                    VALUES: values,
+                    PROBABILITY: meta_data[PROBABILITY],
+                    DECISION: meta_data[DECISION],
+                    TIMESTAMP: get_utc_now(),
+                    EXPLANATION: meta_data[EXPLANATION],
+                }
+                self._logger.debug(
+                    f"data_to_be_cached: {feature}, {data_to_be_cached}"
+                )
+                create_cache_entry(
+                    config_manager.top_level_domain,
+                    feature,
+                    data_to_be_cached,
+                    self._logger,
+                )
+            else:
+                self._logger.debug(
+                    f"Feature {feature} was read from cache: {meta_data[EXPLANATION]}"
+                )
 
     def start(self, message: dict) -> dict:
 

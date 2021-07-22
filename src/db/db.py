@@ -123,17 +123,33 @@ def create_cache_entry(
 ):
     logger.debug("Writing to cache")
 
-    database = SessionLocal()
+    session = SessionLocal()
 
-    logger.debug(f"values {values}")
+    try:
+        entry = (
+            session.query(db_models.CacheEntry)
+            .filter_by(top_level_domain=top_level_domain)
+            .first()
+        )
 
-    query = (
-        database.query(db_models.CacheEntry)
-        .filter_by(top_level_domain=top_level_domain)
-        .update({feature: json.dumps(values)})
-    )
-    logger.debug(f"query:{query}")
+        logger.debug(f"entry {entry}")
+        if entry is None:
+            entry = db_models.CacheEntry(
+                **{
+                    "top_level_domain": top_level_domain,
+                    feature: [json.dumps(values)],
+                }
+            )
+            session.add(entry)
+        else:
+            updated_values = entry.__getattribute__(feature)
+            updated_values.append(json.dumps(values))
+            logger.debug(f"updated_values {updated_values}")
+            session.query(db_models.CacheEntry).filter_by(
+                top_level_domain=top_level_domain
+            ).update({feature: updated_values})
 
-    database.commit()
-    database.close()
-    logger.debug("Writing done")
+        session.commit()
+    finally:
+        session.close()
+        logger.debug("Writing done")
