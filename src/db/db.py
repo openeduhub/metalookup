@@ -1,7 +1,8 @@
 import json
 
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import OperationalError, ProgrammingError
+from sqlalchemy.orm import sessionmaker, Session
 
 from app import db_models
 from app.db_models import RecordSchema
@@ -24,7 +25,7 @@ SessionLocal = sessionmaker(
 
 
 def create_request_record(
-    timestamp: float, input_data: Input, allowance: dict
+        timestamp: float, input_data: Input, allowance: dict
 ):
     print("Writing request to db")
     db = SessionLocal()
@@ -49,11 +50,11 @@ def create_request_record(
 
 
 def create_response_record(
-    timestamp: float,
-    end_time: float,
-    input_data: Input,
-    allowance: dict,
-    output: Output,
+        timestamp: float,
+        end_time: float,
+        input_data: Input,
+        allowance: dict,
+        output: Output,
 ):
     print("Writing response to db")
     json_compatible_meta = jsonable_encoder(output.meta)
@@ -95,3 +96,13 @@ def create_dummy_record() -> RecordSchema:
         time_until_complete=-1,
     )
     return record
+
+
+def load_records(database: Session = SessionLocal()) -> RecordSchema:
+    try:
+        records = database.query(db_models.Record).all()
+    except (OperationalError, ProgrammingError) as err:
+        dummy_record = create_dummy_record()
+        dummy_record.exception = f"Database exception: {err.args}"
+        records = [dummy_record]
+    return records

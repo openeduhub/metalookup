@@ -1,13 +1,11 @@
 import json
 from multiprocessing import shared_memory
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.exc import OperationalError, ProgrammingError
-from sqlalchemy.orm import Session
+from sqlalchemy.exc import OperationalError
 
 import db.base
-from app import db_models
 from app.communication import QueueCommunicator
 from app.db_models import RecordSchema
 from app.models import (
@@ -19,10 +17,9 @@ from app.models import (
     Output,
 )
 from db.db import (
-    create_dummy_record,
     create_request_record,
     create_response_record,
-    get_db,
+    load_records,
 )
 from lib.constants import (
     MESSAGE_ALLOW_LIST,
@@ -56,7 +53,7 @@ db.base.create_metadata(db.base.database_engine)
 
 
 def _convert_dict_to_output_model(
-    meta: dict, debug: bool = False
+        meta: dict, debug: bool = False
 ) -> ExtractorTags:
     extractor_tags = ExtractorTags()
     for key in ExtractorTags.__fields__.keys():
@@ -162,14 +159,8 @@ def extract_meta(input_data: Input):
 
 
 @app.get("/records/")
-def show_records(database: Session = Depends(get_db)):
-    try:
-        records = database.query(db_models.Record).all()
-    except (OperationalError, ProgrammingError) as err:
-        dummy_record = create_dummy_record()
-        dummy_record.exception = f"Database exception: {err.args}"
-        records = [dummy_record]
-
+def show_records():
+    records = load_records()
     out = []
     for record in records:
         out.append(
