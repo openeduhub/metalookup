@@ -12,7 +12,6 @@ from app.communication import QueueCommunicator
 from app.db_models import RecordSchema
 from app.models import (
     DecisionCase,
-    Explanation,
     ExtractorTags,
     Input,
     ListTags,
@@ -36,7 +35,7 @@ from lib.constants import (
     METADATA_EXTRACTOR,
     PROBABILITY,
     TIME_REQUIRED,
-    VALUES,
+    VALUES, EXPLANATION,
 )
 from lib.settings import NUMBER_OF_EXTRACTORS, VERSION
 from lib.timing import get_utc_now
@@ -73,7 +72,7 @@ def _convert_dict_to_output_model(
                     probability=meta[key][PROBABILITY],
                     isHappyCase=DecisionCase.UNKNOWN,  # TODO: resolve properly, formerly meta[key][DECISION],
                     time_for_completion=meta[key][TIME_REQUIRED],
-                    explanation=[Explanation.none, Explanation.NoHTTPS],
+                    explanation=meta[key][EXPLANATION],
                 ),
             )
 

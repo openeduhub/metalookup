@@ -17,6 +17,7 @@ VALUES = "values"
 PROBABILITY = "probability"
 DECISION = "isHappyCase"
 TIME_REQUIRED = "time_required"
+EXPLANATION = "explanation"
 
 ACCESSIBILITY = "accessibility"
 SPLASH = "splash"

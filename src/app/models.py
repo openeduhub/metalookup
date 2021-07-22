@@ -9,6 +9,7 @@ class Explanation(str, Enum):
     NoHTTPS = "NoHTTPS"
     AccessibilityTooLow = "AccessibilityTooLow"
     FoundAds = "FoundAds"
+    Cached = "Cached"
 
 
 class DecisionCase(Enum):

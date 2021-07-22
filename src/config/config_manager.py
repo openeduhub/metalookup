@@ -1,6 +1,8 @@
 import json
 
+from app.models import Explanation
 from features.website_manager import Singleton
+from lib.constants import TIME_REQUIRED, EXPLANATION
 
 
 @Singleton
@@ -32,4 +34,7 @@ class ConfigManager:
         )
 
     def get_predefined_metadata(self, key: str) -> dict:
-        return {key: self.hosts[self.top_level_domain][key]}
+        meta_data = {key: self.hosts[self.top_level_domain][key]}
+        meta_data[key].update({TIME_REQUIRED: 0, EXPLANATION: [Explanation.Cached]})
+        print("meta_data: ", meta_data)
+        return meta_data
