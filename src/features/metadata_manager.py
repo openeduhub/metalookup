@@ -53,11 +53,11 @@ from lib.timing import get_utc_now
 def _parallel_setup(
     extractor_class: type(MetadataBase), logger: Logger
 ) -> MetadataBase:
-    logger.debug(f"Starting setup for {extractor_class} {get_utc_now()}")
+    # logger.debug(f"Starting setup for {extractor_class} {get_utc_now()}")
     extractor = extractor_class(logger)
-    logger.debug(f"Interm setup for {extractor_class} {get_utc_now()}")
+    # logger.debug(f"Interm setup for {extractor_class} {get_utc_now()}")
     extractor.setup()
-    logger.debug(f"Finished setup for {extractor_class} {get_utc_now()}")
+    # logger.debug(f"Finished setup for {extractor_class} {get_utc_now()}")
     return extractor
 
 
@@ -117,12 +117,10 @@ class MetadataManager:
 
         for metadata_extractor in self.metadata_extractors:
             if allow_list[metadata_extractor.key]:
-                if (
-                    config_manager.is_host_predefined()
-                    and config_manager.is_metadata_predefined(
-                        metadata_extractor.key
-                    )
-                ):
+                self._logger.debug(
+                    f"predefined: {config_manager.is_host_predefined()},"
+                )
+                if config_manager.is_host_predefined():
                     extracted_metadata: dict = (
                         config_manager.get_predefined_metadata(
                             metadata_extractor.key
@@ -157,9 +155,9 @@ class MetadataManager:
                     TIMESTAMP: get_utc_now(),
                     EXPLANATION: meta_data[EXPLANATION],
                 }
-                self._logger.debug(
-                    f"data_to_be_cached: {feature}, {data_to_be_cached}"
-                )
+                # self._logger.debug(
+                #    f"data_to_be_cached: {feature}, {data_to_be_cached}"
+                # )
                 create_cache_entry(
                     config_manager.top_level_domain,
                     feature,

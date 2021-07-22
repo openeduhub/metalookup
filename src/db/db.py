@@ -118,6 +118,12 @@ def load_cache(database: Session = SessionLocal()):
     return cache
 
 
+def get_top_level_domains():
+    session = SessionLocal()
+    entries = session.query(db_models.CacheEntry.top_level_domain).all()
+    return [entry[0] for entry in entries]
+
+
 def create_cache_entry(
     top_level_domain: str, feature: str, values: dict, logger
 ):
@@ -132,7 +138,7 @@ def create_cache_entry(
             .first()
         )
 
-        logger.debug(f"entry {entry}")
+        # logger.debug(f"entry {entry}")
         if entry is None:
             entry = db_models.CacheEntry(
                 **{
@@ -144,7 +150,7 @@ def create_cache_entry(
         else:
             updated_values = entry.__getattribute__(feature)
             updated_values.append(json.dumps(values))
-            logger.debug(f"updated_values {updated_values}")
+            # logger.debug(f"updated_values {updated_values}")
             session.query(db_models.CacheEntry).filter_by(
                 top_level_domain=top_level_domain
             ).update({feature: updated_values})
