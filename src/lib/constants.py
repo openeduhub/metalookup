@@ -32,6 +32,7 @@ LIGHTHOUSE_EXTRACTOR = "lighthouse_extractor"
 # Header
 STRICT_TRANSPORT_SECURITY = "strict-transport-security"
 
+SECONDS_PER_DAY = 60 * 60 * 24
 
 # Database
 class ActionEnum(Enum):

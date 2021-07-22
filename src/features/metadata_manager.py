@@ -117,10 +117,12 @@ class MetadataManager:
 
         for metadata_extractor in self.metadata_extractors:
             if allow_list[metadata_extractor.key]:
-                self._logger.debug(
-                    f"predefined: {config_manager.is_host_predefined()},"
-                )
-                if config_manager.is_host_predefined():
+                if (
+                    config_manager.is_host_predefined()
+                    and config_manager.is_enough_cached_data_present(
+                        metadata_extractor.key
+                    )
+                ):
                     extracted_metadata: dict = (
                         config_manager.get_predefined_metadata(
                             metadata_extractor.key

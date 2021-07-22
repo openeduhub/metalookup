@@ -20,6 +20,7 @@ from lib.constants import (
     MESSAGE_URL,
 )
 from lib.logger import create_logger
+from lib.math import get_unique_list
 from lib.settings import SPLASH_HEADERS, SPLASH_URL
 
 
@@ -201,17 +202,6 @@ class WebsiteManager:
             self.website_data.html, "html.parser"
         )
 
-    @staticmethod
-    def _get_unique_list(items: list) -> list:
-        seen = set()
-        for element in range(len(items) - 1, -1, -1):
-            item = items[element]
-            if item in seen:
-                del items[element]
-            else:
-                seen.add(item)
-        return items
-
     def _extract_raw_links(self) -> None:
 
         source_regex = self.source_regex.findall
@@ -224,7 +214,7 @@ class WebsiteManager:
             )
             if link is not None
         ]
-        self.website_data.raw_links = self._get_unique_list(
+        self.website_data.raw_links = get_unique_list(
             links
             + [el for el in self.website_data.image_links if el is not None]
         )
@@ -278,7 +268,7 @@ class WebsiteManager:
             for link in self.website_data.raw_links
         ]
         self.website_data.extensions = [
-            x for x in self._get_unique_list(file_extensions) if x != ""
+            x for x in get_unique_list(file_extensions) if x != ""
         ]
 
     def _load_har(self, har: str) -> None:

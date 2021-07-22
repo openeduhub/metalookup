@@ -10,6 +10,7 @@ import db.models as db_models
 from db.base import create_database_engine, create_metadata
 from features.website_manager import WebsiteManager
 from lib.constants import ACCESSIBILITY, VALUES
+from lib.math import get_mean, get_std_dev
 from lib.settings import PROFILING_HOST_NAME
 
 
@@ -127,17 +128,6 @@ def parse_meta():
 
     for key, value in time_per_feature.items():
         print(f"total time per feature {key}: {sum(value)}")
-
-
-def get_mean(values: list) -> float:
-    return sum(values) / len(values)
-
-
-def get_std_dev(values: list) -> float:
-    mean = get_mean(values)
-    var = sum(pow(x - mean, 2) for x in values) / len(values)  # variance
-    std = math.sqrt(var)
-    return std
 
 
 def print_accessibility_per_domain():
