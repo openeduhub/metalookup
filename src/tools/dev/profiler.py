@@ -10,8 +10,8 @@ import db.models as db_models
 from db.base import create_database_engine, create_metadata
 from features.website_manager import WebsiteManager
 from lib.constants import ACCESSIBILITY, VALUES
-from lib.math import get_mean, get_std_dev
 from lib.settings import PROFILING_HOST_NAME
+from lib.tools import get_mean, get_std_dev
 
 
 def get_profiler_db():
@@ -138,11 +138,9 @@ def print_accessibility_per_domain():
     website_manager = WebsiteManager.get_instance()
 
     meta_rows = database.execute(query)
-    # print("meta_rows: ", meta_rows)
 
     print_data = {}
     for meta_row in meta_rows:
-        # print("meta_row: ", meta_row)
         url = meta_row[0]
         if url == "":
             continue

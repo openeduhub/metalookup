@@ -16,9 +16,9 @@ from lib.constants import (
     VALUES,
 )
 from lib.logger import create_logger
-from lib.math import get_mean, get_unique_list
 from lib.settings import CACHE_RETENTION_TIME_DAYS, MINIMUM_REQUIRED_ENTRIES
 from lib.timing import get_utc_now
+from lib.tools import get_mean, get_unique_list
 
 
 @Singleton

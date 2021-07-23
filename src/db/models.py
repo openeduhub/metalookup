@@ -1,4 +1,4 @@
-from sqlalchemy import JSON, Boolean, Column, Float, Integer, UnicodeText
+from sqlalchemy import Boolean, Column, Float, Integer, UnicodeText
 from sqlalchemy.dialects.postgresql import ARRAY
 
 from db.base import Base
@@ -15,8 +15,8 @@ class Record(Base):
     headers = Column(UnicodeText)
     har = Column(UnicodeText)
     debug = Column(Boolean)
-    allow_list = Column(UnicodeText)  # dump json for now
-    meta = Column(UnicodeText)  # dump json for now
+    allow_list = Column(UnicodeText)
+    meta = Column(UnicodeText)
     exception = Column(UnicodeText)
     time_until_complete = Column(Float)
 

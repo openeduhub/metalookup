@@ -29,7 +29,7 @@ def create_request_record(
     timestamp: float, input_data: Input, allowance: dict
 ):
     print("Writing request to db")
-    db = SessionLocal()
+    session = SessionLocal()
     new_input = db_models.Record(
         timestamp=timestamp,
         action=ActionEnum.REQUEST,
@@ -45,9 +45,9 @@ def create_request_record(
         time_until_complete=0,
     )
 
-    db.add(new_input)
-    db.commit()
-    db.close()
+    session.add(new_input)
+    session.commit()
+    session.close()
 
 
 def create_response_record(
@@ -59,7 +59,7 @@ def create_response_record(
 ):
     print("Writing response to db")
     json_compatible_meta = jsonable_encoder(output.meta)
-    database = SessionLocal()
+    session = SessionLocal()
     new_input = db_models.Record(
         timestamp=end_time,
         action=ActionEnum.RESPONSE,
@@ -75,9 +75,9 @@ def create_response_record(
         time_until_complete=output.time_until_complete,
     )
 
-    database.add(new_input)
-    database.commit()
-    database.close()
+    session.add(new_input)
+    session.commit()
+    session.close()
 
 
 def create_dummy_record() -> RecordSchema:
@@ -99,9 +99,9 @@ def create_dummy_record() -> RecordSchema:
     return record
 
 
-def load_records(database: Session = SessionLocal()) -> [db_models.Record]:
+def load_records(session: Session = SessionLocal()) -> [db_models.Record]:
     try:
-        records = database.query(db_models.Record).all()
+        records = session.query(db_models.Record).all()
     except (OperationalError, ProgrammingError) as err:
         dummy_record = create_dummy_record()
         dummy_record.exception = f"Database exception: {err.args}"
@@ -109,9 +109,9 @@ def load_records(database: Session = SessionLocal()) -> [db_models.Record]:
     return records
 
 
-def load_cache(database: Session = SessionLocal()):
+def load_cache(session: Session = SessionLocal()):
     try:
-        cache = database.query(db_models.CacheEntry).all()
+        cache = session.query(db_models.CacheEntry).all()
     except (OperationalError, ProgrammingError) as err:
         print("Error while loading cache:", err.args)
         cache = []
@@ -138,7 +138,6 @@ def create_cache_entry(
             .first()
         )
 
-        # logger.debug(f"entry {entry}")
         if entry is None:
             entry = db_models.CacheEntry(
                 **{
@@ -150,7 +149,6 @@ def create_cache_entry(
         else:
             updated_values = entry.__getattribute__(feature)
             updated_values.append(json.dumps(values))
-            # logger.debug(f"updated_values {updated_values}")
             session.query(db_models.CacheEntry).filter_by(
                 top_level_domain=top_level_domain
             ).update({feature: updated_values})

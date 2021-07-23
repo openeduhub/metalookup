@@ -66,9 +66,7 @@ class MetadataManager:
 
     def __init__(self) -> None:
         self._logger = create_logger()
-        self._logger.debug(f"Starting setup at {get_utc_now()}")
         self._setup_extractors()
-        self._logger.debug(f"Finished setup at {get_utc_now()}")
 
     def _setup_extractors(self) -> None:
 
@@ -162,18 +160,12 @@ class MetadataManager:
                     TIMESTAMP: get_utc_now(),
                     EXPLANATION: meta_data[EXPLANATION],
                 }
-                # self._logger.debug(
-                #    f"data_to_be_cached: {feature}, {data_to_be_cached}"
-                # )
+
                 create_cache_entry(
                     cache_manager.top_level_domain,
                     feature,
                     data_to_be_cached,
                     self._logger,
-                )
-            else:
-                self._logger.debug(
-                    f"Feature {feature} was read from cache: {meta_data[EXPLANATION]}"
                 )
 
     def start(self, message: dict) -> dict:

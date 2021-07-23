@@ -20,8 +20,8 @@ from lib.constants import (
     MESSAGE_URL,
 )
 from lib.logger import create_logger
-from lib.math import get_unique_list
 from lib.settings import SPLASH_HEADERS, SPLASH_URL
+from lib.tools import get_unique_list
 
 
 @dataclass
