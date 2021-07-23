@@ -142,10 +142,16 @@ class MetadataManager:
         return data
 
     def cache_data(
-        self, extracted_metadata: dict, config_manager: ConfigManager
+        self,
+        extracted_metadata: dict,
+        config_manager: ConfigManager,
+        allow_list: dict,
     ):
         for feature, meta_data in extracted_metadata.items():
-            if Explanation.Cached not in meta_data[EXPLANATION]:
+            if (
+                allow_list[feature]
+                and Explanation.Cached not in meta_data[EXPLANATION]
+            ):
                 values = []
                 if feature == ACCESSIBILITY:
                     values = meta_data[VALUES]
@@ -194,7 +200,11 @@ class MetadataManager:
                         shared_memory_name=message[MESSAGE_SHARED_MEMORY_NAME],
                     )
                 )
-                self.cache_data(extracted_meta_data, config_manager)
+                self.cache_data(
+                    extracted_meta_data,
+                    config_manager,
+                    allow_list=message[MESSAGE_ALLOW_LIST],
+                )
             except ConnectionError as e:
                 exception = f"Connection error extracting metadata: '{e.args}'"
                 self._logger.exception(
