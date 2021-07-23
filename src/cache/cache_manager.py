@@ -22,7 +22,7 @@ from lib.timing import get_utc_now
 
 
 @Singleton
-class ConfigManager:
+class CacheManager:
     _logger: logging.Logger
 
     def __init__(self):
@@ -30,9 +30,9 @@ class ConfigManager:
         self.top_level_domain: str = ""
         self.hosts = {}
         self._logger = create_logger()
-        self._load_config()
+        self._prepare_cache_manager()
 
-    def _load_config(self) -> None:
+    def _prepare_cache_manager(self) -> None:
         self.hosts = get_top_level_domains()
 
     def is_host_predefined(self) -> bool:

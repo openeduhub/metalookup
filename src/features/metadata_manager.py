@@ -1,5 +1,4 @@
 import asyncio
-import json
 import multiprocessing
 import traceback
 from collections import ChainMap
@@ -8,7 +7,7 @@ from logging import Logger
 from multiprocessing import shared_memory
 
 from app.models import Explanation
-from config.config_manager import ConfigManager
+from cache.cache_manager import CacheManager
 from db.db import create_cache_entry
 from features.accessibility import Accessibility
 from features.cookies import Cookies
@@ -106,7 +105,7 @@ class MetadataManager:
     async def _extract_meta_data(
         self,
         allow_list: dict,
-        config_manager: ConfigManager,
+        cache_manager: CacheManager,
         shared_memory_name: str,
     ) -> dict:
         data = {}
@@ -118,13 +117,13 @@ class MetadataManager:
         for metadata_extractor in self.metadata_extractors:
             if allow_list[metadata_extractor.key]:
                 if (
-                    config_manager.is_host_predefined()
-                    and config_manager.is_enough_cached_data_present(
+                    cache_manager.is_host_predefined()
+                    and cache_manager.is_enough_cached_data_present(
                         metadata_extractor.key
                     )
                 ):
                     extracted_metadata: dict = (
-                        config_manager.get_predefined_metadata(
+                        cache_manager.get_predefined_metadata(
                             metadata_extractor.key
                         )
                     )
@@ -144,7 +143,7 @@ class MetadataManager:
     def cache_data(
         self,
         extracted_metadata: dict,
-        config_manager: ConfigManager,
+        cache_manager: CacheManager,
         allow_list: dict,
     ):
         for feature, meta_data in extracted_metadata.items():
@@ -167,7 +166,7 @@ class MetadataManager:
                 #    f"data_to_be_cached: {feature}, {data_to_be_cached}"
                 # )
                 create_cache_entry(
-                    config_manager.top_level_domain,
+                    cache_manager.top_level_domain,
                     feature,
                     data_to_be_cached,
                     self._logger,
@@ -182,8 +181,8 @@ class MetadataManager:
         website_manager = WebsiteManager.get_instance()
         website_manager.load_website_data(message=message)
 
-        config_manager = ConfigManager.get_instance()
-        config_manager.top_level_domain = (
+        cache_manager = CacheManager.get_instance()
+        cache_manager.top_level_domain = (
             website_manager.website_data.top_level_domain
         )
 
@@ -196,13 +195,13 @@ class MetadataManager:
                 extracted_meta_data = asyncio.run(
                     self._extract_meta_data(
                         allow_list=message[MESSAGE_ALLOW_LIST],
-                        config_manager=config_manager,
+                        cache_manager=cache_manager,
                         shared_memory_name=message[MESSAGE_SHARED_MEMORY_NAME],
                     )
                 )
                 self.cache_data(
                     extracted_meta_data,
-                    config_manager,
+                    cache_manager,
                     allow_list=message[MESSAGE_ALLOW_LIST],
                 )
             except ConnectionError as e:
