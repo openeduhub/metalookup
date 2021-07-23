@@ -49,11 +49,12 @@ class Manager:
 
             response = self.metadata_manager.start(message=message)
 
-            self.manager_to_api_queue.put({uuid: response})
+            if WANT_PROFILING:
+                profiler.disable()
+                profiler.dump_stats("profile.log")
+                profiler.enable()
 
-        if WANT_PROFILING:
-            profiler.disable()
-            self._logger.debug(f"stats: {profiler.print_stats()}")
+            self.manager_to_api_queue.put({uuid: response})
 
     def _handle_api_request(self) -> None:
         try:

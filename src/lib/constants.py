@@ -17,6 +17,8 @@ VALUES = "values"
 PROBABILITY = "probability"
 DECISION = "isHappyCase"
 TIME_REQUIRED = "time_required"
+EXPLANATION = "explanation"
+TIMESTAMP = "timestamp"
 
 ACCESSIBILITY = "accessibility"
 SPLASH = "splash"
@@ -30,6 +32,7 @@ LIGHTHOUSE_EXTRACTOR = "lighthouse_extractor"
 # Header
 STRICT_TRANSPORT_SECURITY = "strict-transport-security"
 
+SECONDS_PER_DAY = 60 * 60 * 24
 
 # Database
 class ActionEnum(Enum):

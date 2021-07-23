@@ -6,7 +6,9 @@ from itertools import repeat
 from logging import Logger
 from multiprocessing import shared_memory
 
-from config.config_manager import ConfigManager
+from app.models import Explanation
+from cache.cache_manager import CacheManager
+from db.db import create_cache_entry
 from features.accessibility import Accessibility
 from features.cookies import Cookies
 from features.extract_from_files import ExtractFromFiles
@@ -33,7 +35,16 @@ from features.metadata_base import MetadataBase
 from features.metatag_explorer import MetatagExplorer
 from features.security import Security
 from features.website_manager import Singleton, WebsiteManager
-from lib.constants import MESSAGE_ALLOW_LIST, MESSAGE_SHARED_MEMORY_NAME
+from lib.constants import (
+    ACCESSIBILITY,
+    DECISION,
+    EXPLANATION,
+    MESSAGE_ALLOW_LIST,
+    MESSAGE_SHARED_MEMORY_NAME,
+    PROBABILITY,
+    TIMESTAMP,
+    VALUES,
+)
 from lib.logger import create_logger
 from lib.timing import get_utc_now
 
@@ -41,8 +52,11 @@ from lib.timing import get_utc_now
 def _parallel_setup(
     extractor_class: type(MetadataBase), logger: Logger
 ) -> MetadataBase:
+    # logger.debug(f"Starting setup for {extractor_class} {get_utc_now()}")
     extractor = extractor_class(logger)
+    # logger.debug(f"Interm setup for {extractor_class} {get_utc_now()}")
     extractor.setup()
+    # logger.debug(f"Finished setup for {extractor_class} {get_utc_now()}")
     return extractor
 
 
@@ -89,7 +103,7 @@ class MetadataManager:
     async def _extract_meta_data(
         self,
         allow_list: dict,
-        config_manager: ConfigManager,
+        cache_manager: CacheManager,
         shared_memory_name: str,
     ) -> dict:
         data = {}
@@ -101,13 +115,13 @@ class MetadataManager:
         for metadata_extractor in self.metadata_extractors:
             if allow_list[metadata_extractor.key]:
                 if (
-                    config_manager.is_host_predefined()
-                    and config_manager.is_metadata_predefined(
+                    cache_manager.is_host_predefined()
+                    and cache_manager.is_enough_cached_data_present(
                         metadata_extractor.key
                     )
                 ):
-                    extracted_metadata = (
-                        config_manager.get_predefined_metadata(
+                    extracted_metadata: dict = (
+                        cache_manager.get_predefined_metadata(
                             metadata_extractor.key
                         )
                     )
@@ -119,18 +133,48 @@ class MetadataManager:
                     data.update(metadata_extractor.start())
                     shared_status[0] += 1
 
-        extracted_metadata = await asyncio.gather(*tasks)
+        extracted_metadata: tuple[dict] = await asyncio.gather(*tasks)
         shared_status[0] += len(tasks)
         data = {**data, **dict(ChainMap(*extracted_metadata))}
         return data
+
+    def cache_data(
+        self,
+        extracted_metadata: dict,
+        cache_manager: CacheManager,
+        allow_list: dict,
+    ):
+        for feature, meta_data in extracted_metadata.items():
+            if (
+                allow_list[feature]
+                and Explanation.Cached not in meta_data[EXPLANATION]
+            ):
+                values = []
+                if feature == ACCESSIBILITY:
+                    values = meta_data[VALUES]
+
+                data_to_be_cached = {
+                    VALUES: values,
+                    PROBABILITY: meta_data[PROBABILITY],
+                    DECISION: meta_data[DECISION],
+                    TIMESTAMP: get_utc_now(),
+                    EXPLANATION: meta_data[EXPLANATION],
+                }
+
+                create_cache_entry(
+                    cache_manager.top_level_domain,
+                    feature,
+                    data_to_be_cached,
+                    self._logger,
+                )
 
     def start(self, message: dict) -> dict:
 
         website_manager = WebsiteManager.get_instance()
         website_manager.load_website_data(message=message)
 
-        config_manager = ConfigManager.get_instance()
-        config_manager.top_level_domain = (
+        cache_manager = CacheManager.get_instance()
+        cache_manager.top_level_domain = (
             website_manager.website_data.top_level_domain
         )
 
@@ -143,9 +187,14 @@ class MetadataManager:
                 extracted_meta_data = asyncio.run(
                     self._extract_meta_data(
                         allow_list=message[MESSAGE_ALLOW_LIST],
-                        config_manager=config_manager,
+                        cache_manager=cache_manager,
                         shared_memory_name=message[MESSAGE_SHARED_MEMORY_NAME],
                     )
+                )
+                self.cache_data(
+                    extracted_meta_data,
+                    cache_manager,
+                    allow_list=message[MESSAGE_ALLOW_LIST],
                 )
             except ConnectionError as e:
                 exception = f"Connection error extracting metadata: '{e.args}'"

@@ -52,7 +52,7 @@ class EasyPrivacy(MetadataBase):
 
 class CookiesInHtml(MetadataBase):
     urls = [
-        "https://easylist-downloads.adblockplus.org/easylist-cookie.txt",
+        # "https://easylist-downloads.adblockplus.org/easylist-cookie.txt", #
         # "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_allowlist.txt",
         # "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_allowlist_general_hide.txt",
         "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_general_block.txt",

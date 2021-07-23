@@ -1,13 +1,17 @@
 import json
+import math
 import sys
 
 import requests
 from sqlalchemy import inspect
 from sqlalchemy.orm import Session, sessionmaker
 
-from app import db_models
+import db.models as db_models
 from db.base import create_database_engine, create_metadata
+from features.website_manager import WebsiteManager
+from lib.constants import ACCESSIBILITY, VALUES
 from lib.settings import PROFILING_HOST_NAME
+from lib.tools import get_mean, get_std_dev
 
 
 def get_profiler_db():
@@ -46,7 +50,8 @@ def download_remote_records():
 
     db = ProfilerSession()
     for record in records:
-        print("Writing record #", record["id"])
+        if PROFILER_DEBUG:
+            print("Writing record #", record["id"])
 
         db_record = db_models.Record(
             timestamp=record["timestamp"],
@@ -93,6 +98,16 @@ def get_total_time():
     print("total_time: ", total_time)
 
 
+def convert_meta_string_to_dict(meta: str) -> dict:
+    if meta != "":
+        meta = json.loads(meta)
+        if meta is None:
+            meta = {}
+    else:
+        meta = {}
+    return meta
+
+
 def parse_meta():
     database: Session = ProfilerSession()
 
@@ -101,26 +116,72 @@ def parse_meta():
     time_per_feature = {}
 
     for meta_row in meta_rows:
-        if meta_row[0] != "":
-            meta = json.loads(meta_row[0])
-        else:
-            meta = {}
+        meta = convert_meta_string_to_dict(meta_row[0])
 
         for key, value in meta.items():
             if key not in time_per_feature.keys():
                 time_per_feature.update({key: []})
-            time_per_feature[key].append(float(value["time_for_completion"]))
+            if value is not None:
+                time_per_feature[key].append(
+                    float(value["time_for_completion"])
+                )
 
     for key, value in time_per_feature.items():
         print(f"total time per feature {key}: {sum(value)}")
 
 
+def print_accessibility_per_domain():
+    database: Session = ProfilerSession()
+
+    query = database.query(db_models.Record.url, db_models.Record.meta)
+
+    website_manager = WebsiteManager.get_instance()
+
+    meta_rows = database.execute(query)
+
+    print_data = {}
+    for meta_row in meta_rows:
+        url = meta_row[0]
+        if url == "":
+            continue
+
+        website_manager.website_data.url = url
+        website_manager._extract_top_level_domain()
+        top_level_domain = website_manager.website_data.top_level_domain
+        if top_level_domain == "":
+            print("Top level domain not found for", url)
+
+        if top_level_domain not in print_data.keys():
+            print_data.update({top_level_domain: []})
+        meta = convert_meta_string_to_dict(meta_row[1])
+        if ACCESSIBILITY in meta.keys() and meta[ACCESSIBILITY] is not None:
+            values = meta[ACCESSIBILITY][VALUES]
+
+            for value in values:
+                if value != -1:
+                    print_data[top_level_domain].append(value)
+
+    print("print_data:", print_data)
+    for domain in print_data.keys():
+        if domain != "" and len(print_data) > 0:
+            print(
+                domain,
+                get_mean(print_data[domain]),
+                get_std_dev(print_data[domain]),
+            )
+
+
+PROFILER_DEBUG = False
+
 if __name__ == "__main__":
     create_metadata(profiling_engine)
     download_remote_records()
 
-    print_schemas()
+    if PROFILER_DEBUG:
+        print_schemas()
 
     get_total_time()
 
     parse_meta()
+
+    print_accessibility_per_domain()
