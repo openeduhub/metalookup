@@ -1,6 +1,8 @@
 import asyncio
+import multiprocessing
 import traceback
 from collections import ChainMap
+from itertools import repeat
 from logging import Logger
 from multiprocessing import shared_memory
 
@@ -49,6 +51,14 @@ from lib.logger import create_logger
 from lib.timing import get_utc_now
 
 
+def _parallel_setup(
+    extractor_class: type(MetadataBase), logger: Logger
+) -> MetadataBase:
+    extractor = extractor_class(logger)
+    extractor.setup()
+    return extractor
+
+
 @Singleton
 class MetadataManager:
     metadata_extractors: list[type(MetadataBase)] = []
@@ -56,14 +66,6 @@ class MetadataManager:
     def __init__(self) -> None:
         self._logger = create_logger()
         self._setup_extractors()
-
-    @staticmethod
-    def _setup_extractor(
-        extractor_class: type(MetadataBase), logger: Logger
-    ) -> MetadataBase:
-        extractor = extractor_class(logger)
-        extractor.setup()
-        return extractor
 
     def _setup_extractors(self) -> None:
 
@@ -95,8 +97,29 @@ class MetadataManager:
         self._logger.debug(f"re2: {_is_re2_supported()}")
         print(f"re2: {_is_re2_supported()}")
 
+        before = get_utc_now()
         for extractor in extractors:
-            self._setup_extractor(extractor, self._logger)
+            self.metadata_extractors.append(
+                _parallel_setup(extractor, self._logger)
+            )
+        self._logger.debug(
+            f"self.metadata_extractors: {self.metadata_extractors}"
+        )
+        after = get_utc_now()
+        self._logger.debug(
+            f"Finished pool setup {after}, took {after - before}s."
+        )
+        """
+        before = get_utc_now()
+        self._logger.debug(f"Starting pool setup {get_utc_now()}")
+
+        pool = multiprocessing.Pool(processes=6)
+        self.metadata_extractors = pool.starmap(
+            _parallel_setup, zip(extractors, repeat(self._logger))
+        )
+        after = get_utc_now()
+        self._logger.debug(f"Finished pool setup {after}, took {after - before}s.")
+        """
 
     async def _extract_meta_data(
         self,

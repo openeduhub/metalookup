@@ -1,5 +1,4 @@
 import json
-import random
 from multiprocessing import shared_memory
 
 from fastapi import FastAPI, HTTPException
@@ -18,14 +17,12 @@ from app.models import (
 )
 from app.schemas import RecordSchema
 from db.db import (
-    create_cache_entry,
     create_request_record,
     create_response_record,
     load_cache,
     load_records,
 )
 from lib.constants import (
-    ACCESSIBILITY,
     EXPLANATION,
     MESSAGE_ALLOW_LIST,
     MESSAGE_EXCEPTION,

@@ -27,6 +27,7 @@ LOG_PATH = "logs/"
 
 # Online lists
 USE_LOCAL_IF_POSSIBLE = True
+USE_RE2 = True
 
 # Miscellaneous
 RETURN_IMAGES_IN_METADATA = False
