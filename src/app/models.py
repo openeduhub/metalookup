@@ -9,12 +9,19 @@ class Explanation(str, Enum):
     NoHTTPS = "NoHTTPS"
     AccessibilityTooLow = "AccessibilityTooLow"
     FoundAds = "FoundAds"
+    Cached = "Cached"
+
+    def __repr__(self):
+        return str(self.value)
 
 
-class DecisionCase(Enum):
+class DecisionCase(str, Enum):
     TRUE = "true"
     FALSE = "false"
     UNKNOWN = "unknown"
+
+    def __repr__(self):
+        return str(self.value)
 
 
 class MetadataTags(BaseModel):

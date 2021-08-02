@@ -2,6 +2,7 @@ from unittest import mock
 
 import pytest
 
+from lib.settings import WANT_PROFILING
 from manager import Manager
 
 
@@ -76,6 +77,9 @@ def test_handle_content(manager: Manager, mocker):
 
     manager.manager_to_api_queue = mocker.MagicMock()
     manager.metadata_manager = mocker.MagicMock()
+
+    assert WANT_PROFILING is False
+
     manager._handle_content(request)
 
     assert manager.metadata_manager.start.call_count == 1

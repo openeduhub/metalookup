@@ -10,9 +10,15 @@ import adblockparser
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 
-from app.models import DecisionCase
+from app.models import DecisionCase, Explanation
 from features.website_manager import WebsiteData, WebsiteManager
-from lib.constants import DECISION, PROBABILITY, TIME_REQUIRED, VALUES
+from lib.constants import (
+    DECISION,
+    EXPLANATION,
+    PROBABILITY,
+    TIME_REQUIRED,
+    VALUES,
+)
 from lib.settings import USE_LOCAL_IF_POSSIBLE
 from lib.timing import get_utc_now
 
@@ -230,6 +236,7 @@ class MetadataBase:
                 **values,
                 PROBABILITY: probability,
                 DECISION: decision,
+                EXPLANATION: [Explanation.none, Explanation.NoHTTPS],
             }
         }
         if self.tag_list_last_modified != "":

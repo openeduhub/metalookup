@@ -1,11 +1,13 @@
 import json
+from typing import List
 
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import OperationalError, ProgrammingError
+from sqlalchemy.orm import Session, sessionmaker
 
-from app import db_models
-from app.db_models import RecordSchema
+import db.models as db_models
 from app.models import Input, Output
+from app.schemas import RecordSchema
 from db.base import database_engine
 from lib.constants import ActionEnum
 
@@ -27,7 +29,7 @@ def create_request_record(
     timestamp: float, input_data: Input, allowance: dict
 ):
     print("Writing request to db")
-    db = SessionLocal()
+    session = SessionLocal()
     new_input = db_models.Record(
         timestamp=timestamp,
         action=ActionEnum.REQUEST,
@@ -43,9 +45,9 @@ def create_request_record(
         time_until_complete=0,
     )
 
-    db.add(new_input)
-    db.commit()
-    db.close()
+    session.add(new_input)
+    session.commit()
+    session.close()
 
 
 def create_response_record(
@@ -57,7 +59,7 @@ def create_response_record(
 ):
     print("Writing response to db")
     json_compatible_meta = jsonable_encoder(output.meta)
-    db = SessionLocal()
+    session = SessionLocal()
     new_input = db_models.Record(
         timestamp=end_time,
         action=ActionEnum.RESPONSE,
@@ -73,9 +75,9 @@ def create_response_record(
         time_until_complete=output.time_until_complete,
     )
 
-    db.add(new_input)
-    db.commit()
-    db.close()
+    session.add(new_input)
+    session.commit()
+    session.close()
 
 
 def create_dummy_record() -> RecordSchema:
@@ -95,3 +97,63 @@ def create_dummy_record() -> RecordSchema:
         time_until_complete=-1,
     )
     return record
+
+
+def load_records(session: Session = SessionLocal()) -> [db_models.Record]:
+    try:
+        records = session.query(db_models.Record).all()
+    except (OperationalError, ProgrammingError) as err:
+        dummy_record = create_dummy_record()
+        dummy_record.exception = f"Database exception: {err.args}"
+        records = [dummy_record]
+    return records
+
+
+def load_cache(session: Session = SessionLocal()):
+    try:
+        cache = session.query(db_models.CacheEntry).all()
+    except (OperationalError, ProgrammingError) as err:
+        print("Error while loading cache:", err.args)
+        cache = []
+    return cache
+
+
+def get_top_level_domains():
+    session = SessionLocal()
+    entries = session.query(db_models.CacheEntry.top_level_domain).all()
+    return [entry[0] for entry in entries]
+
+
+def create_cache_entry(
+    top_level_domain: str, feature: str, values: dict, logger
+):
+    logger.debug("Writing to cache")
+
+    session = SessionLocal()
+
+    try:
+        entry = (
+            session.query(db_models.CacheEntry)
+            .filter_by(top_level_domain=top_level_domain)
+            .first()
+        )
+
+        if entry is None:
+            entry = db_models.CacheEntry(
+                **{
+                    "top_level_domain": top_level_domain,
+                    feature: [json.dumps(values)],
+                }
+            )
+            session.add(entry)
+        else:
+            updated_values = entry.__getattribute__(feature)
+            updated_values.append(json.dumps(values))
+            session.query(db_models.CacheEntry).filter_by(
+                top_level_domain=top_level_domain
+            ).update({feature: updated_values})
+
+        session.commit()
+    finally:
+        session.close()
+        logger.debug("Writing done")

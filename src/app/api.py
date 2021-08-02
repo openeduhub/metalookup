@@ -1,31 +1,32 @@
 import json
+import random
 from multiprocessing import shared_memory
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import OperationalError
-from sqlalchemy.orm import Session
 
 import db.base
-from app import db_models
 from app.communication import QueueCommunicator
-from app.db_models import RecordSchema
 from app.models import (
     DecisionCase,
-    Explanation,
     ExtractorTags,
     Input,
     ListTags,
     MetadataTags,
     Output,
 )
+from app.schemas import RecordSchema
 from db.db import (
-    create_dummy_record,
+    create_cache_entry,
     create_request_record,
     create_response_record,
-    get_db,
+    load_cache,
+    load_records,
 )
 from lib.constants import (
+    ACCESSIBILITY,
+    EXPLANATION,
     MESSAGE_ALLOW_LIST,
     MESSAGE_EXCEPTION,
     MESSAGE_HAR,
@@ -73,7 +74,7 @@ def _convert_dict_to_output_model(
                     probability=meta[key][PROBABILITY],
                     isHappyCase=DecisionCase.UNKNOWN,  # TODO: resolve properly, formerly meta[key][DECISION],
                     time_for_completion=meta[key][TIME_REQUIRED],
-                    explanation=[Explanation.none, Explanation.NoHTTPS],
+                    explanation=meta[key][EXPLANATION],
                 ),
             )
 
@@ -163,14 +164,8 @@ def extract_meta(input_data: Input):
 
 
 @app.get("/records/")
-def show_records(database: Session = Depends(get_db)):
-    try:
-        records = database.query(db_models.Record).all()
-    except OperationalError as err:
-        dummy_record = create_dummy_record()
-        dummy_record.exception = f"Database exception: {err.args}"
-        records = [dummy_record]
-
+def show_records():
+    records = load_records()
     out = []
     for record in records:
         out.append(
@@ -206,3 +201,8 @@ def get_progress():
     return {
         "progress": round(shared_status[0] / NUMBER_OF_EXTRACTORS, 2),
     }
+
+
+@app.get("/cache/")
+def get_cache():
+    return {"cache": load_cache()}
