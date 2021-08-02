@@ -1,8 +1,6 @@
 import asyncio
-import multiprocessing
 import traceback
 from collections import ChainMap
-from itertools import repeat
 from logging import Logger
 from multiprocessing import shared_memory
 
@@ -51,17 +49,6 @@ from lib.logger import create_logger
 from lib.timing import get_utc_now
 
 
-def _parallel_setup(
-        extractor_class: type(MetadataBase), logger: Logger
-) -> MetadataBase:
-    # logger.debug(f"Starting setup for {extractor_class} {get_utc_now()}")
-    extractor = extractor_class(logger)
-    # logger.debug(f"Interm setup for {extractor_class} {get_utc_now()}")
-    extractor.setup()
-    # logger.debug(f"Finished setup for {extractor_class} {get_utc_now()}")
-    return extractor
-
-
 @Singleton
 class MetadataManager:
     metadata_extractors: list[type(MetadataBase)] = []
@@ -69,6 +56,14 @@ class MetadataManager:
     def __init__(self) -> None:
         self._logger = create_logger()
         self._setup_extractors()
+
+    @staticmethod
+    def _setup_extractor(
+        extractor_class: type(MetadataBase), logger: Logger
+    ) -> MetadataBase:
+        extractor = extractor_class(logger)
+        extractor.setup()
+        return extractor
 
     def _setup_extractors(self) -> None:
 
@@ -97,31 +92,17 @@ class MetadataManager:
             Accessibility,
         ]
 
-        self._logger.debug(f"re2 installed: {_is_re2_supported()}")
+        self._logger.debug(f"re2: {_is_re2_supported()}")
+        print(f"re2: {_is_re2_supported()}")
 
-        before = get_utc_now()
         for extractor in extractors:
-            _parallel_setup(extractor, self._logger)
-        after = get_utc_now()
-        self._logger.debug(f"Finished pool setup 2nd version {after}, took {after - before}s.")
-
-        """
-        before = get_utc_now()
-        self._logger.debug(f"Starting pool setup {get_utc_now()}")
-
-        pool = multiprocessing.Pool(processes=6)
-        self.metadata_extractors = pool.starmap(
-            _parallel_setup, zip(extractors, repeat(self._logger))
-        )
-        after = get_utc_now()
-        self._logger.debug(f"Finished pool setup {after}, took {after - before}s.")
-        """
+            self._setup_extractor(extractor, self._logger)
 
     async def _extract_meta_data(
-            self,
-            allow_list: dict,
-            cache_manager: CacheManager,
-            shared_memory_name: str,
+        self,
+        allow_list: dict,
+        cache_manager: CacheManager,
+        shared_memory_name: str,
     ) -> dict:
         data = {}
         tasks = []
@@ -132,10 +113,10 @@ class MetadataManager:
         for metadata_extractor in self.metadata_extractors:
             if allow_list[metadata_extractor.key]:
                 if (
-                        cache_manager.is_host_predefined()
-                        and cache_manager.is_enough_cached_data_present(
-                    metadata_extractor.key
-                )
+                    cache_manager.is_host_predefined()
+                    and cache_manager.is_enough_cached_data_present(
+                        metadata_extractor.key
+                    )
                 ):
                     extracted_metadata: dict = (
                         cache_manager.get_predefined_metadata(
@@ -156,15 +137,15 @@ class MetadataManager:
         return data
 
     def cache_data(
-            self,
-            extracted_metadata: dict,
-            cache_manager: CacheManager,
-            allow_list: dict,
+        self,
+        extracted_metadata: dict,
+        cache_manager: CacheManager,
+        allow_list: dict,
     ):
         for feature, meta_data in extracted_metadata.items():
             if (
-                    allow_list[feature]
-                    and Explanation.Cached not in meta_data[EXPLANATION]
+                allow_list[feature]
+                and Explanation.Cached not in meta_data[EXPLANATION]
             ):
                 values = []
                 if feature == ACCESSIBILITY:

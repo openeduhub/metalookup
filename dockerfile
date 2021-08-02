@@ -12,9 +12,23 @@ RUN apk update && \
     apk add --virtual build-deps gcc musl-dev && \
     apk add postgresql-dev
 
+# Needed for re2
+RUN apk add python3-dev
+RUN apk add build-base # https://github.com/gliderlabs/docker-alpine/issues/24
+RUN apk add --update git
+RUN git clone https://code.googlesource.com/re2
+WORKDIR /home/extractor/re2
+RUN make
+RUN make test
+RUN make install
+RUN make testinstall
+RUN apk add cmake
+WORKDIR /home/extractor
+
 COPY requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 RUN apk del .build-deps
+RUN apk del build-deps
 
 # First copy the data, then give ownership to it, then switch to correct user
 COPY src/ .

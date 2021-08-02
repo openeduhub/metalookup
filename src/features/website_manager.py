@@ -178,6 +178,7 @@ class WebsiteManager:
         har = ""
         headers = ""
         try:
+            print(f"data.keys() {data.keys()}")
             html = data["html"]
             har = str(json.dumps(data["har"]))
             headers = str(json.dumps(self._transform_raw_header(raw_headers)))

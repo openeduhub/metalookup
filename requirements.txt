@@ -1,35 +1,38 @@
 adblockparser==0.7
-aiohttp==3.7.3; python_version >= "3.6"
+aiohttp==3.7.4.post0; python_version >= "3.6"
 async-timeout==3.0.1; python_full_version >= "3.5.3"
-attrs==20.3.0; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.4.0"
+attrs==21.2.0; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
 beautifulsoup4==4.9.3
 bs4==0.0.1
-certifi==2020.12.5
-cffi==1.14.4
-chardet==3.0.4; python_version > "3.0"
+certifi==2021.5.30
+cffi==1.14.6
+chardet==4.0.0; python_version > "3.0" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version > "3.0"
+charset-normalizer==2.0.4; python_full_version >= "3.5.0" and python_version >= "3"
 click==7.1.2; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
-cryptography==3.3.1; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.6.0"
+cryptography==3.3.1; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.6.0")
 fastapi==0.63.0; python_version >= "3.6"
 filelock==3.0.12
 greenlet==1.1.0; python_version >= "3" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version >= "3"
 h11==0.12.0; python_version >= "3.6"
-idna==2.10; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.4.0"
-lxml==4.6.2; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.5.0")
+idna==3.2; python_version >= "3.5"
+lxml==4.6.3; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.5.0")
 multidict==5.1.0; python_version >= "3.6"
 pdfminer.six==20201018; python_version >= "3.4"
 psycopg2==2.9.1; python_version >= "3.6"
+pybind11==2.7.0; (python_version >= "2.7" and python_version < "3.0") or (python_version > "3.0" and python_version < "3.1") or (python_version > "3.1" and python_version < "3.2") or (python_version > "3.2" and python_version < "3.3") or (python_version > "3.3" and python_version < "3.4") or (python_version > "3.4")
 pycparser==2.20; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.4.0"
-pydantic==1.7.3; python_version >= "3.6"
+pydantic==1.8.2; python_full_version >= "3.6.1"
 pypdf2==1.26.0
+pyre2==0.3.2
 requests-file==1.5.1
-requests==2.25.1; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.5.0")
-six==1.15.0; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.3.0"
-sortedcontainers==2.3.0
-soupsieve==2.1; python_version >= "3.5"
-sqlalchemy==1.4.21; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.6.0")
+requests==2.26.0; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.6.0")
+six==1.16.0; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.3.0"
+sortedcontainers==2.4.0
+soupsieve==2.2.1; python_version >= "3.6"
+sqlalchemy==1.4.22; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.6.0")
 starlette==0.13.6; python_version >= "3.6"
 tldextract==3.1.0; python_version >= "3.5"
-typing-extensions==3.7.4.3
-urllib3==1.26.3; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version < "4"
-uvicorn==0.13.3
+typing-extensions==3.10.0.0
+urllib3==1.26.6; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version < "4"
+uvicorn==0.13.4
 yarl==1.6.3; python_version >= "3.6"
