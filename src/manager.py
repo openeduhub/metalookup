@@ -29,6 +29,10 @@ class Manager:
 
         self._logger.info("Manager set up and waiting for data.")
 
+        if WANT_PROFILING:
+            profiler.disable()
+            profiler.print_stats()
+            # profiler.enable()
         self.run()
 
     def _create_api(self) -> None:
@@ -83,7 +87,7 @@ class Manager:
 
 
 def launch_api_server(
-    queue: multiprocessing.Queue, return_queue: multiprocessing.Queue
+        queue: multiprocessing.Queue, return_queue: multiprocessing.Queue
 ) -> None:
     app.communicator = QueueCommunicator(queue, return_queue)
     uvicorn.run(app, host="0.0.0.0", port=API_PORT, log_level="debug")

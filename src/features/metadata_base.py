@@ -102,7 +102,7 @@ class MetadataBase:
         return round(ratio, 2)
 
     def _calculate_probability_from_ratio(
-        self, decision_indicator: float
+            self, decision_indicator: float
     ) -> float:
         return (
             round(
@@ -127,8 +127,8 @@ class MetadataBase:
 
     def _decide(self, website_data: WebsiteData) -> tuple[DecisionCase, float]:
         if (
-            self.probability_determination_method
-            == ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
+                self.probability_determination_method
+                == ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
         ):
             decision_indicator = self._get_ratio_of_elements(
                 website_data=website_data
@@ -138,25 +138,25 @@ class MetadataBase:
             )
             decision = self._get_decision(decision_indicator)
         elif (
-            self.probability_determination_method
-            == ProbabilityDeterminationMethod.SINGLE_OCCURRENCE
+                self.probability_determination_method
+                == ProbabilityDeterminationMethod.SINGLE_OCCURRENCE
         ):
             decision, probability = self._decide_single_occurrence(
                 website_data
             )
         elif (
-            self.probability_determination_method
-            == ProbabilityDeterminationMethod.FIRST_VALUE
+                self.probability_determination_method
+                == ProbabilityDeterminationMethod.FIRST_VALUE
         ):
             decision, probability = self._decide_first_value(website_data)
         elif (
-            self.probability_determination_method
-            == ProbabilityDeterminationMethod.MEAN_VALUE
+                self.probability_determination_method
+                == ProbabilityDeterminationMethod.MEAN_VALUE
         ):
             decision, probability = self._decide_mean_value(website_data)
         elif (
-            self.probability_determination_method
-            == ProbabilityDeterminationMethod.FALSE_LIST
+                self.probability_determination_method
+                == ProbabilityDeterminationMethod.FALSE_LIST
         ):
             decision, probability = self._decide_false_list(website_data)
         else:
@@ -165,7 +165,7 @@ class MetadataBase:
         return decision, probability
 
     def _decide_single_occurrence(
-        self, website_data: WebsiteData
+            self, website_data: WebsiteData
     ) -> tuple[DecisionCase, float]:
         probability = (
             1.0
@@ -176,7 +176,7 @@ class MetadataBase:
         return decision, probability
 
     def _decide_first_value(
-        self, website_data: WebsiteData
+            self, website_data: WebsiteData
     ) -> tuple[DecisionCase, float]:
         if website_data.values:
             probability = self._calculate_probability_from_ratio(
@@ -188,7 +188,7 @@ class MetadataBase:
         return decision, probability
 
     def _decide_mean_value(
-        self, website_data: WebsiteData
+            self, website_data: WebsiteData
     ) -> tuple[DecisionCase, float]:
         if website_data.values:
             mean = round(
@@ -201,7 +201,7 @@ class MetadataBase:
         return decision, probability
 
     def _decide_false_list(
-        self, website_data: WebsiteData
+            self, website_data: WebsiteData
     ) -> tuple[DecisionCase, float]:
         probability = 1
         decision = DecisionCase.UNKNOWN
@@ -224,7 +224,7 @@ class MetadataBase:
         return website_manager.website_data
 
     def _processing_values(
-        self, values: dict, website_data: WebsiteData, before: float
+            self, values: dict, website_data: WebsiteData, before: float
     ) -> dict:
         website_data.values = values[VALUES]
 
@@ -321,7 +321,7 @@ class MetadataBase:
         return {VALUES: values}
 
     async def _download_multiple_tag_lists(
-        self, session: ClientSession
+            self, session: ClientSession
     ) -> list[str]:
         tasks = [
             self._download_tag_list(url=url, session=session)
@@ -332,7 +332,7 @@ class MetadataBase:
         return complete_list
 
     async def _download_tag_list(
-        self, url: str, session: ClientSession
+            self, url: str, session: ClientSession
     ) -> list[str]:
         taglist_path = "tag_lists/"
         if not os.path.isdir(taglist_path):
@@ -374,20 +374,21 @@ class MetadataBase:
                 self.tag_list_expires = int(match.group(1))
 
             if (
-                self.tag_list_last_modified != ""
-                and self.tag_list_expires != 0
+                    self.tag_list_last_modified != ""
+                    and self.tag_list_expires != 0
             ):
                 break
 
     def _prepare_tag_list(self) -> None:
+        # TODO: rather slow
         tag_list = [
             el.lower()
             for el in self.tag_list
             if el != ""
-            and (
-                self.comment_symbol == ""
-                or not el.startswith(self.comment_symbol)
-            )
+               and (
+                       self.comment_symbol == ""
+                       or not el.startswith(self.comment_symbol)
+               )
         ]
 
         self.tag_list = list(OrderedDict.fromkeys(tag_list))
@@ -405,11 +406,19 @@ class MetadataBase:
 
     def setup(self) -> None:
         """Child function."""
+        before = get_utc_now()
+        self._logger.debug(f"{self.__class__.__name__}: Setup step 1 started at {before}")
         asyncio.run(self._setup_downloads())
         if self.tag_list:
+            self._logger.debug(f"{self.__class__.__name__}: Setup step 2 started at {get_utc_now()}")
             self._extract_date_from_list()
+            self._logger.debug(f"{self.__class__.__name__}: Setup step 3 started at {get_utc_now()}")
             self._prepare_tag_list()
+            self._logger.debug(
+                f"{self.__class__.__name__}: Setup step 4 started at {get_utc_now()}, self.tag_list: {len(self.tag_list)}")
             if self.extraction_method == ExtractionMethod.USE_ADBLOCK_PARSER:
                 self.match_rules = adblockparser.AdblockRules(
                     self.tag_list, skip_unsupported_rules=False
                 )
+        after = get_utc_now()
+        self._logger.debug(f"{self.__class__.__name__}: Setup done at {get_utc_now()}, took {after - before}s.")

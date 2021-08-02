@@ -161,14 +161,21 @@ def print_accessibility_per_domain():
                 if value != -1:
                     print_data[top_level_domain].append(value)
 
-    print("print_data:", print_data)
+    # print("print_data:", print_data)
     for domain in print_data.keys():
-        if domain != "" and len(print_data) > 0:
-            print(
-                domain,
-                get_mean(print_data[domain]),
-                get_std_dev(print_data[domain]),
-            )
+        if domain != "":
+            if len(print_data[domain]) > 0:
+                print(
+                    domain,
+                    len(print_data[domain]),
+                    get_mean(print_data[domain]),
+                    get_std_dev(print_data[domain]),
+                )
+            else:
+                print(
+                    domain,
+                    len(print_data[domain]),
+                )
 
 
 PROFILER_DEBUG = False
