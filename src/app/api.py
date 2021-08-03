@@ -1,5 +1,4 @@
 import json
-import time
 from multiprocessing import shared_memory
 
 from fastapi import FastAPI, HTTPException
@@ -32,7 +31,7 @@ from lib.constants import (
     VALUES,
 )
 from lib.settings import NUMBER_OF_EXTRACTORS, VERSION
-from lib.timing import get_utc_now, global_start
+from lib.timing import get_utc_now
 
 app = FastAPI(title=METADATA_EXTRACTOR, version=VERSION)
 app.add_middleware(
@@ -83,7 +82,6 @@ def _convert_allow_list_to_dict(allow_list: ListTags) -> dict:
     description="The main endpoint for metadata extraction.",
 )
 def extract_meta(input_data: Input):
-    print(f"got POST at {time.perf_counter() - global_start} since start")
     starting_extraction = get_utc_now()
 
     allowance = _convert_allow_list_to_dict(input_data.allow_list)
@@ -108,7 +106,6 @@ def extract_meta(input_data: Input):
     )
 
     meta_data: dict = app.communicator.get_message(uuid)
-    print(f"got meta_data at {time.perf_counter() - global_start} since start")
     if meta_data:
         extractor_tags = _convert_dict_to_output_model(
             meta_data, input_data.debug
@@ -142,7 +139,6 @@ def extract_meta(input_data: Input):
         database_exception += "\nDatabase exception: " + str(err.args)
         out.exception += database_exception
 
-    print(f"send result at {time.perf_counter() - global_start} since start")
     if exception != "":
         raise HTTPException(
             status_code=400,
