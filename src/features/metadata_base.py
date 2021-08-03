@@ -411,5 +411,5 @@ class MetadataBase:
             self._prepare_tag_list()
             if self.extraction_method == ExtractionMethod.USE_ADBLOCK_PARSER:
                 self.match_rules = adblockparser.AdblockRules(
-                    self.tag_list, skip_unsupported_rules=False
+                    self.tag_list, skip_unsupported_rules=False, use_re2=False
                 )
