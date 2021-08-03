@@ -1,5 +1,4 @@
 import json
-import random
 import time
 from multiprocessing import shared_memory
 
@@ -9,24 +8,15 @@ from sqlalchemy.exc import OperationalError
 
 import db.base
 from app.communication import QueueCommunicator
-from app.models import (
-    DecisionCase,
-    ExtractorTags,
-    Input,
-    ListTags,
-    MetadataTags,
-    Output,
-)
+from app.models import ExtractorTags, Input, ListTags, MetadataTags, Output
 from app.schemas import RecordSchema
 from db.db import (
-    create_cache_entry,
     create_request_record,
     create_response_record,
     load_cache,
     load_records,
 )
 from lib.constants import (
-    ACCESSIBILITY,
     DECISION,
     EXPLANATION,
     MESSAGE_ALLOW_LIST,

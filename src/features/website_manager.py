@@ -8,7 +8,6 @@ from json import JSONDecodeError
 from typing import NoReturn
 from urllib.parse import urlparse
 
-import bs4
 import requests
 from bs4 import BeautifulSoup
 from tldextract.suffix_list import SuffixListNotFound
