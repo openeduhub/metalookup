@@ -25,6 +25,7 @@ SPLASH = "splash"
 DESKTOP = "desktop"
 MOBILE = "mobile"
 SCORE = "score"
+SCRIPT = "script"
 
 METADATA_EXTRACTOR = "metadata_extractor"
 LIGHTHOUSE_EXTRACTOR = "lighthouse_extractor"
@@ -33,6 +34,7 @@ LIGHTHOUSE_EXTRACTOR = "lighthouse_extractor"
 STRICT_TRANSPORT_SECURITY = "strict-transport-security"
 
 SECONDS_PER_DAY = 60 * 60 * 24
+
 
 # Database
 class ActionEnum(Enum):

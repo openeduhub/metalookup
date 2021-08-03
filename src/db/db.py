@@ -1,5 +1,4 @@
 import json
-from typing import List
 
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.exc import OperationalError, ProgrammingError
