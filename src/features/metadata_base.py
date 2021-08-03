@@ -408,17 +408,11 @@ class MetadataBase:
         """Child function."""
         before = get_utc_now()
         self._logger.debug(
-            f"{self.__class__.__name__}: Setup step 1 started at {before}"
+            f"{self.__class__.__name__}: Setup started at {before}"
         )
         asyncio.run(self._setup_downloads())
         if self.tag_list:
-            self._logger.debug(
-                f"{self.__class__.__name__}: Setup step 2 started at {get_utc_now()}"
-            )
             self._extract_date_from_list()
-            self._logger.debug(
-                f"{self.__class__.__name__}: Setup step 3 started at {get_utc_now()}"
-            )
             self._prepare_tag_list()
             self._logger.debug(
                 f"{self.__class__.__name__}: Setup step 4 started at {get_utc_now()}, self.tag_list: {len(self.tag_list)}"

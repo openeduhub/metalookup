@@ -1,6 +1,7 @@
 import cProfile
 import multiprocessing
 import signal
+import time
 from queue import Empty
 
 import uvicorn
@@ -10,7 +11,7 @@ from app.communication import QueueCommunicator
 from features.metadata_manager import MetadataManager
 from lib.logger import create_logger
 from lib.settings import API_PORT, WANT_PROFILING
-from lib.timing import get_utc_now
+from lib.timing import get_utc_now, global_start
 
 
 class Manager:
@@ -47,23 +48,35 @@ class Manager:
     # =========== LOOP ============
     def _handle_content(self, request: dict) -> None:
 
-        self._logger.info(f"Received request: {request}")
+        self._logger.info(
+            f"Received request: {request}, Number of items: {len(request.keys())}"
+        )
         for uuid, message in request.items():
             self._logger.debug(f"message: {message}")
 
             response = self.metadata_manager.start(message=message)
 
+            self._logger.debug(
+                f"got response at {time.perf_counter() - global_start} since start"
+            )
             if WANT_PROFILING:
                 profiler.disable()
                 profiler.dump_stats("profile.log")
                 profiler.enable()
 
+            self._logger.debug(
+                f"return response at {time.perf_counter() - global_start} since start"
+            )
             self.manager_to_api_queue.put({uuid: response})
 
     def _handle_api_request(self) -> None:
         try:
             request = self.api_to_manager_queue.get(block=True, timeout=None)
             if isinstance(request, dict):
+                now = time.perf_counter()
+                self._logger.debug(
+                    f"Handle content at {now - global_start} since start"
+                )
                 self._handle_content(request)
         except Empty:
             self._logger.debug("api_to_manager_queue was Empty.")

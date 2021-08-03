@@ -7,14 +7,7 @@ from sqlalchemy.exc import OperationalError
 
 import db.base
 from app.communication import QueueCommunicator
-from app.models import (
-    DecisionCase,
-    ExtractorTags,
-    Input,
-    ListTags,
-    MetadataTags,
-    Output,
-)
+from app.models import ExtractorTags, Input, ListTags, MetadataTags, Output
 from app.schemas import RecordSchema
 from db.db import (
     create_request_record,
@@ -23,6 +16,7 @@ from db.db import (
     load_records,
 )
 from lib.constants import (
+    DECISION,
     EXPLANATION,
     MESSAGE_ALLOW_LIST,
     MESSAGE_EXCEPTION,
@@ -69,7 +63,7 @@ def _convert_dict_to_output_model(
                 MetadataTags(
                     values=meta[key][VALUES],
                     probability=meta[key][PROBABILITY],
-                    isHappyCase=DecisionCase.UNKNOWN,  # TODO: resolve properly, formerly meta[key][DECISION],
+                    isHappyCase=meta[key][DECISION],
                     time_for_completion=meta[key][TIME_REQUIRED],
                     explanation=meta[key][EXPLANATION],
                 ),
@@ -112,7 +106,6 @@ def extract_meta(input_data: Input):
     )
 
     meta_data: dict = app.communicator.get_message(uuid)
-
     if meta_data:
         extractor_tags = _convert_dict_to_output_model(
             meta_data, input_data.debug

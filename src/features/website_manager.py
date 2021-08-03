@@ -1,13 +1,13 @@
 import json
 import os
 import re
+import time
 import traceback
 from dataclasses import dataclass, field
 from json import JSONDecodeError
 from typing import NoReturn
 from urllib.parse import urlparse
 
-import bs4
 import requests
 from bs4 import BeautifulSoup
 from tldextract.suffix_list import SuffixListNotFound
@@ -18,9 +18,11 @@ from lib.constants import (
     MESSAGE_HEADERS,
     MESSAGE_HTML,
     MESSAGE_URL,
+    SCRIPT,
 )
 from lib.logger import create_logger
 from lib.settings import SPLASH_HEADERS, SPLASH_URL
+from lib.timing import global_start
 from lib.tools import get_unique_list
 
 
@@ -81,35 +83,30 @@ class WebsiteManager:
 
     def load_website_data(self, message: dict = None) -> None:
         if message is None:
-            message = {}
+            return
 
         if self.website_data.url == "":
             self.website_data.url = message[MESSAGE_URL]
             self._extract_top_level_domain()
 
-        if (
-            self.website_data.raw_header == ""
-            and message[MESSAGE_HEADERS] != ""
-        ):
-            self.website_data.raw_header = message[MESSAGE_HEADERS]
-            self._preprocess_header()
-
         if message[MESSAGE_HTML] == "":
             response = self._get_html_and_har(self.website_data.url)
             message[MESSAGE_HTML] = response[MESSAGE_HTML]
             message[MESSAGE_HAR] = response[MESSAGE_HAR]
-            if MESSAGE_HEADERS in message.keys():
-                self.website_data.raw_header = response[MESSAGE_HEADERS]
-                self._preprocess_header()
+            message[MESSAGE_HEADERS] = response[MESSAGE_HEADERS]
 
-        if message[MESSAGE_HTML] != "" and self.website_data.html == "":
+        if message[MESSAGE_HEADERS] != "":
+            self.website_data.raw_header = message[MESSAGE_HEADERS]
+            self._preprocess_header()
+
+        if message[MESSAGE_HTML] != "":
             self.website_data.html = message[MESSAGE_HTML].lower()
             self._create_html_soup()
             self._extract_images()
             self._extract_raw_links()
             self._extract_extensions()
 
-        if message[MESSAGE_HAR] != "" and not self.website_data.har:
+        if message[MESSAGE_HAR] != "":
             self._load_har(message[MESSAGE_HAR])
 
     def _extract_top_level_domain(self) -> None:
@@ -199,33 +196,27 @@ class WebsiteManager:
         }
 
     def _create_html_soup(self) -> None:
-        self.website_data.soup = BeautifulSoup(
-            self.website_data.html, "html.parser"
-        )
+        self.website_data.soup = BeautifulSoup(self.website_data.html, "lxml")
 
     def _extract_raw_links(self) -> None:
-
-        source_regex = self.source_regex.findall
-        links = [
-            link
-            for tag in self.website_data.soup.find_all()
-            for element in self.website_data.soup.find_all(tag.name)
-            for link in self._get_raw_link_from_tag_element(
-                element, source_regex, tag.name
-            )
-            if link is not None
-        ]
-        self.website_data.raw_links = get_unique_list(
-            links
-            + [el for el in self.website_data.image_links if el is not None]
+        self._logger.debug(
+            f"_extract_raw_links starts at {time.perf_counter() - global_start} since start"
         )
+        unique_tags = get_unique_list(
+            [tag.name for tag in self.website_data.soup.find_all()]
+        )
+        if SCRIPT in unique_tags:
+            unique_tags.remove(SCRIPT)
+            source_regex = self.source_regex.findall
+            script_links = [
+                link
+                for element in self.website_data.soup.find_all(SCRIPT)
+                for link in source_regex(str(element).replace("\n", ""))
+                if link
+            ]
+        else:
+            script_links = []
 
-    @staticmethod
-    def _get_raw_link_from_tag_element(
-        element: bs4.element.ResultSet,
-        source_regex,
-        tag: BeautifulSoup,
-    ) -> list:
         attributes = [
             "href",
             "src",
@@ -234,18 +225,23 @@ class WebsiteManager:
             "data-src",
             "data-srcset",
         ]
-        links = []
-        if element is not None:
-            if tag == "script":
-                matches = source_regex(str(element).replace("\n", ""))
-                if matches:
-                    links += matches
-            links += [
-                element.attrs.get(attribute)
-                for attribute in attributes
-                if element.has_attr(attribute)
-            ]
-        return links
+        links = [
+            element.attrs.get(attribute)
+            for tag in unique_tags
+            for element in get_unique_list(
+                self.website_data.soup.find_all(tag)
+            )
+            for attribute in attributes
+            if element.has_attr(attribute)
+        ]
+        self._logger.debug(
+            f"Found links at {time.perf_counter() - global_start} since start: {len(links)}"
+        )
+        self.website_data.raw_links = get_unique_list(
+            links
+            + [el for el in self.website_data.image_links if el is not None]
+            + script_links
+        )
 
     def _extract_images(self) -> None:
         self.website_data.image_links = [
