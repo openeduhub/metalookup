@@ -53,11 +53,16 @@ from lib.timing import get_utc_now, global_start
 
 
 def _parallel_setup(
-    extractor_class: type(MetadataBase), logger: Logger
+        extractor_class: type(MetadataBase), logger: Logger
 ) -> MetadataBase:
     extractor = extractor_class(logger)
     extractor.setup()
     return extractor
+
+
+def parallel_tasks(extractor: MetadataBase):
+    print(extractor)
+    return extractor.start()
 
 
 @Singleton
@@ -123,13 +128,14 @@ class MetadataManager:
         """
 
     async def _extract_meta_data(
-        self,
-        allow_list: dict,
-        cache_manager: CacheManager,
-        shared_memory_name: str,
+            self,
+            allow_list: dict,
+            cache_manager: CacheManager,
+            shared_memory_name: str,
     ) -> dict:
         data = {}
         tasks = []
+        pool_tasks = []
 
         shared_status = shared_memory.ShareableList(name=shared_memory_name)
         shared_status[0] = 0
@@ -137,10 +143,10 @@ class MetadataManager:
         for metadata_extractor in self.metadata_extractors:
             if allow_list[metadata_extractor.key]:
                 if (
-                    cache_manager.is_host_predefined()
-                    and cache_manager.is_enough_cached_data_present(
-                        metadata_extractor.key
-                    )
+                        cache_manager.is_host_predefined()
+                        and cache_manager.is_enough_cached_data_present(
+                    metadata_extractor.key
+                )
                 ):
                     extracted_metadata: dict = (
                         cache_manager.get_predefined_metadata(
@@ -150,26 +156,45 @@ class MetadataManager:
                     data.update(extracted_metadata)
                     shared_status[0] += 1
                 elif metadata_extractor.call_async:
-                    tasks.append(metadata_extractor.astart())
+                    #tasks.append(metadata_extractor.astart())
+                    pool_tasks.append(metadata_extractor)
                 else:
-                    data.update(metadata_extractor.start())
+                    # data.update(metadata_extractor.start())
+                    pool_tasks.append(metadata_extractor)
                     shared_status[0] += 1
 
-        extracted_metadata: tuple[dict] = await asyncio.gather(*tasks)
+        self._logger.debug(f"setup before gather {time.perf_counter() - global_start} since start")
+        self._logger.debug(f"pool_tasks {time.perf_counter() - global_start} since start: {pool_tasks}")
+
+        # extracted_metadata: tuple[dict] = await asyncio.gather(*tasks)
+        self._logger.debug(f"setup after gather {time.perf_counter() - global_start} since start")
+
+        self._logger.debug(f"setup before pool {time.perf_counter() - global_start} since start.")
+        pool = multiprocessing.Pool(processes=6)
+
+        try:
+            extracted_metadata = pool.map(parallel_tasks, pool_tasks)
+        except Exception as e:
+            extracted_metadata = {}
+            self._logger.debug(f"3: {e.args}")
+        self._logger.debug(f"setup after pool {time.perf_counter() - global_start} since start")
+        self._logger.debug(
+            f"setup after pool2 {time.perf_counter() - global_start} since start: {extracted_metadata}")
+
         shared_status[0] += len(tasks)
         data = {**data, **dict(ChainMap(*extracted_metadata))}
         return data
 
     def cache_data(
-        self,
-        extracted_metadata: dict,
-        cache_manager: CacheManager,
-        allow_list: dict,
+            self,
+            extracted_metadata: dict,
+            cache_manager: CacheManager,
+            allow_list: dict,
     ):
         for feature, meta_data in extracted_metadata.items():
             if (
-                allow_list[feature]
-                and Explanation.Cached not in meta_data[EXPLANATION]
+                    allow_list[feature]
+                    and Explanation.Cached not in meta_data[EXPLANATION]
             ):
                 values = []
                 if feature == ACCESSIBILITY:

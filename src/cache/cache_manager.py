@@ -46,7 +46,7 @@ class CacheManager:
         )
 
     def is_host_predefined(self) -> bool:
-        return self.top_level_domain in self.hosts
+        return False #self.top_level_domain in self.hosts
 
     def is_enough_cached_data_present(self, key: str) -> bool:
         feature_values = self.read_cached_feature_values(key)

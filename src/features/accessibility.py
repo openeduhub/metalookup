@@ -1,6 +1,5 @@
 import asyncio
 import json
-from json import JSONDecodeError
 
 from aiohttp import ClientConnectorError, ClientSession
 
@@ -33,10 +32,10 @@ class Accessibility(MetadataBase):
         return score
 
     async def _execute_api_call(
-        self,
-        website_data: WebsiteData,
-        session: ClientSession,
-        strategy: str = DESKTOP,
+            self,
+            website_data: WebsiteData,
+            session: ClientSession,
+            strategy: str = DESKTOP,
     ) -> float:
         params = {
             MESSAGE_URL: website_data.url,
@@ -50,10 +49,10 @@ class Accessibility(MetadataBase):
                 url=container_url, timeout=60, json=params
             )
         except (
-            asyncio.exceptions.TimeoutError,
-            ClientConnectorError,
-            ConnectionRefusedError,
-            OSError,
+                asyncio.exceptions.TimeoutError,
+                ClientConnectorError,
+                ConnectionRefusedError,
+                OSError,
         ) as e:
             self._logger.exception(
                 f"Timeout for url {container_url} after 60s: {e.args}"
@@ -65,6 +64,10 @@ class Accessibility(MetadataBase):
             score_text = await process.text()
             score = self.extract_score(score_text)
         return score
+
+    def _start(self, website_data: WebsiteData) -> dict:
+        self._logger.debug(f"Calling accessibility through start")
+        return asyncio.run(self._astart(website_data))
 
     async def _astart(self, website_data: WebsiteData) -> dict:
         async with ClientSession() as session:
