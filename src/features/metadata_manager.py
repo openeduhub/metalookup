@@ -1,5 +1,6 @@
 import asyncio
 import multiprocessing
+import time
 import traceback
 from collections import ChainMap
 from itertools import repeat
@@ -46,7 +47,7 @@ from lib.constants import (
     VALUES,
 )
 from lib.logger import create_logger
-from lib.timing import get_utc_now
+from lib.timing import get_utc_now, global_start
 
 
 def _parallel_setup(
@@ -170,14 +171,28 @@ class MetadataManager:
 
     def start(self, message: dict) -> dict:
 
+        self._logger.debug(
+            f"Start metadata_manager at {time.perf_counter() - global_start} since start"
+        )
+
         website_manager = WebsiteManager.get_instance()
+        self._logger.debug(
+            f"WebsiteManager initialized at {time.perf_counter() - global_start} since start"
+        )
         website_manager.load_website_data(message=message)
 
+        self._logger.debug(
+            f"WebsiteManager loaded at {time.perf_counter() - global_start} since start"
+        )
         cache_manager = CacheManager.get_instance()
         cache_manager.top_level_domain = (
             website_manager.website_data.top_level_domain
         )
 
+        now = time.perf_counter()
+        self._logger.debug(
+            f"starting_extraction at {now - global_start} since start"
+        )
         starting_extraction = get_utc_now()
         if website_manager.website_data.html == "":
             exception = "Empty html. Potentially, splash failed."
@@ -214,6 +229,9 @@ class MetadataManager:
                 )
                 extracted_meta_data = {"exception": exception}
 
+        self._logger.debug(
+            f"extracted_meta_data at {time.perf_counter() - global_start} since start"
+        )
         extracted_meta_data.update(
             {
                 "time_for_extraction": get_utc_now() - starting_extraction,
@@ -222,4 +240,8 @@ class MetadataManager:
         )
 
         website_manager.reset()
+
+        self._logger.debug(
+            f"website_manager.reset() at {time.perf_counter() - global_start} since start"
+        )
         return extracted_meta_data

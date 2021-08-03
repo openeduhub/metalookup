@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 
 import db.models as db_models
 from app.models import DecisionCase, Explanation
@@ -17,7 +18,7 @@ from lib.constants import (
 )
 from lib.logger import create_logger
 from lib.settings import CACHE_RETENTION_TIME_DAYS, MINIMUM_REQUIRED_ENTRIES
-from lib.timing import get_utc_now
+from lib.timing import get_utc_now, global_start
 from lib.tools import get_mean, get_unique_list
 
 
@@ -30,10 +31,19 @@ class CacheManager:
         self.top_level_domain: str = ""
         self.hosts = {}
         self._logger = create_logger()
+        self._logger.debug(
+            f"CacheManager loaded at {time.perf_counter() - global_start} since start"
+        )
         self._prepare_cache_manager()
 
     def _prepare_cache_manager(self) -> None:
+        self._logger.debug(
+            f"get_top_level_domains at {time.perf_counter() - global_start} since start"
+        )
         self.hosts = get_top_level_domains()
+        self._logger.debug(
+            f"get_top_level_domains done at {time.perf_counter() - global_start} since start"
+        )
 
     def is_host_predefined(self) -> bool:
         return self.top_level_domain in self.hosts
