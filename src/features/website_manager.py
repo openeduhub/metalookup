@@ -83,55 +83,30 @@ class WebsiteManager:
 
     def load_website_data(self, message: dict = None) -> None:
         if message is None:
-            message = {}
+            return
 
         if self.website_data.url == "":
             self.website_data.url = message[MESSAGE_URL]
             self._extract_top_level_domain()
 
-        self._logger.debug(
-            f"url read at {time.perf_counter() - global_start} since start"
-        )
-        if (
-            self.website_data.raw_header == ""
-            and message[MESSAGE_HEADERS] != ""
-        ):
-            self.website_data.raw_header = message[MESSAGE_HEADERS]
-            self._preprocess_header()
-
-        self._logger.debug(
-            f"raw header processed at {time.perf_counter() - global_start} since start"
-        )
         if message[MESSAGE_HTML] == "":
             response = self._get_html_and_har(self.website_data.url)
             message[MESSAGE_HTML] = response[MESSAGE_HTML]
             message[MESSAGE_HAR] = response[MESSAGE_HAR]
-            if MESSAGE_HEADERS in message.keys():
-                self.website_data.raw_header = response[MESSAGE_HEADERS]
-                self._preprocess_header()
+            message[MESSAGE_HEADERS] = response[MESSAGE_HEADERS]
 
-        self._logger.debug(
-            f"raw header processed again at {time.perf_counter() - global_start} since start"
-        )
-        if message[MESSAGE_HTML] != "" and self.website_data.html == "":
+        if message[MESSAGE_HEADERS] != "":
+            self.website_data.raw_header = message[MESSAGE_HEADERS]
+            self._preprocess_header()
+
+        if message[MESSAGE_HTML] != "":
             self.website_data.html = message[MESSAGE_HTML].lower()
             self._create_html_soup()
-            self._logger.debug(
-                f"_extract_images at {time.perf_counter() - global_start} since start"
-            )
             self._extract_images()
-            self._logger.debug(
-                f"_extract_raw_links at {time.perf_counter() - global_start} since start"
-            )
             self._extract_raw_links()
-            self._logger.debug(
-                f"_extract_extensions at {time.perf_counter() - global_start} since start"
-            )
             self._extract_extensions()
-        self._logger.debug(
-            f"html processed again at {time.perf_counter() - global_start} since start"
-        )
-        if message[MESSAGE_HAR] != "" and not self.website_data.har:
+
+        if message[MESSAGE_HAR] != "":
             self._load_har(message[MESSAGE_HAR])
 
     def _extract_top_level_domain(self) -> None:
