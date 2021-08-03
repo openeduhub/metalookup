@@ -264,9 +264,13 @@ class MetadataBase:
     def start(self) -> dict:
         before, website_data = self._prepare_start("sync")
         values = self._start(website_data=website_data)
-        return self._processing_values(
+
+        self._logger.debug(f"returned values: {self.__class__.__name__},{len(self.tag_list)}: {values}")
+        output = self._processing_values(
             values=values, website_data=website_data, before=before
         )
+        self._logger.debug(f"output: {self.__class__.__name__},{len(self.tag_list)}: {output}")
+        return output
 
     def _work_header(self, header: dict) -> list:
         values = []

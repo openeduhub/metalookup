@@ -55,13 +55,14 @@ from lib.timing import get_utc_now, global_start
 def _parallel_setup(
         extractor_class: type(MetadataBase), logger: Logger
 ) -> MetadataBase:
+    logger.debug(f"setup extractor: {extractor_class}")
     extractor = extractor_class(logger)
     extractor.setup()
     return extractor
 
 
-def parallel_tasks(extractor: MetadataBase):
-    print(extractor)
+def parallel_tasks(extractor: MetadataBase, logger):
+    logger.debug(f"parallel_tasks: {extractor}")
     return extractor.start()
 
 
@@ -76,8 +77,6 @@ class MetadataManager:
     def _setup_extractors(self) -> None:
 
         extractors = [
-            Advertisement,
-            EasyPrivacy,
             MaliciousExtensions,
             ExtractFromFiles,
             CookiesInHtml,
@@ -98,6 +97,8 @@ class MetadataManager:
             Javascript,
             MetatagExplorer,
             Accessibility,
+            Advertisement,
+            EasyPrivacy,
         ]
 
         self._logger.debug(f"re2: {_is_re2_supported()}")
@@ -105,6 +106,7 @@ class MetadataManager:
 
         before = get_utc_now()
         for extractor in extractors:
+            self._logger.debug(f"extractor: {extractor}")
             self.metadata_extractors.append(
                 _parallel_setup(extractor, self._logger)
             )
@@ -142,6 +144,7 @@ class MetadataManager:
 
         for metadata_extractor in self.metadata_extractors:
             if allow_list[metadata_extractor.key]:
+                self._logger.debug(f"Working on {metadata_extractor.key}")
                 if (
                         cache_manager.is_host_predefined()
                         and cache_manager.is_enough_cached_data_present(
@@ -155,28 +158,29 @@ class MetadataManager:
                     )
                     data.update(extracted_metadata)
                     shared_status[0] += 1
-                elif metadata_extractor.call_async:
-                    #tasks.append(metadata_extractor.astart())
-                    pool_tasks.append(metadata_extractor)
+                elif metadata_extractor.key == "advertisement" or metadata_extractor.key == "easy_privacy":
+                    self._logger.debug(f"Bypass for {metadata_extractor}")
+                    data.update(metadata_extractor.start())
                 else:
-                    # data.update(metadata_extractor.start())
                     pool_tasks.append(metadata_extractor)
-                    shared_status[0] += 1
 
-        self._logger.debug(f"setup before gather {time.perf_counter() - global_start} since start")
+        #self._logger.debug(f"setup before gather {time.perf_counter() - global_start} since start")
         self._logger.debug(f"pool_tasks {time.perf_counter() - global_start} since start: {pool_tasks}")
 
         # extracted_metadata: tuple[dict] = await asyncio.gather(*tasks)
-        self._logger.debug(f"setup after gather {time.perf_counter() - global_start} since start")
+        #self._logger.debug(f"setup after gather {time.perf_counter() - global_start} since start")
 
         self._logger.debug(f"setup before pool {time.perf_counter() - global_start} since start.")
-        pool = multiprocessing.Pool(processes=6)
+        pool = multiprocessing.Pool(processes=10)
 
         try:
-            extracted_metadata = pool.map(parallel_tasks, pool_tasks)
+            extracted_metadata = pool.starmap(parallel_tasks, zip(pool_tasks, repeat(self._logger)))
         except Exception as e:
             extracted_metadata = {}
             self._logger.debug(f"3: {e.args}")
+            for task in pool_tasks:
+                self._logger.debug(f"Task: {task}")
+                self._logger.debug(f"Task.start: {task.start()}")
         self._logger.debug(f"setup after pool {time.perf_counter() - global_start} since start")
         self._logger.debug(
             f"setup after pool2 {time.perf_counter() - global_start} since start: {extracted_metadata}")
