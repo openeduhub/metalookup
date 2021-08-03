@@ -27,6 +27,7 @@ from db.db import (
 )
 from lib.constants import (
     ACCESSIBILITY,
+    DECISION,
     EXPLANATION,
     MESSAGE_ALLOW_LIST,
     MESSAGE_EXCEPTION,
@@ -73,7 +74,7 @@ def _convert_dict_to_output_model(
                 MetadataTags(
                     values=meta[key][VALUES],
                     probability=meta[key][PROBABILITY],
-                    isHappyCase=DecisionCase.UNKNOWN,  # TODO: resolve properly, formerly meta[key][DECISION],
+                    isHappyCase=meta[key][DECISION],
                     time_for_completion=meta[key][TIME_REQUIRED],
                     explanation=meta[key][EXPLANATION],
                 ),

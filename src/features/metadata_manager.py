@@ -67,7 +67,7 @@ class MetadataManager:
 
     def __init__(self) -> None:
         self._logger = create_logger()
-        # self._setup_extractors()
+        self._setup_extractors()
 
     def _setup_extractors(self) -> None:
 
