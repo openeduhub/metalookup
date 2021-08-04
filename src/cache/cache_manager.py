@@ -4,7 +4,7 @@ import time
 
 import db.models as db_models
 from app.models import DecisionCase, Explanation
-from db.db import SessionLocal, get_top_level_domains, load_cache
+from db.db import SessionLocal, get_top_level_domains, reset_cache
 from features.website_manager import Singleton
 from lib.constants import (
     ACCESSIBILITY,
@@ -123,3 +123,7 @@ class CacheManager:
             }
         )
         return meta_data
+
+    @staticmethod
+    def reset_cache():
+        return reset_cache()
