@@ -9,6 +9,7 @@ import db.base
 from app.communication import QueueCommunicator
 from app.models import ExtractorTags, Input, ListTags, MetadataTags, Output
 from app.schemas import RecordSchema
+from cache.cache_manager import CacheManager
 from db.db import (
     create_request_record,
     create_response_record,
@@ -196,3 +197,10 @@ def get_progress():
 @app.get("/cache/")
 def get_cache():
     return {"cache": load_cache()}
+
+
+@app.post("/cache/reset")
+def reset_cache_post():
+    cache_manager = CacheManager.get_instance()
+    row_count = cache_manager.reset_cache()
+    return {"Deleted_rows": row_count}
