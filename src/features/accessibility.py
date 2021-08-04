@@ -1,6 +1,5 @@
 import asyncio
 import json
-from json import JSONDecodeError
 
 from aiohttp import ClientConnectorError, ClientSession
 
@@ -78,4 +77,5 @@ class Accessibility(MetadataBase):
                     for strategy in [DESKTOP, MOBILE]
                 ]
             )
+        score = [value for value in score if value != -1]
         return {VALUES: score}
