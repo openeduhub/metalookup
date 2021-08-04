@@ -8,8 +8,17 @@ class Explanation(str, Enum):
     none = "NoExplanation"
     NoHTTPS = "NoHTTPS"
     AccessibilityTooLow = "AccessibilityTooLow"
-    FoundAds = "FoundAds"
+    AccessibilitySuitable = "AccessibilitySuitable"
+    AccessibilityServiceReturnedFailure = "AccessibilityServiceReturnedFailure"
+    FoundListMatches = "FoundListMatches"
     Cached = "Cached"
+    KnockoutMatchFound = "KnockoutMatchFound"
+    NoCookiesFound = "NoCookiesFound"
+    CookiesFound = "CookiesFound"
+    ExtractableFilesFound = "ExtractableFilesFound"
+    InsufficientlyExtractableFilesFound = "InsufficientlyExtractableFilesFound"
+    PotentiallyInsufficientGDPRFound = "PotentiallyInsufficientGDPRFound"
+    IndicatorsForInsufficientSecurityFound = "IndicatorsForInsufficientSecurityFound"
 
     def __repr__(self):
         return str(self.value)
