@@ -1,6 +1,6 @@
 import re
 
-from app.models import DecisionCase
+from app.models import DecisionCase, Explanation
 from features.metadata_base import MetadataBase
 from features.website_manager import WebsiteData
 from lib.constants import STRICT_TRANSPORT_SECURITY, VALUES
@@ -148,7 +148,9 @@ class GDPR(MetadataBase):
 
         return {VALUES: list(set(flat_values))}
 
-    def _decide(self, website_data: WebsiteData) -> tuple[DecisionCase, float]:
+    def _decide(
+        self, website_data: WebsiteData
+    ) -> tuple[DecisionCase, float, list[Explanation]]:
         probability = 0.5
 
         if (
@@ -165,4 +167,10 @@ class GDPR(MetadataBase):
             probability -= 0.1
 
         decision = self._get_inverted_decision(probability)
-        return decision, probability
+
+        explanation = (
+            [Explanation.MinimumGDPRRequirementsCovered]
+            if decision == DecisionCase.TRUE
+            else [Explanation.PotentiallyInsufficientGDPRFound]
+        )
+        return decision, probability, explanation
