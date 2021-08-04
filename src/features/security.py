@@ -46,10 +46,10 @@ class Security(MetadataBase):
                     )
 
                     if (
-                            tag == STRICT_TRANSPORT_SECURITY
-                            and self._is_sts_mag_age_greater_than_zero(
-                        header_value
-                    )
+                        tag == STRICT_TRANSPORT_SECURITY
+                        and self._is_sts_mag_age_greater_than_zero(
+                            header_value
+                        )
                     ):
                         found_keys += 1
 
@@ -74,7 +74,7 @@ class Security(MetadataBase):
 
     @staticmethod
     def _number_of_expected_keys_in_header(
-            expected_value: dict, header_value: list
+        expected_value: dict, header_value: list
     ) -> int:
         found_values = sum(
             [
@@ -94,11 +94,16 @@ class Security(MetadataBase):
                 greater_than_zero = True
         return greater_than_zero
 
-    def _decide(self, website_data: WebsiteData) -> tuple[DecisionCase, float, list[Explanation]]:
+    def _decide(
+        self, website_data: WebsiteData
+    ) -> tuple[DecisionCase, float, list[Explanation]]:
         probability = len(website_data.values) / len(
             self.expected_headers.keys()
         )
         decision = self._get_inverted_decision(probability)
-        explanation = [Explanation.none] if decision == DecisionCase.TRUE else [
-            Explanation.IndicatorsForInsufficientSecurityFound]
+        explanation = (
+            [Explanation.MinimumSecurityRequirementsCovered]
+            if decision == DecisionCase.TRUE
+            else [Explanation.IndicatorsForInsufficientSecurityFound]
+        )
         return decision, probability, explanation

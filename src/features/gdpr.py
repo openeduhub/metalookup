@@ -148,7 +148,9 @@ class GDPR(MetadataBase):
 
         return {VALUES: list(set(flat_values))}
 
-    def _decide(self, website_data: WebsiteData) -> tuple[DecisionCase, float, list[Explanation]]:
+    def _decide(
+        self, website_data: WebsiteData
+    ) -> tuple[DecisionCase, float, list[Explanation]]:
         probability = 0.5
 
         if (
@@ -166,6 +168,9 @@ class GDPR(MetadataBase):
 
         decision = self._get_inverted_decision(probability)
 
-        explanation = [Explanation.none] if decision == DecisionCase.TRUE else [
-            Explanation.PotentiallyInsufficientGDPRFound]
+        explanation = (
+            [Explanation.MinimumGDPRRequirementsCovered]
+            if decision == DecisionCase.TRUE
+            else [Explanation.PotentiallyInsufficientGDPRFound]
+        )
         return decision, probability, explanation

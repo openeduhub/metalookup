@@ -53,7 +53,7 @@ class ExtractFromFiles(MetadataBase):
 
     @staticmethod
     def _get_xml_body(
-            soup: BeautifulSoup, xml_file: zipfile.ZipInfo
+        soup: BeautifulSoup, xml_file: zipfile.ZipInfo
     ) -> BeautifulSoup:
         body = BeautifulSoup()
         if xml_file.filename == "word/document.xml":
@@ -66,7 +66,7 @@ class ExtractFromFiles(MetadataBase):
 
     @staticmethod
     def _extract_xml_content(
-            document: zipfile.ZipFile, xml_file: zipfile.ZipInfo
+        document: zipfile.ZipFile, xml_file: zipfile.ZipInfo
     ) -> list:
         content = document.read(xml_file, pwd=None).decode()
         soup = BeautifulSoup(content, "xml")
@@ -76,7 +76,7 @@ class ExtractFromFiles(MetadataBase):
 
     @staticmethod
     def _extract_image_content(
-            document: zipfile.ZipFile, xml_file: zipfile.ZipInfo
+        document: zipfile.ZipFile, xml_file: zipfile.ZipInfo
     ) -> dict:
         image = document.read(xml_file, pwd=None)
         image = base64.b64encode(image).decode()
@@ -92,14 +92,14 @@ class ExtractFromFiles(MetadataBase):
             if file.filename.find(".xml") >= 0:
                 extracted_content += self._extract_xml_content(document, file)
             elif (
-                    RETURN_IMAGES_IN_METADATA and file.filename.find("media") >= 0
+                RETURN_IMAGES_IN_METADATA and file.filename.find("media") >= 0
             ):
                 images.update(self._extract_image_content(document, file))
 
         return {"extracted_content": extracted_content, "images": images}
 
     def _get_pdf_content(
-            self, filename: str, pdf_file: PyPDF2.PdfFileReader
+        self, filename: str, pdf_file: PyPDF2.PdfFileReader
     ) -> str:
         extracted_content = f"{pdf_file.getDocumentInfo()}"
         data = pdf_file.getXmpMetadata()
@@ -137,7 +137,7 @@ class ExtractFromFiles(MetadataBase):
         return {"extracted_content": extracted_content, "images": images}
 
     async def _download_file(
-            self, file_url: str, filename: str, session: ClientSession
+        self, file_url: str, filename: str, session: ClientSession
     ) -> None:
         result = await session.get(url=file_url)
         if result.status != 200:
@@ -189,13 +189,18 @@ class ExtractFromFiles(MetadataBase):
         values = await self._work_files(files=extractable_files)
         return {**values}
 
-    def _decide(self, website_data: WebsiteData) -> tuple[DecisionCase, float, list[Explanation]]:
+    def _decide(
+        self, website_data: WebsiteData
+    ) -> tuple[DecisionCase, float, list[Explanation]]:
         probability = 0
         extractable_files = self._get_extractable_files(website_data)
 
         if website_data.values:
             probability = len(extractable_files) / len(website_data.values)
         decision = self._get_inverted_decision(probability)
-        explanation = [Explanation.ExtractableFilesFound] if decision == DecisionCase.TRUE else [
-            Explanation.InsufficientlyExtractableFilesFound]
+        explanation = (
+            [Explanation.ExtractableFilesFound]
+            if decision == DecisionCase.TRUE
+            else [Explanation.InsufficientlyExtractableFilesFound]
+        )
         return decision, probability, explanation

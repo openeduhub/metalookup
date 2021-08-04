@@ -109,6 +109,8 @@ class CacheManager:
             .filter_by(top_level_domain=self.top_level_domain)
             .first()
         )
+        if entry is None:
+            return []
         return entry.__getattribute__(key)
 
     def get_predefined_metadata(self, key: str) -> dict:
