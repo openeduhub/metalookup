@@ -164,5 +164,5 @@ class GDPR(MetadataBase):
         ):
             probability -= 0.1
 
-        decision = self._get_decision(probability)
+        decision = self._get_inverted_decision(probability)
         return decision, probability

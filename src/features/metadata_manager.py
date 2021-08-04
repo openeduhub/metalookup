@@ -47,6 +47,7 @@ from lib.constants import (
     VALUES,
 )
 from lib.logger import create_logger
+from lib.settings import BYPASS_CACHE
 from lib.timing import get_utc_now, global_start
 
 
@@ -116,7 +117,8 @@ class MetadataManager:
         for metadata_extractor in self.metadata_extractors:
             if allow_list[metadata_extractor.key]:
                 if (
-                    cache_manager.is_host_predefined()
+                    not BYPASS_CACHE
+                    and cache_manager.is_host_predefined()
                     and cache_manager.is_enough_cached_data_present(
                         metadata_extractor.key
                     )

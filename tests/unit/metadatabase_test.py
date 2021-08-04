@@ -195,30 +195,36 @@ def test_easylist_filter():
 @pytest.mark.parametrize(
     "values, decision_threshold, expected_decision, expected_probability",
     [
-        ([], -1, DecisionCase.UNKNOWN, 0),
+        ([], -1, DecisionCase.UNKNOWN, -0.9),
         (
             [0.5],
             -1,
             DecisionCase.UNKNOWN,
-            1,
+            -1.1,
         ),
         (
             [0.5, 1],
             -1,
             DecisionCase.UNKNOWN,
-            1,
+            -1.1,
         ),
         (
             [0.5],
             0.5,
-            DecisionCase.TRUE,
-            1,
+            DecisionCase.FALSE,
+            0.55,
         ),
         (
             [0.5],
             1,
             DecisionCase.FALSE,
+            1.1,
+        ),
+        (
+            [],
             1,
+            DecisionCase.TRUE,
+            0.9,
         ),
     ],
 )
@@ -260,21 +266,21 @@ def test_decide_single(
         (
             [0.5, 1, 1, 1],
             0,
-            DecisionCase.TRUE,
+            DecisionCase.FALSE,
             1,
             [1, 1, 1, 1],
         ),
         (
             [0.5],
             0,
-            DecisionCase.TRUE,
+            DecisionCase.FALSE,
             0.25,
             [1, 1, 1, 1],
         ),
         (
             [0.5],
             0.5,
-            DecisionCase.FALSE,
+            DecisionCase.TRUE,
             0.5,
             [1, 1, 1, 1],
         ),
@@ -313,7 +319,7 @@ def test_decide_number_of_elements(
         (
             [0.5],
             0,
-            DecisionCase.TRUE,
+            DecisionCase.FALSE,
             0.5,
         ),
         (
@@ -324,6 +330,18 @@ def test_decide_number_of_elements(
         ),
         (
             [0.75, 0.1],
+            0.5,
+            DecisionCase.FALSE,
+            0.5,
+        ),
+        (
+            [],
+            0.5,
+            DecisionCase.UNKNOWN,
+            0,
+        ),
+        (
+            [0.25],
             0.5,
             DecisionCase.TRUE,
             0.5,
@@ -396,7 +414,7 @@ def test_mean_value(
     website_data.values = values
     metadatabase.decision_threshold = decision_threshold
     metadatabase.probability_determination_method = (
-        ProbabilityDeterminationMethod.MEAN_VALUE
+        ProbabilityDeterminationMethod.ACCESSIBILITY
     )
     decision, probability = metadatabase._decide(website_data=website_data)
 
@@ -412,11 +430,11 @@ def test_mean_value(
 @pytest.mark.parametrize(
     "values, decision_threshold, expected_decision, expected_probability, false_list",
     [
-        ([0.5], 1, DecisionCase.UNKNOWN, 1, [0]),
+        ([0.5], 1, DecisionCase.TRUE, 1, [0]),
         ([0.5], 1, DecisionCase.FALSE, 1, [0.5]),
         ([0.5, 0.1, 0, "hello"], 1, DecisionCase.FALSE, 1, ["hello"]),
-        ([0.5, 0.1, 0, "hello"], 1, DecisionCase.UNKNOWN, 1, ["hell"]),
-        ([0.5, 0.1, 0, "hello"], 1, DecisionCase.UNKNOWN, 1, ["0"]),
+        ([0.5, 0.1, 0, "hello"], 1, DecisionCase.TRUE, 1, ["hell"]),
+        ([0.5, 0.1, 0, "hello"], 1, DecisionCase.TRUE, 1, ["0"]),
         ([0.5, 0.1, 0, "hello"], 1, DecisionCase.FALSE, 1, ["0", "hello"]),
     ],
 )
