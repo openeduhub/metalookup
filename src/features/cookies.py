@@ -1,4 +1,4 @@
-from app.models import DecisionCase
+from app.models import DecisionCase, Explanation
 from features.metadata_base import MetadataBase
 from features.website_manager import WebsiteData
 from lib.constants import VALUES
@@ -22,7 +22,9 @@ class Cookies(MetadataBase):
 
         return {VALUES: raw_cookies}
 
-    def _decide(self, website_data: WebsiteData) -> tuple[DecisionCase, float]:
+    def _decide(
+        self, website_data: WebsiteData
+    ) -> tuple[DecisionCase, float, list[Explanation]]:
         insecure_cookies = [
             cookie
             for cookie in website_data.values
@@ -31,4 +33,9 @@ class Cookies(MetadataBase):
 
         probability = 1 if insecure_cookies else 0
         decision = self._get_decision(probability)
-        return decision, probability
+        explanation = (
+            [Explanation.CookiesFound]
+            if decision == DecisionCase.TRUE
+            else [Explanation.NoCookiesFound]
+        )
+        return decision, probability, explanation
