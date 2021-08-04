@@ -347,7 +347,10 @@ class MetadataBase:
         self._logger.info(
             f"Working on html content: {self.__class__.__name__},{len(self.tag_list)}"
         )
+        self._logger.debug(f"Tag list: {self.tag_list}, {self.extraction_method}")
         if self.tag_list:
+            self._logger.debug(f"raw links {website_data.raw_links}")
+            self._logger.debug(f"length html {len(''.join(website_data.html))}")
             if self.extraction_method == ExtractionMethod.MATCH_DIRECTLY:
                 html = "".join(website_data.html)
                 values = [ele for ele in self.tag_list if ele in html]

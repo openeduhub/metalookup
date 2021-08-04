@@ -78,7 +78,7 @@ class CacheManager:
                 values.extend(data[VALUES])
                 probability.append(data[PROBABILITY])
                 explanation.extend(data[EXPLANATION])
-                decision.extend(data[DECISION])
+                decision.append(data[DECISION])
 
         explanation = get_unique_list(explanation)
 

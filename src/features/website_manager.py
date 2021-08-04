@@ -149,7 +149,7 @@ class WebsiteManager:
     def _get_html_and_har(self, url: str) -> dict:
         splash_url = (
             f"{SPLASH_URL}/render.json?url={url}&html={1}&iframes={1}"
-            f"&har={1}&response_body={1}&wait={1}"
+            f"&har={1}&response_body={1}&wait={10}&render_all={1}"
         )
         try:
             response = requests.get(
@@ -204,6 +204,7 @@ class WebsiteManager:
         unique_tags = get_unique_list(
             [tag.name for tag in self.website_data.soup.find_all()]
         )
+        self._logger.debug((f"unique_tags: {unique_tags}"))
         if SCRIPT in unique_tags:
             unique_tags.remove(SCRIPT)
             source_regex = self.source_regex.findall

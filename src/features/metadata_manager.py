@@ -52,12 +52,13 @@ from lib.timing import get_utc_now, global_start
 
 
 def _parallel_setup(
-    extractor_class: type(MetadataBase), logger: Logger
+        extractor_class: type(MetadataBase), logger: Logger
 ) -> MetadataBase:
-    # logger.debug(f"Starting setup for {extractor_class} {get_utc_now()}")
+    logger.debug(f"Starting setup for {extractor_class} {get_utc_now()}")
     extractor = extractor_class(logger)
     # logger.debug(f"Interm setup for {extractor_class} {get_utc_now()}")
-    extractor.setup()
+    #if isinstance(extractor_class, GDPR):
+    #    extractor.setup()
     # logger.debug(f"Finished setup for {extractor_class} {get_utc_now()}")
     return extractor
 
@@ -103,10 +104,10 @@ class MetadataManager:
         )
 
     async def _extract_meta_data(
-        self,
-        allow_list: dict,
-        cache_manager: CacheManager,
-        shared_memory_name: str,
+            self,
+            allow_list: dict,
+            cache_manager: CacheManager,
+            shared_memory_name: str,
     ) -> dict:
         data = {}
         tasks = []
@@ -117,11 +118,11 @@ class MetadataManager:
         for metadata_extractor in self.metadata_extractors:
             if allow_list[metadata_extractor.key]:
                 if (
-                    not BYPASS_CACHE
-                    and cache_manager.is_host_predefined()
-                    and cache_manager.is_enough_cached_data_present(
-                        metadata_extractor.key
-                    )
+                        not BYPASS_CACHE
+                        and cache_manager.is_host_predefined()
+                        and cache_manager.is_enough_cached_data_present(
+                    metadata_extractor.key
+                )
                 ):
                     extracted_metadata: dict = (
                         cache_manager.get_predefined_metadata(
@@ -142,15 +143,15 @@ class MetadataManager:
         return data
 
     def cache_data(
-        self,
-        extracted_metadata: dict,
-        cache_manager: CacheManager,
-        allow_list: dict,
+            self,
+            extracted_metadata: dict,
+            cache_manager: CacheManager,
+            allow_list: dict,
     ):
         for feature, meta_data in extracted_metadata.items():
             if (
-                allow_list[feature]
-                and Explanation.Cached not in meta_data[EXPLANATION]
+                    allow_list[feature]
+                    and Explanation.Cached not in meta_data[EXPLANATION]
             ):
                 values = []
                 if feature == ACCESSIBILITY:
