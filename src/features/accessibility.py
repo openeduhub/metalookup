@@ -19,7 +19,7 @@ from lib.settings import ACCESSIBILITY_URL
 
 class Accessibility(MetadataBase):
     probability_determination_method = (
-        ProbabilityDeterminationMethod.MEAN_VALUE
+        ProbabilityDeterminationMethod.ACCESSIBILITY
     )
     decision_threshold = 0.8
     call_async = True

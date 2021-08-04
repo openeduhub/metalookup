@@ -28,7 +28,7 @@ class ProbabilityDeterminationMethod(Enum):
     SINGLE_OCCURRENCE = 2
     FIRST_VALUE = 3
     FALSE_LIST = 4
-    MEAN_VALUE = 5
+    ACCESSIBILITY = 5
 
 
 class ExtractionMethod(Enum):
@@ -118,11 +118,21 @@ class MetadataBase:
 
     def _get_decision(self, probability: float) -> DecisionCase:
         decision = DecisionCase.UNKNOWN
+        print("probability: ", probability, self.decision_threshold)
         if probability > 0 and self.decision_threshold != -1:
-            if probability > self.decision_threshold:
-                decision = DecisionCase.TRUE
-            else:
+            if probability >= self.decision_threshold:
                 decision = DecisionCase.FALSE
+            else:
+                decision = DecisionCase.TRUE
+        return decision
+
+    def _get_inverted_decision(self, probability: float) -> DecisionCase:
+        decision = DecisionCase.UNKNOWN
+        if probability > 0 and self.decision_threshold != -1:
+            if probability <= self.decision_threshold:
+                decision = DecisionCase.FALSE
+            else:
+                decision = DecisionCase.TRUE
         return decision
 
     def _decide(self, website_data: WebsiteData) -> tuple[DecisionCase, float]:
@@ -151,9 +161,9 @@ class MetadataBase:
             decision, probability = self._decide_first_value(website_data)
         elif (
             self.probability_determination_method
-            == ProbabilityDeterminationMethod.MEAN_VALUE
+            == ProbabilityDeterminationMethod.ACCESSIBILITY
         ):
-            decision, probability = self._decide_mean_value(website_data)
+            decision, probability = self._decide_accessibility(website_data)
         elif (
             self.probability_determination_method
             == ProbabilityDeterminationMethod.FALSE_LIST
@@ -167,10 +177,12 @@ class MetadataBase:
     def _decide_single_occurrence(
         self, website_data: WebsiteData
     ) -> tuple[DecisionCase, float]:
+        slightly_above_threshold = self.decision_threshold * 1.1
+        slightly_below_threshold = self.decision_threshold * 0.9
         probability = (
-            1.0
+            slightly_above_threshold
             if (website_data.values and len(website_data.values) > 0)
-            else 0.0
+            else slightly_below_threshold
         )
         decision = self._get_decision(probability)
         return decision, probability
@@ -187,24 +199,23 @@ class MetadataBase:
             decision, probability = self._get_default_decision()
         return decision, probability
 
-    def _decide_mean_value(
+    def _decide_accessibility(
         self, website_data: WebsiteData
     ) -> tuple[DecisionCase, float]:
+        decision, probability = self._get_default_decision()
         if website_data.values:
             mean = round(
                 sum(website_data.values) / (len(website_data.values)), 2
             )
             probability = self._calculate_probability_from_ratio(mean)
-            decision = self._get_decision(mean)
-        else:
-            decision, probability = self._get_default_decision()
+            decision = self._get_inverted_decision(mean)
         return decision, probability
 
     def _decide_false_list(
         self, website_data: WebsiteData
     ) -> tuple[DecisionCase, float]:
         probability = 1
-        decision = DecisionCase.UNKNOWN
+        decision = DecisionCase.TRUE
         for false_element in self.false_list:
             if false_element in website_data.values:
                 decision = DecisionCase.FALSE
@@ -236,7 +247,7 @@ class MetadataBase:
                 **values,
                 PROBABILITY: probability,
                 DECISION: decision,
-                EXPLANATION: [Explanation.none, Explanation.NoHTTPS],
+                EXPLANATION: [Explanation.none],
             }
         }
         if self.tag_list_last_modified != "":

@@ -195,5 +195,5 @@ class ExtractFromFiles(MetadataBase):
 
         if website_data.values:
             probability = len(extractable_files) / len(website_data.values)
-        decision = self._get_decision(probability)
+        decision = self._get_inverted_decision(probability)
         return decision, probability
