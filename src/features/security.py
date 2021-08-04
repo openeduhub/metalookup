@@ -98,5 +98,5 @@ class Security(MetadataBase):
         probability = len(website_data.values) / len(
             self.expected_headers.keys()
         )
-        decision = self._get_decision(probability)
+        decision = self._get_inverted_decision(probability)
         return decision, probability
