@@ -2,6 +2,8 @@ import json
 import logging
 import time
 
+from psycopg2 import ProgrammingError
+
 import db.models as db_models
 from app.models import DecisionCase, Explanation
 from db.db import SessionLocal, get_top_level_domains, reset_cache
@@ -104,11 +106,15 @@ class CacheManager:
 
     def read_cached_feature_values(self, key: str) -> list:
         database = SessionLocal()
-        entry = (
-            database.query(db_models.CacheEntry)
-            .filter_by(top_level_domain=self.top_level_domain)
-            .first()
-        )
+        try:
+            entry = (
+                database.query(db_models.CacheEntry)
+                .filter_by(top_level_domain=self.top_level_domain)
+                .first()
+            )
+        except ProgrammingError as e:
+            self._logger.exception(f"Reading cache failed: {e.args}")
+            entry = []
         if entry is None:
             return []
         return entry.__getattribute__(key)

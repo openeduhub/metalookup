@@ -1,7 +1,11 @@
 import json
 
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy.exc import OperationalError, ProgrammingError
+from sqlalchemy.exc import (
+    OperationalError,
+    PendingRollbackError,
+    ProgrammingError,
+)
 from sqlalchemy.orm import Session, sessionmaker
 
 import db.models as db_models
@@ -46,8 +50,14 @@ def create_request_record(
     )
 
     session.add(new_input)
-    session.commit()
-    session.close()
+    try:
+        session.commit()
+        session.close()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
 
 def create_response_record(
@@ -76,8 +86,14 @@ def create_response_record(
     )
 
     session.add(new_input)
-    session.commit()
-    session.close()
+    try:
+        session.commit()
+        session.close()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
 
 def create_dummy_record() -> RecordSchema:
@@ -102,7 +118,7 @@ def create_dummy_record() -> RecordSchema:
 def load_records(session: Session = SessionLocal()) -> [db_models.Record]:
     try:
         records = session.query(db_models.Record).all()
-    except (OperationalError, ProgrammingError) as err:
+    except (OperationalError, ProgrammingError, PendingRollbackError) as err:
         dummy_record = create_dummy_record()
         dummy_record.exception = f"Database exception: {err.args}"
         records = [dummy_record]
@@ -154,6 +170,9 @@ def create_cache_entry(
             ).update({feature: updated_values})
 
         session.commit()
+    except Exception:
+        session.rollback()
+        raise
     finally:
         session.close()
         logger.debug("Writing done")
@@ -165,7 +184,13 @@ def reset_cache() -> int:
 
     session = SessionLocal()
     resulting_row_count: int = session.query(db_models.CacheEntry).delete()
-    session.commit()
-    session.close()
+    try:
+        session.commit()
+        session.close()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
     return resulting_row_count
