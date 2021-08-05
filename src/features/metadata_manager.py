@@ -56,10 +56,7 @@ def _parallel_setup(
 ) -> MetadataBase:
     logger.debug(f"Starting setup for {extractor_class} {get_utc_now()}")
     extractor = extractor_class(logger)
-    logger.debug(f"Starting setup for {extractor_class} {Cookies}")
-    if isinstance(extractor, Cookies):
-        logger.debug(f"Setup for {extractor_class} {Cookies}")
-        extractor.setup()
+    extractor.setup()
     logger.debug(f"Finished setup for {extractor_class} {get_utc_now()}")
     return extractor
 
@@ -160,7 +157,6 @@ class MetadataManager:
         extracted_metadata: dict,
         cache_manager: CacheManager,
         allow_list: dict,
-        url: str,
     ):
         for feature, meta_data in extracted_metadata.items():
             if (
@@ -229,7 +225,6 @@ class MetadataManager:
                     extracted_meta_data,
                     cache_manager,
                     allow_list=message[MESSAGE_ALLOW_LIST],
-                    url=message[MESSAGE_URL],
                 )
             except ConnectionError as e:
                 exception = f"Connection error extracting metadata: '{e.args}'"
