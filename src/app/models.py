@@ -269,3 +269,25 @@ class Output(BaseModel):
         description="The time needed from starting the extraction"
         " until sending the resulting meta data out.",
     )
+
+
+class Ping(BaseModel):
+    status: str = Field(
+        default="not ok",
+        description="Ping output. Should be 'ok' in happy case.",
+    )
+
+
+class ProgressOutput(BaseModel):
+    progress: float = Field(default=0.0, description="Progress of evaluation.")
+
+
+class CacheOutput(BaseModel):
+    cache: list = Field(default=[], description="Cache content.")
+
+
+class ResetCacheOutput(BaseModel):
+    deleted_rows: int = Field(
+        default=-1,
+        description="Number of deleted rows from cache. Each row represents one top-level-domain.",
+    )
