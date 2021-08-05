@@ -56,10 +56,7 @@ def _parallel_setup(
 ) -> MetadataBase:
     logger.debug(f"Starting setup for {extractor_class} {get_utc_now()}")
     extractor = extractor_class(logger)
-    logger.debug(f"Starting setup for {extractor_class} {Cookies}")
-    if isinstance(extractor, Cookies):
-        logger.debug(f"Setup for {extractor_class} {Cookies}")
-        extractor.setup()
+    extractor.setup()
     logger.debug(f"Finished setup for {extractor_class} {get_utc_now()}")
     return extractor
 
