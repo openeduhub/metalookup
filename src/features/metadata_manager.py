@@ -47,7 +47,7 @@ from lib.constants import (
     TIMESTAMP,
     VALUES,
 )
-from lib.logger import create_logger
+from lib.logger import get_logger
 from lib.timing import get_utc_now, global_start
 
 
@@ -68,7 +68,7 @@ class MetadataManager:
     blacklisted_for_cache = [MaliciousExtensions, ExtractFromFiles, Javascript]
 
     def __init__(self) -> None:
-        self._logger = create_logger()
+        self._logger = get_logger()
         self._setup_extractors()
 
     def _setup_extractors(self) -> None:

@@ -7,8 +7,12 @@ from lib.constants import LOGFILE_MANAGER
 from lib.settings import LOG_LEVEL, LOG_PATH
 
 
+def get_logger() -> logging.Logger:
+    return logging.getLogger(LOGFILE_MANAGER)
+
+
 def create_logger() -> logging.Logger:
-    logger = logging.getLogger(name=f"../{LOGFILE_MANAGER}")
+    logger = get_logger()
 
     logger.propagate = False
 

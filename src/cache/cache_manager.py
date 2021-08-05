@@ -18,7 +18,7 @@ from lib.constants import (
     TIMESTAMP,
     VALUES,
 )
-from lib.logger import create_logger
+from lib.logger import get_logger
 from lib.settings import (
     BYPASS_CACHE,
     CACHE_RETENTION_TIME_DAYS,
@@ -36,7 +36,7 @@ class CacheManager:
         super().__init__()
         self.top_level_domain: str = ""
         self.hosts = {}
-        self._logger = create_logger()
+        self._logger = get_logger()
         self._logger.debug(
             f"CacheManager loaded at {time.perf_counter() - global_start} since start"
         )

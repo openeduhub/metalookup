@@ -20,7 +20,7 @@ from lib.constants import (
     MESSAGE_URL,
     SCRIPT,
 )
-from lib.logger import create_logger
+from lib.logger import get_logger
 from lib.settings import SPLASH_HEADERS, SPLASH_URL
 from lib.timing import global_start
 from lib.tools import get_unique_list
@@ -69,7 +69,7 @@ class WebsiteManager:
 
     def __init__(self) -> None:
         super().__init__()
-        self._logger = create_logger()
+        self._logger = get_logger()
 
         try:
             self.tld_extractor = TLDExtract(cache_dir=False)

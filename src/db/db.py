@@ -13,7 +13,7 @@ from app.models import Input, Output
 from app.schemas import RecordSchema
 from db.base import database_engine
 from lib.constants import ActionEnum
-from lib.logger import create_logger
+from lib.logger import get_logger
 
 
 def get_db():
@@ -179,8 +179,8 @@ def create_cache_entry(
 
 
 def reset_cache() -> int:
-    logger = create_logger()
-    logger.debug("Resetting cache")
+    logger = get_logger()
+    logger.info("Resetting cache")
 
     session = SessionLocal()
     resulting_row_count: int = session.query(db_models.CacheEntry).delete()
