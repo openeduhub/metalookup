@@ -7,12 +7,16 @@ from lib.constants import LOGFILE_MANAGER
 from lib.settings import LOG_LEVEL, LOG_PATH
 
 
+def get_logger() -> logging.Logger:
+    return logging.getLogger(LOGFILE_MANAGER)
+
+
 def create_logger() -> logging.Logger:
-    _logger = logging.getLogger(name=f"../{LOGFILE_MANAGER}")
+    logger = get_logger()
 
-    _logger.propagate = True
+    logger.propagate = False
 
-    _logger.setLevel(LOG_LEVEL)
+    logger.setLevel(LOG_LEVEL)
 
     formatter = logging.Formatter("%(asctime)s  %(levelname)-7s %(message)s")
 
@@ -48,6 +52,6 @@ def create_logger() -> logging.Logger:
     error_handler.setLevel(logging.ERROR)
     error_handler.setFormatter(formatter)
 
-    _logger.addHandler(fh)
-    _logger.addHandler(error_handler)
-    return _logger
+    logger.addHandler(fh)
+    logger.addHandler(error_handler)
+    return logger

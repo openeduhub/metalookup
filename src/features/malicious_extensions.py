@@ -16,7 +16,6 @@ class MaliciousExtensions(MetadataBase):
         "swf",
         "mcq",
         "dyv",
-        "html",
         "ps1",
         "9",
         "ocx",
@@ -153,7 +152,6 @@ class MaliciousExtensions(MetadataBase):
         "lpaq5",
         "ctbl",
         "boo",
-        "js",
         "buk",
         "hts",
         "sldm",
@@ -187,6 +185,7 @@ class MaliciousExtensions(MetadataBase):
         "potm",
         "\u202e",
     ]
+    # whitelisted for now: "js", "html",
     decision_threshold = 0
 
     def _start(self, website_data: WebsiteData) -> dict:

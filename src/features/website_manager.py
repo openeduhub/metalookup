@@ -20,7 +20,7 @@ from lib.constants import (
     MESSAGE_URL,
     SCRIPT,
 )
-from lib.logger import create_logger
+from lib.logger import get_logger
 from lib.settings import SPLASH_HEADERS, SPLASH_URL
 from lib.timing import global_start
 from lib.tools import get_unique_list
@@ -69,7 +69,7 @@ class WebsiteManager:
 
     def __init__(self) -> None:
         super().__init__()
-        self._logger = create_logger()
+        self._logger = get_logger()
 
         try:
             self.tld_extractor = TLDExtract(cache_dir=False)
@@ -149,7 +149,7 @@ class WebsiteManager:
     def _get_html_and_har(self, url: str) -> dict:
         splash_url = (
             f"{SPLASH_URL}/render.json?url={url}&html={1}&iframes={1}"
-            f"&har={1}&response_body={1}&wait={1}"
+            f"&har={1}&response_body={1}&wait={10}&render_all={1}"
         )
         try:
             response = requests.get(
@@ -204,6 +204,7 @@ class WebsiteManager:
         unique_tags = get_unique_list(
             [tag.name for tag in self.website_data.soup.find_all()]
         )
+        self._logger.debug((f"unique_tags: {unique_tags}"))
         if SCRIPT in unique_tags:
             unique_tags.remove(SCRIPT)
             source_regex = self.source_regex.findall
