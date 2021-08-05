@@ -283,7 +283,7 @@ src='https://cdn.fluidplayer.com/v2/current/fluidplayer.min.js?ver=5.6' id='flui
     }
     expected = {
         feature.key: {
-            "values": [".exe", ".pdf", ".js"],
+            "values": [".exe", ".pdf"],
             "excluded_values": [".6"],
             "runs_within": 10,  # time the evaluation may take AT MAX -> acceptance test}
         }
