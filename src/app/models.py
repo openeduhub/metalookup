@@ -69,7 +69,6 @@ class ListTags(BaseModel):
     malicious_extensions: Optional[bool] = True
     extracted_links: Optional[bool] = True
     extract_from_files: Optional[bool] = True
-    cookies_in_html: Optional[bool] = True
     cookies: Optional[bool] = True
     fanboy_annoyance: Optional[bool] = True
     fanboy_notification: Optional[bool] = True
@@ -114,12 +113,6 @@ class ExtractorTags(BaseModel):
         "e.g., is the text in a PDF readable?"
         "Probability = "
         "Ratio of found files which are extractable.",
-    )
-    cookies_in_html: MetadataTags = Field(
-        default=None,
-        description="Beta. Are parts of the html matching with known cookie code?"
-        "Probability = "
-        "1 If any matching element is found, else 0.",
     )
     cookies: MetadataTags = Field(
         default=None,

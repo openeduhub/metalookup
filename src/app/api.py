@@ -50,7 +50,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["POST", "GET", "OPTIONS"],
+    allow_methods=["POST", "GET", "OPTIONS", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 # noinspection PyTypeHints
@@ -168,7 +168,6 @@ def extract_meta(input_data: Input):
 
 @app.get(
     "/records/",
-    response_model=RecordsOutput,
     description="Get all urls and their processed metadata.",
 )
 def show_records():
@@ -192,7 +191,7 @@ def show_records():
                 time_until_complete=record.time_until_complete,
             )
         )
-    return records
+    return {"records": records}
 
 
 @app.get(

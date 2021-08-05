@@ -53,27 +53,6 @@ class EasyPrivacy(MetadataBase):
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
 
-class CookiesInHtml(MetadataBase):
-    urls = [
-        # "https://easylist-downloads.adblockplus.org/easylist-cookie.txt", #
-        # "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_allowlist.txt",
-        # "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_allowlist_general_hide.txt",
-        "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_general_block.txt",
-        "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_general_hide.txt",
-        "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_international_specific_block.txt",
-        "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_international_specific_hide.txt",
-        "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_specific_block.txt",
-        "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_specific_hide.txt",
-        "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_thirdparty.txt",
-    ]
-    decision_threshold = 0
-    call_async = True
-    probability_determination_method = (
-        ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
-    )
-    extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
-
-
 class FanboyAnnoyance(MetadataBase):
     urls = [
         "https://easylist.to/easylist/fanboy-annoyance.txt",

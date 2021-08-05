@@ -17,7 +17,6 @@ from features.gdpr import GDPR
 from features.html_based import (
     Advertisement,
     AntiAdBlock,
-    CookiesInHtml,
     EasylistAdult,
     EasylistGermany,
     EasyPrivacy,
@@ -43,6 +42,7 @@ from lib.constants import (
     MESSAGE_ALLOW_LIST,
     MESSAGE_BYPASS_CACHE,
     MESSAGE_SHARED_MEMORY_NAME,
+    MESSAGE_URL,
     PROBABILITY,
     TIMESTAMP,
     VALUES,
@@ -56,7 +56,10 @@ def _parallel_setup(
 ) -> MetadataBase:
     logger.debug(f"Starting setup for {extractor_class} {get_utc_now()}")
     extractor = extractor_class(logger)
-    extractor.setup()
+    logger.debug(f"Starting setup for {extractor_class} {Cookies}")
+    if isinstance(extractor, Cookies):
+        logger.debug(f"Setup for {extractor_class} {Cookies}")
+        extractor.setup()
     logger.debug(f"Finished setup for {extractor_class} {get_utc_now()}")
     return extractor
 
@@ -78,7 +81,6 @@ class MetadataManager:
             EasyPrivacy,
             MaliciousExtensions,
             ExtractFromFiles,
-            CookiesInHtml,
             FanboyAnnoyance,
             FanboyNotification,
             FanboySocialMedia,
@@ -158,6 +160,7 @@ class MetadataManager:
         extracted_metadata: dict,
         cache_manager: CacheManager,
         allow_list: dict,
+        url: str,
     ):
         for feature, meta_data in extracted_metadata.items():
             if (
@@ -226,6 +229,7 @@ class MetadataManager:
                     extracted_meta_data,
                     cache_manager,
                     allow_list=message[MESSAGE_ALLOW_LIST],
+                    url=message[MESSAGE_URL],
                 )
             except ConnectionError as e:
                 exception = f"Connection error extracting metadata: '{e.args}'"
