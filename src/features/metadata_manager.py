@@ -56,16 +56,16 @@ def _parallel_setup(
 ) -> MetadataBase:
     logger.debug(f"Starting setup for {extractor_class} {get_utc_now()}")
     extractor = extractor_class(logger)
-    # logger.debug(f"Interm setup for {extractor_class} {get_utc_now()}")
-    # if isinstance(extractor_class, GDPR):
-    #    extractor.setup()
-    # logger.debug(f"Finished setup for {extractor_class} {get_utc_now()}")
+    extractor.setup()
+    logger.debug(f"Finished setup for {extractor_class} {get_utc_now()}")
     return extractor
 
 
 @Singleton
 class MetadataManager:
     metadata_extractors: list[type(MetadataBase)] = []
+
+    blacklisted_for_cache = [MaliciousExtensions, ExtractFromFiles, Javascript]
 
     def __init__(self) -> None:
         self._logger = create_logger()
@@ -99,9 +99,17 @@ class MetadataManager:
         ]
 
         pool = multiprocessing.Pool(processes=6)
-        self.metadata_extractors = pool.starmap(
+        self.metadata_extractors: list[type(MetadataBase)] = pool.starmap(
             _parallel_setup, zip(extractors, repeat(self._logger))
         )
+
+    def is_feature_whitelisted_for_cache(
+        self, extractor: type(MetadataBase)
+    ) -> bool:
+        for feature in self.blacklisted_for_cache:
+            if isinstance(extractor, feature):
+                return False
+        return True
 
     async def _extract_meta_data(
         self,
@@ -119,6 +127,9 @@ class MetadataManager:
             if allow_list[metadata_extractor.key]:
                 if (
                     not BYPASS_CACHE
+                    and self.is_feature_whitelisted_for_cache(
+                        metadata_extractor
+                    )
                     and cache_manager.is_host_predefined()
                     and cache_manager.is_enough_cached_data_present(
                         metadata_extractor.key

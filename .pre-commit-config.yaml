@@ -1,26 +1,32 @@
 repos:
--   repo: https://github.com/ambv/black
+  - repo: https://github.com/ambv/black
     rev: 20.8b1
     hooks:
-    - id: black
-      language_version: python3.9
--   repo: https://gitlab.com/pycqa/flake8
+      - id: black
+        language_version: python3.9
+  - repo: https://gitlab.com/pycqa/flake8
     rev: 3.8.4
     hooks:
-    - id: flake8
--   repo:  https://github.com/PyCQA/isort
+      - id: flake8
+  - repo: https://github.com/PyCQA/isort
     rev: 5.6.4
     hooks:
-    - id: isort
--   repo: local
+      - id: isort
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.0.0
     hooks:
-    - id: pytest
-      name: pytest
-      entry: poetry run pytest
-      language: python
-      pass_filenames: false
-    - id: pytest-cov
-      name: pytest-cov
-      entry: poetry run pytest --cov=. --cov-report=html --cov-report=term # --cov-fail-under=100
-      language: python
-      pass_filenames: false
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+  - repo: local
+    hooks:
+      - id: pytest
+        name: pytest
+        entry: poetry run pytest
+        language: python
+        pass_filenames: false
+      - id: pytest-cov
+        name: pytest-cov
+        entry: poetry run pytest --cov=. --cov-report=html --cov-report=term # --cov-fail-under=100
+        language: python
+        pass_filenames: false
