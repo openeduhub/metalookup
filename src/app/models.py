@@ -248,6 +248,10 @@ class Input(BaseModel):
         default=True,
         description="Developer flag to receive more information through API",
     )
+    bypass_cache: Optional[bool] = Field(
+        default=False,
+        description="Bypass the cache (true) or not in evaluation.",
+    )
 
 
 class Output(BaseModel):

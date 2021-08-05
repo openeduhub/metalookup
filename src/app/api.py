@@ -20,6 +20,7 @@ from lib.constants import (
     DECISION,
     EXPLANATION,
     MESSAGE_ALLOW_LIST,
+    MESSAGE_BYPASS_CACHE,
     MESSAGE_EXCEPTION,
     MESSAGE_HAR,
     MESSAGE_HEADERS,
@@ -103,6 +104,7 @@ def extract_meta(input_data: Input):
             MESSAGE_HAR: input_data.har,
             MESSAGE_ALLOW_LIST: allowance,
             MESSAGE_SHARED_MEMORY_NAME: shared_status.shm.name,
+            MESSAGE_BYPASS_CACHE: input_data.bypass_cache,
         }
     )
 

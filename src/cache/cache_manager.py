@@ -19,7 +19,11 @@ from lib.constants import (
     VALUES,
 )
 from lib.logger import create_logger
-from lib.settings import CACHE_RETENTION_TIME_DAYS, MINIMUM_REQUIRED_ENTRIES
+from lib.settings import (
+    BYPASS_CACHE,
+    CACHE_RETENTION_TIME_DAYS,
+    MINIMUM_REQUIRED_ENTRIES,
+)
 from lib.timing import get_utc_now, global_start
 from lib.tools import get_mean, get_unique_list
 
@@ -36,7 +40,11 @@ class CacheManager:
         self._logger.debug(
             f"CacheManager loaded at {time.perf_counter() - global_start} since start"
         )
+        self.bypass = BYPASS_CACHE
         self._prepare_cache_manager()
+
+    def set_bypass(self, bypass: bool):
+        self.bypass = bypass
 
     def _prepare_cache_manager(self) -> None:
         self._logger.debug(

@@ -41,13 +41,13 @@ from lib.constants import (
     DECISION,
     EXPLANATION,
     MESSAGE_ALLOW_LIST,
+    MESSAGE_BYPASS_CACHE,
     MESSAGE_SHARED_MEMORY_NAME,
     PROBABILITY,
     TIMESTAMP,
     VALUES,
 )
 from lib.logger import create_logger
-from lib.settings import BYPASS_CACHE
 from lib.timing import get_utc_now, global_start
 
 
@@ -126,7 +126,7 @@ class MetadataManager:
         for metadata_extractor in self.metadata_extractors:
             if allow_list[metadata_extractor.key]:
                 if (
-                    not BYPASS_CACHE
+                    not cache_manager.bypass
                     and self.is_feature_whitelisted_for_cache(
                         metadata_extractor
                     )
@@ -202,6 +202,8 @@ class MetadataManager:
         cache_manager.top_level_domain = (
             website_manager.website_data.top_level_domain
         )
+        cache_manager.set_bypass(message[MESSAGE_BYPASS_CACHE])
+        self._logger.debug(f"Bypass cache: {cache_manager.bypass}")
 
         now = time.perf_counter()
         self._logger.debug(
