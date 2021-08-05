@@ -49,8 +49,8 @@ app = FastAPI(title=METADATA_EXTRACTOR, version=VERSION)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
+    allow_credentials=True,
+    allow_methods=["POST", "GET", "OPTIONS"],
     allow_headers=["*"],
 )
 # noinspection PyTypeHints
