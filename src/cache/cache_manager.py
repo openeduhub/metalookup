@@ -102,10 +102,9 @@ class CacheManager:
         else:
             decision = DecisionCase.UNKNOWN
 
-        if key == ACCESSIBILITY:
+        values = []
+        if key == ACCESSIBILITY and len(values) > 0:
             values = [get_mean(values)]
-        else:
-            values = []
 
         return {
             VALUES: values,
