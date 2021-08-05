@@ -8,6 +8,7 @@ MESSAGE_META = "meta"
 MESSAGE_EXCEPTION = "exception"
 MESSAGE_HAR = "har"
 MESSAGE_SHARED_MEMORY_NAME = "shared_memory_name"
+MESSAGE_BYPASS_CACHE = "bypass_cache"
 
 LOGFILE_MANAGER = "manager"
 

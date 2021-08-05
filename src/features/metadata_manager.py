@@ -41,24 +41,23 @@ from lib.constants import (
     DECISION,
     EXPLANATION,
     MESSAGE_ALLOW_LIST,
+    MESSAGE_BYPASS_CACHE,
     MESSAGE_SHARED_MEMORY_NAME,
     PROBABILITY,
     TIMESTAMP,
     VALUES,
 )
-from lib.logger import create_logger
-from lib.settings import BYPASS_CACHE
+from lib.logger import get_logger
 from lib.timing import get_utc_now, global_start
 
 
 def _parallel_setup(
     extractor_class: type(MetadataBase), logger: Logger
 ) -> MetadataBase:
-    # logger.debug(f"Starting setup for {extractor_class} {get_utc_now()}")
+    logger.debug(f"Starting setup for {extractor_class} {get_utc_now()}")
     extractor = extractor_class(logger)
-    # logger.debug(f"Interm setup for {extractor_class} {get_utc_now()}")
     extractor.setup()
-    # logger.debug(f"Finished setup for {extractor_class} {get_utc_now()}")
+    logger.debug(f"Finished setup for {extractor_class} {get_utc_now()}")
     return extractor
 
 
@@ -66,8 +65,10 @@ def _parallel_setup(
 class MetadataManager:
     metadata_extractors: list[type(MetadataBase)] = []
 
+    blacklisted_for_cache = [MaliciousExtensions, ExtractFromFiles, Javascript]
+
     def __init__(self) -> None:
-        self._logger = create_logger()
+        self._logger = get_logger()
         self._setup_extractors()
 
     def _setup_extractors(self) -> None:
@@ -98,9 +99,17 @@ class MetadataManager:
         ]
 
         pool = multiprocessing.Pool(processes=6)
-        self.metadata_extractors = pool.starmap(
+        self.metadata_extractors: list[type(MetadataBase)] = pool.starmap(
             _parallel_setup, zip(extractors, repeat(self._logger))
         )
+
+    def is_feature_whitelisted_for_cache(
+        self, extractor: type(MetadataBase)
+    ) -> bool:
+        for feature in self.blacklisted_for_cache:
+            if isinstance(extractor, feature):
+                return False
+        return True
 
     async def _extract_meta_data(
         self,
@@ -117,7 +126,10 @@ class MetadataManager:
         for metadata_extractor in self.metadata_extractors:
             if allow_list[metadata_extractor.key]:
                 if (
-                    not BYPASS_CACHE
+                    not cache_manager.bypass
+                    and self.is_feature_whitelisted_for_cache(
+                        metadata_extractor
+                    )
                     and cache_manager.is_host_predefined()
                     and cache_manager.is_enough_cached_data_present(
                         metadata_extractor.key
@@ -190,6 +202,8 @@ class MetadataManager:
         cache_manager.top_level_domain = (
             website_manager.website_data.top_level_domain
         )
+        cache_manager.set_bypass(message[MESSAGE_BYPASS_CACHE])
+        self._logger.debug(f"Bypass cache: {cache_manager.bypass}")
 
         now = time.perf_counter()
         self._logger.debug(

@@ -1,7 +1,11 @@
 import json
 
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy.exc import OperationalError, ProgrammingError
+from sqlalchemy.exc import (
+    OperationalError,
+    PendingRollbackError,
+    ProgrammingError,
+)
 from sqlalchemy.orm import Session, sessionmaker
 
 import db.models as db_models
@@ -9,7 +13,7 @@ from app.models import Input, Output
 from app.schemas import RecordSchema
 from db.base import database_engine
 from lib.constants import ActionEnum
-from lib.logger import create_logger
+from lib.logger import get_logger
 
 
 def get_db():
@@ -46,8 +50,14 @@ def create_request_record(
     )
 
     session.add(new_input)
-    session.commit()
-    session.close()
+    try:
+        session.commit()
+        session.close()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
 
 def create_response_record(
@@ -76,8 +86,14 @@ def create_response_record(
     )
 
     session.add(new_input)
-    session.commit()
-    session.close()
+    try:
+        session.commit()
+        session.close()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
 
 def create_dummy_record() -> RecordSchema:
@@ -102,7 +118,7 @@ def create_dummy_record() -> RecordSchema:
 def load_records(session: Session = SessionLocal()) -> [db_models.Record]:
     try:
         records = session.query(db_models.Record).all()
-    except (OperationalError, ProgrammingError) as err:
+    except (OperationalError, ProgrammingError, PendingRollbackError) as err:
         dummy_record = create_dummy_record()
         dummy_record.exception = f"Database exception: {err.args}"
         records = [dummy_record]
@@ -154,18 +170,27 @@ def create_cache_entry(
             ).update({feature: updated_values})
 
         session.commit()
+    except Exception:
+        session.rollback()
+        raise
     finally:
         session.close()
         logger.debug("Writing done")
 
 
 def reset_cache() -> int:
-    logger = create_logger()
-    logger.debug("Resetting cache")
+    logger = get_logger()
+    logger.info("Resetting cache")
 
     session = SessionLocal()
     resulting_row_count: int = session.query(db_models.CacheEntry).delete()
-    session.commit()
-    session.close()
+    try:
+        session.commit()
+        session.close()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
     return resulting_row_count

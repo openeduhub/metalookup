@@ -10,9 +10,9 @@ Topics:
 
 - The service is able to perform with just the url of the website. No additional information is needed.
 - The service performs its analysis in less than 30s, especially for the first call directly after container launch
-- The service is resilient against failing code, i.e., the user will always get a response. 
+- The service is resilient against failing code, i.e., the user will always get a response.
   In the worst case, that response is an error message.
-  
+
 
 # Acceptance tests
 

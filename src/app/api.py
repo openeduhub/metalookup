@@ -7,8 +7,18 @@ from sqlalchemy.exc import OperationalError
 
 import db.base
 from app.communication import QueueCommunicator
-from app.models import ExtractorTags, Input, ListTags, MetadataTags, Output
-from app.schemas import RecordSchema
+from app.models import (
+    CacheOutput,
+    ExtractorTags,
+    Input,
+    ListTags,
+    MetadataTags,
+    Output,
+    Ping,
+    ProgressOutput,
+    ResetCacheOutput,
+)
+from app.schemas import RecordSchema, RecordsOutput
 from cache.cache_manager import CacheManager
 from db.db import (
     create_request_record,
@@ -20,6 +30,7 @@ from lib.constants import (
     DECISION,
     EXPLANATION,
     MESSAGE_ALLOW_LIST,
+    MESSAGE_BYPASS_CACHE,
     MESSAGE_EXCEPTION,
     MESSAGE_HAR,
     MESSAGE_HEADERS,
@@ -103,6 +114,7 @@ def extract_meta(input_data: Input):
             MESSAGE_HAR: input_data.har,
             MESSAGE_ALLOW_LIST: allowance,
             MESSAGE_SHARED_MEMORY_NAME: shared_status.shm.name,
+            MESSAGE_BYPASS_CACHE: input_data.bypass_cache,
         }
     )
 
@@ -154,7 +166,11 @@ def extract_meta(input_data: Input):
     return out
 
 
-@app.get("/records/")
+@app.get(
+    "/records/",
+    response_model=RecordsOutput,
+    description="Get all urls and their processed metadata.",
+)
 def show_records():
     records = load_records()
     out = []
@@ -176,10 +192,14 @@ def show_records():
                 time_until_complete=record.time_until_complete,
             )
         )
-    return {"out": records}
+    return records
 
 
-@app.get("/_ping", description="Ping function for automatic health check.")
+@app.get(
+    "/_ping",
+    description="Ping function for automatic health check.",
+    response_model=Ping,
+)
 def ping():
     return {"status": "ok"}
 
@@ -187,6 +207,7 @@ def ping():
 @app.get(
     "/get_progress",
     description="Returns progress of the metadata extraction. From 0 to 1 (=100%).",
+    response_model=ProgressOutput,
 )
 def get_progress():
     return {
@@ -194,13 +215,21 @@ def get_progress():
     }
 
 
-@app.get("/cache/")
+@app.get(
+    "/cache/",
+    response_model=CacheOutput,
+    description="Developer endpoint to receive cache content.",
+)
 def get_cache():
     return {"cache": load_cache()}
 
 
-@app.post("/cache/reset")
+@app.post(
+    "/cache/reset",
+    description="Endpoint to reset cache",
+    response_model=ResetCacheOutput,
+)
 def reset_cache_post():
     cache_manager = CacheManager.get_instance()
     row_count = cache_manager.reset_cache()
-    return {"Deleted_rows": row_count}
+    return {"deleted_rows": row_count}

@@ -1,5 +1,4 @@
 import json
-import math
 import sys
 
 import requests
@@ -32,7 +31,6 @@ ProfilerSession = sessionmaker(
 
 def download_remote_records():
     url = "https://metalookup.openeduhub.net/records"
-    # url = "http://extractor:5057/records"
 
     payload = {}
     headers = {}
@@ -48,7 +46,7 @@ def download_remote_records():
         sys.exit(1)
     print("Number of records loaded: ", len(records))
 
-    db = ProfilerSession()
+    session = ProfilerSession()
     for record in records:
         if PROFILER_DEBUG:
             print("Writing record #", record["id"])
@@ -67,10 +65,16 @@ def download_remote_records():
             exception=record["exception"],
             time_until_complete=record["time_until_complete"],
         )
-        db.add(db_record)
+        session.add(db_record)
 
-    db.commit()
-    db.close()
+    try:
+        session.commit()
+        session.close()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
 
 def print_schemas():

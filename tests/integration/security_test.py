@@ -1,10 +1,10 @@
 import json
 import os
 
-from app.models import DecisionCase
+from app.models import DecisionCase, Explanation
 from features.security import Security
 from features.website_manager import WebsiteData
-from lib.logger import create_logger
+from lib.logger import get_logger
 
 if "PRE_COMMIT" in os.environ:
     from integration.features_integration_test import _test_feature
@@ -56,7 +56,7 @@ def test_start():
 
 
 def test_decide():
-    _logger = create_logger()
+    _logger = get_logger()
 
     security = Security(_logger)
 
@@ -70,10 +70,14 @@ def test_decide():
     ]
     expected_decision = DecisionCase.TRUE
     expected_probability = 1.0
+    expected_explanation = [Explanation.MinimumSecurityRequirementsCovered]
 
     security.expected_headers = security_tags
 
-    decision, probability = security._decide(website_data=website_data)
+    decision, probability, explanation = security._decide(
+        website_data=website_data
+    )
 
     assert probability == expected_probability
     assert decision == expected_decision
+    assert explanation == expected_explanation

@@ -13,17 +13,17 @@ Die Unit- und Integrationstests vertiefen dies weiter.
 
 Merkmale geben drei wichtige Werte zurück:
 
-- `decision`: 
+- `decision`:
     - Die getroffene Entscheidung.
     - `wahr` oder `falsch`. `wahr` zeigt an, dass das Merkmal erfüllt ist.
     - `decision` ist explizit nur in Kombination mit `probability` wertvoll.
-- `probability`: 
+- `probability`:
     - Die Wahrscheinlichkeit, dass die Entscheidung zutrifft.
     - Ein Wert von 0 bedeutet, die Entscheidung hat keinen Wert. Egal ob `wahr` oder `falsch`, wir wissen nichts.
-    - Dies geschieht bspw., wenn das Merkmal exakt auf der Schwelle zwischen `wahr` und `falsch`. 
-      An diesem Punkt wären beide Entscheidungen möglich und würde sich die Webseite nur minimal ändern, wäre die Entscheidung anders. 
+    - Dies geschieht bspw., wenn das Merkmal exakt auf der Schwelle zwischen `wahr` und `falsch`.
+      An diesem Punkt wären beide Entscheidungen möglich und würde sich die Webseite nur minimal ändern, wäre die Entscheidung anders.
       Daher ist hier nichts sicher auszusagen.
-- `values`: 
+- `values`:
     - Die rohen Werte, welche das Merkmal gefunden hat
     - Basierend auf diesen Werten werden die Entscheidung und deren Wahrscheinlichkeit bestimmt
 
@@ -45,7 +45,7 @@ gepflegtes Werkzeug zurückgegriffen, welches reproduzierbare Ergebnisse liefert
 
 #### Ablauf
 
-1. Das Merkmal sendet die Webseite-url an einen Lighthouse Container basierend auf: 
+1. Das Merkmal sendet die Webseite-url an einen Lighthouse Container basierend auf:
    `https://github.com/femtopixel/docker-google-lighthouse`.
 2. Zurück kommen Fließkommazahlen zwischen `0` und `1`.
 3. Der Wert wird für mobile Endgeräte und Desktop-PCs einzeln berechnet und dann gemittelt.
@@ -53,7 +53,7 @@ gepflegtes Werkzeug zurückgegriffen, welches reproduzierbare Ergebnisse liefert
 Die `probability` wird entsprechend zwischen dem Schwellwert und `1` linear skaliert.
 Je näher der Mittelwert am Schwellwert liegt, desto geringer ist `probability`.
 D. h., liegt der Mittelwert bei `0.85` und der Schwellwert bei `0.8`, so wird `probability` `0.25`.
-   
+
 #### Beispiel
 
 Die url `https://canyoublockit.com/extreme-test/` liefert Werte von `0.98` für mobile Endgeräte und Desktop-PCs.
@@ -77,9 +77,9 @@ entfallen.
 1. Das Merkmal entnimmt alle Cookies, welche von der Webseite benutzt werden.
 2. Jedes Cookie wird auf dessen Eigenschaften `httpOnly` sowie `secure` überprüft.
 3. Ist eine der beiden Eigenschaften `falsch`, so wird dieses Cookie als „unsicher“ eingestuft.
-4. Gibt es mindestens ein unsicheres Cookie auf der Webseite, so wird die `probability` auf `1` und 
+4. Gibt es mindestens ein unsicheres Cookie auf der Webseite, so wird die `probability` auf `1` und
 `decision` auf `wahr` gesetzt.
-   
+
 #### Beispiel
 
 Cookie 1:
@@ -104,7 +104,7 @@ Cookie 2:
 
 #### TODO
 
-- Die gefundenen Cookies werden für weitere Evaluation zurückgegeben, sodass entschieden werden kann, ob Cookies auf eine Whitelist kommen. 
+- Die gefundenen Cookies werden für weitere Evaluation zurückgegeben, sodass entschieden werden kann, ob Cookies auf eine Whitelist kommen.
 - Cookies könnten unsicher sein, obwohl die überprüften Merkmale es als sicher anzeigen. Eine Blacklist wäre nötig.
 
 ### Dateiextrahierbarkeit alias ExtractFromFiles
@@ -128,12 +128,12 @@ angeboten werden.
    `values` hinzugefügt.
 5. Die `probability` ergibt sich als Anteil solcher extrahierbarer Dateien im Vergleich zu allen vorhandenen Dateien.
 4. Ist die `probability` über dem Schwellwert, so wird `decision` auf `wahr` gesetzt.
-   
+
 #### Beispiel
 
 1. Die url `https://digitallearninglab.de/unterrichtsbausteine/anlauttraining` enthält Pdf und Docx Dateien.
 2. Alle Dateien sind extrahierbar, sodass das Merkmal hier die `decision` `wahr` zurückgegeben wird.
-3. Da dies programmatisch passiert, kann lediglich durch den Nutzer überprüft werden, dass die Dateien nicht 
+3. Da dies programmatisch passiert, kann lediglich durch den Nutzer überprüft werden, dass die Dateien nicht
    passwortgeschützt sind und der Text in den PDFs selektiert und kopiert werden kann.
 
 #### TODO
@@ -141,13 +141,13 @@ angeboten werden.
 - Welche weiteren Datentypen sind auf den Webseiten vorhanden?
 - Diese Datentypen müssen entsprechend eingebunden und automatisch eingelesen werden
 - Das Einlesen von PDFs basiert derzeit auf pdfminer.six, ein Package welches durch ein besseres ersetzt werden könnte.
-- Zum Einlesen von DOCX Dateien, welche xml enthalten, wird das Package `lxml` benutzt. 
-  Dieses Package benötigt viel Zeit während des Baus des Docker Containers. 
+- Zum Einlesen von DOCX Dateien, welche xml enthalten, wird das Package `lxml` benutzt.
+  Dieses Package benötigt viel Zeit während des Baus des Docker Containers.
   Eine Alternative könnte diesen Prozess und damit CI/CD optimieren.
 
 ### DSGVO alias GDPR
 
-Dieses Merkmal untersucht die Übereinstimmung der Webseite mit den Anforderungen der DSGVO. 
+Dieses Merkmal untersucht die Übereinstimmung der Webseite mit den Anforderungen der DSGVO.
 Da dieses Merkmal eine juristische Behandlung nicht erfüllen kann, wird dieses Merkmal stets `falsch` anzeigen, wie abgesprochen.
 
 Nichtsdestotrotz werden verschiedene Eigenschaften der Webseite untersucht und hinterlegt, um dieses Merkmal weiter zu verbessern.
@@ -163,9 +163,9 @@ Die Eigenschaften umfassen:
 
 #### Vorteil
 
-Ob eine Webseite DSGVO konform ist, ist eine komplexe Aussage. 
+Ob eine Webseite DSGVO konform ist, ist eine komplexe Aussage.
 Dieses Merkmal automatisiert einige relevante Überprüfungen,
-sodass ungenügende Webseiten vorselektiert werden und zur detaillierteren Untersuchung durch Fachpersonal übergeben 
+sodass ungenügende Webseiten vorselektiert werden und zur detaillierteren Untersuchung durch Fachpersonal übergeben
 werden können.
 
 #### Ablauf
@@ -173,9 +173,9 @@ werden können.
 1. Das Merkmal untersucht alle Links der Webseite, ob diese `impressum` enthalten und damit auf ein bestehendes Impressum hinweisen.
 2. Es wird untersucht, ob alle Links auf `https` verweisen und damit sicher sind.
 3. Es wird untersucht, ob der `strict-transport-security` Header der Webseite `includesubdomains`, `preload` sowie `max-age` enthält
-und ob letzteres eine Zeitdauer über 100 Tagen enthält. 
+und ob letzteres eine Zeitdauer über 100 Tagen enthält.
 4. Es wird untersucht, ob der `referrer-policy` Header definiert ist.
-5. Es wird untersucht, ob externe Fonts hinzugeladen werden, da diese auch als Sicherheitslücke ausgenutzt werden können. 
+5. Es wird untersucht, ob externe Fonts hinzugeladen werden, da diese auch als Sicherheitslücke ausgenutzt werden können.
 Wird ein Font gefunden, gilt dies als negativ.
 6. Es wird untersucht, ob auf der Webseite Eingabefelder für Passwörter, E-Mail-Adressen und mehr da ist.
 Wird ein Eingabefeld gefunden, gilt dies als negativ.
@@ -185,13 +185,13 @@ Wird ein Eingabefeld gefunden, gilt dies als negativ.
 #### TODO
 
 - Welche Fonts sind „akzeptabel“, welche nicht?
-- Das Merkmal könnte invertiert werden im Sinne von, ob DSGVO sicher nicht (!) erfüllt ist. 
-  D. h. `wahr` zeigt an, dass DSGVO nicht erfüllt ist. 
+- Das Merkmal könnte invertiert werden im Sinne von, ob DSGVO sicher nicht (!) erfüllt ist.
+  D. h. `wahr` zeigt an, dass DSGVO nicht erfüllt ist.
   Ein `falsch` zeigt an, dass unklar ist, ob DSGVO erfüllt wird oder nicht.
 
 ### Javascript
 
-Dieses Merkmal untersucht, ob und welche Javascripts werden ausgeführt. 
+Dieses Merkmal untersucht, ob und welche Javascripts werden ausgeführt.
 Da Javascript potenziell gefährliche Inhalte laden und ausführen kann wird dieses Merkmal `wahr` anzeigen, sobald ein Javascript gefunden wurde.
 
 #### Vorteil
@@ -213,7 +213,7 @@ Code lesen müssen.
 ```
 
 - Auch wenn dies kein wirkliches Skript enthält, so deutet der Schlüssel `src` auf ein Skript hin.
-- Dieses wird entsprechend extrahiert und erkannt. 
+- Dieses wird entsprechend extrahiert und erkannt.
 - Hier wird `decision` `wahr`.
 
 #### TODO
@@ -279,20 +279,20 @@ Es ist zu erwarten, dass nur die wenigsten Webseiten dieses Merkmal erfüllen.
 
 #### Vorteil
 
-Ähnlich zu DSGVO ist Sicherheit ein komplexes Thema, welches durch dieses Merkmal teilautomatisiert wird, sodass 
+Ähnlich zu DSGVO ist Sicherheit ein komplexes Thema, welches durch dieses Merkmal teilautomatisiert wird, sodass
 auffällig unsichere Webseiten früh aussortiert werden können.
 
 #### Ablauf
 
 1. Das Merkmal untersucht, ob die folgenden Header gesetzt sind:
-   
+
     `content-security-policy`
     `referrer-policy`
-   
+
 2. Wird eines der Merkmale nicht gefunden, so ist das negativ.
 3. Es überprüft, ob `cache-control` so gesetzt wurde, dass Daten nicht gecached werden
 4. Es überprüft, ob `x-content-type-options` auf `nosniff` gesetzt wurde.
-5. Es überprüft, ob `x-frame-options` auf `deny` oder `same_origin` gesetzt wurde. 
+5. Es überprüft, ob `x-frame-options` auf `deny` oder `same_origin` gesetzt wurde.
 Damit kann die Webseite nicht als iFrame eingebettet werden.
 6. Es überprüft, ob `x-xss-protection` auf `1` und `mode=block` gesetzt wurde und damit cross-site-scripting deaktiviert.
 7. Es überprüft, ob `strict-transport-security` auf `max-age=` und `includeSubDomains` gesetzt wurde.
@@ -319,7 +319,7 @@ Die Listen werden als open-source Repository von der Community gepflegt.
 Ein Überblick kann hier gefunden werden: `https://easylist.to/`.
 Weitere Listen werden hier bezogen: `https://github.com/easylist/easylist/tree/master/easylist`.
 Diese Listen werden für AdBlock-artige Plugins im Browser benutzt, um entsprechend Werbung zu blockieren.
-Die Syntax ermöglicht Elemente explizit zu blockieren oder zu erlauben, ganze Domänen zu sperren oder nur gewisse 
+Die Syntax ermöglicht Elemente explizit zu blockieren oder zu erlauben, ganze Domänen zu sperren oder nur gewisse
 Bausteine einer Webseite zu erlauben.
 Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockplus.org/filter-cheatsheet`.
 
@@ -359,8 +359,8 @@ Wird ein entsprechendes Element entdeckt, so wird dieses Merkmal auf `wahr` gese
 
 #### Vorteil
 
-Da Tracker u. ä. unbeobachtet im Hintergrund laufen, ermöglicht dieses Merkmal anhand eines großen Fundus an 
-Informationen automatisiert solche Elemente zu erkennen. 
+Da Tracker u. ä. unbeobachtet im Hintergrund laufen, ermöglicht dieses Merkmal anhand eines großen Fundus an
+Informationen automatisiert solche Elemente zu erkennen.
 Es eliminiert aufwändiges Suchen durch Menschen und subjektive Entscheidungen.
 
 #### Quellen
@@ -370,7 +370,7 @@ Ein Überblick kann hier gefunden werden: `https://easylist.to/`.
 Weitere Listen werden hier bezogen: `https://github.com/easylist/easylist/tree/master/easyprivacy`.
 Diese Listen werden für AdBlock-artige Plugins im Browser benutzt, um entsprechende Elemente zu blockieren, die die
 Privatsphäre untergraben.
-Die Syntax ermöglicht Elemente explizit zu blockieren oder zu erlauben, ganze Domänen zu sperren oder nur gewisse 
+Die Syntax ermöglicht Elemente explizit zu blockieren oder zu erlauben, ganze Domänen zu sperren oder nur gewisse
 Bausteine einer Webseite zu erlauben.
 Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockplus.org/filter-cheatsheet`.
 
@@ -403,8 +403,8 @@ Wird ein solches Cookie entdeckt, so wird dieses Merkmal auf `wahr` gesetzt.
 
 #### Vorteil
 
-Da Cookies teilweise auch im HTML Code versteckt sind, ermöglicht dieses Merkmal anhand eines großen Fundus an 
-Informationen automatisiert solche Elemente zu erkennen. 
+Da Cookies teilweise auch im HTML Code versteckt sind, ermöglicht dieses Merkmal anhand eines großen Fundus an
+Informationen automatisiert solche Elemente zu erkennen.
 Es eliminiert aufwändiges Suchen durch Menschen und subjektive Entscheidungen.
 
 #### Quellen
@@ -413,7 +413,7 @@ Die Listen werden als open-source Repository von der Community gepflegt.
 Ein Überblick kann hier gefunden werden: `https://easylist.to/`.
 Weitere Listen werden hier bezogen: `https://github.com/easylist/easylist/tree/master/easylist_cookie`.
 Diese Listen werden für AdBlock-artige Plugins im Browser benutzt, um entsprechende Cookies zu blockieren.
-Die Syntax ermöglicht Elemente explizit zu blockieren oder zu erlauben, ganze Domänen zu sperren oder nur gewisse 
+Die Syntax ermöglicht Elemente explizit zu blockieren oder zu erlauben, ganze Domänen zu sperren oder nur gewisse
 Bausteine einer Webseite zu erlauben.
 Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockplus.org/filter-cheatsheet`.
 
@@ -446,8 +446,8 @@ Der Name `Fanboy` ist der Alias eines Software-Ingenieurs: `https://github.com/r
 
 #### Vorteil
 
-Da die Einschätzung, ob ein Element als `nervig` gilt rein subjektiv ist, ermöglicht dieses Merkmal anhand eines großen 
-Fundus an Informationen automatisiert solche Elemente zu erkennen. 
+Da die Einschätzung, ob ein Element als `nervig` gilt rein subjektiv ist, ermöglicht dieses Merkmal anhand eines großen
+Fundus an Informationen automatisiert solche Elemente zu erkennen.
 Es eliminiert aufwändiges Suchen durch Menschen und subjektive Entscheidungen.
 
 #### Quellen
@@ -456,7 +456,7 @@ Die Listen werden als open-source Repository von der Community gepflegt.
 Ein Überblick kann hier gefunden werden: `https://easylist.to/`.
 Weitere Listen werden hier bezogen: `https://github.com/easylist/easylist/tree/master/fanboy-addon`.
 Diese Listen werden für AdBlock-artige Plugins im Browser benutzt, um entsprechende `nervige` Elemente zu blockieren.
-Die Syntax ermöglicht Elemente explizit zu blockieren oder zu erlauben, ganze Domänen zu sperren oder nur gewisse 
+Die Syntax ermöglicht Elemente explizit zu blockieren oder zu erlauben, ganze Domänen zu sperren oder nur gewisse
 Bausteine einer Webseite zu erlauben.
 Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockplus.org/filter-cheatsheet`.
 
@@ -491,8 +491,8 @@ Der Name `Fanboy` ist der Alias eines Software-Ingenieurs: `https://github.com/r
 
 #### Vorteil
 
-Da Benachrichtigungen häufig erst nach einer gewissen Nutzungsdauer einer Webseite aktiv werden, ermöglicht dieses 
-Merkmal anhand eines großen Fundus an Informationen automatisiert solche Elemente zu erkennen. 
+Da Benachrichtigungen häufig erst nach einer gewissen Nutzungsdauer einer Webseite aktiv werden, ermöglicht dieses
+Merkmal anhand eines großen Fundus an Informationen automatisiert solche Elemente zu erkennen.
 Es eliminiert aufwändiges Suchen durch Menschen und subjektive Entscheidungen.
 
 #### Quellen
@@ -501,7 +501,7 @@ Die Listen werden als open-source Repository von der Community gepflegt.
 Ein Überblick kann hier gefunden werden: `https://easylist.to/`.
 Weitere Listen werden hier bezogen: `https://github.com/easylist/easylist/tree/master/fanboy-addon`.
 Diese Listen werden für AdBlock-artige Plugins im Browser benutzt, um entsprechende Benachrichtigungen zu blockieren.
-Die Syntax ermöglicht Elemente explizit zu blockieren oder zu erlauben, ganze Domänen zu sperren oder nur gewisse 
+Die Syntax ermöglicht Elemente explizit zu blockieren oder zu erlauben, ganze Domänen zu sperren oder nur gewisse
 Bausteine einer Webseite zu erlauben.
 Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockplus.org/filter-cheatsheet`.
 
@@ -533,8 +533,8 @@ Der Name `Fanboy` ist der Alias eines Software-Ingenieurs: `https://github.com/r
 
 #### Vorteil
 
-Da Elemente sozialer Netzwerke häufig im Fließtext einer Webseite eingebunden und dadurch wenig offensichtlich sind, 
-ermöglicht dieses Merkmal anhand eines großen Fundus an Informationen automatisiert solche Elemente zu erkennen. 
+Da Elemente sozialer Netzwerke häufig im Fließtext einer Webseite eingebunden und dadurch wenig offensichtlich sind,
+ermöglicht dieses Merkmal anhand eines großen Fundus an Informationen automatisiert solche Elemente zu erkennen.
 Es eliminiert aufwändiges Suchen durch Menschen und subjektive Entscheidungen.
 
 #### Quellen
@@ -543,7 +543,7 @@ Die Listen werden als open-source Repository von der Community gepflegt.
 Ein Überblick kann hier gefunden werden: `https://easylist.to/`.
 Weitere Listen werden hier bezogen: `https://github.com/easylist/easylist/tree/master/fanboy-addon`.
 Diese Listen werden für AdBlock-artige Plugins im Browser benutzt, um entsprechende Elemente sozialer Netzwerke zu blockieren.
-Die Syntax ermöglicht Elemente explizit zu blockieren oder zu erlauben, ganze Domänen zu sperren oder nur gewisse 
+Die Syntax ermöglicht Elemente explizit zu blockieren oder zu erlauben, ganze Domänen zu sperren oder nur gewisse
 Bausteine einer Webseite zu erlauben.
 Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockplus.org/filter-cheatsheet`.
 
@@ -582,7 +582,7 @@ Es nutzt dafür gepflegte open-source Online-Listen.
 #### Vorteil
 
 Da Werbeblocker weit verbreitet sind, sind auch Werbeblocker-Blocker verbreitet und automatisch erkennbar.
-Daher ermöglicht dieses Merkmal anhand eines großen Fundus an Informationen automatisiert solche Elemente zu erkennen. 
+Daher ermöglicht dieses Merkmal anhand eines großen Fundus an Informationen automatisiert solche Elemente zu erkennen.
 Es eliminiert aufwändiges Suchen durch Menschen und subjektive Entscheidungen.
 
 #### Quellen
@@ -591,7 +591,7 @@ Die Listen werden als open-source Repository von der Community gepflegt.
 Ein Überblick kann hier gefunden werden: `https://easylist.to/pages/other-supplementary-filter-lists-and-easylist-variants.html`.
 Weitere Listen werden hier bezogen: `https://github.com/easylist/antiadblockfilters/tree/master/antiadblockfilters`.
 Diese Listen werden für AdBlock-artige Plugins im Browser benutzt, um Anti-Werbeblocker Elemente zu blockieren.
-Die Syntax ermöglicht Elemente explizit zu blockieren oder zu erlauben, ganze Domänen zu sperren oder nur gewisse 
+Die Syntax ermöglicht Elemente explizit zu blockieren oder zu erlauben, ganze Domänen zu sperren oder nur gewisse
 Bausteine einer Webseite zu erlauben.
 Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockplus.org/filter-cheatsheet`.
 
@@ -622,7 +622,7 @@ Es nutzt dafür gepflegte open-source Online-Listen.
 #### Vorteil
 
 Ähnlich zu Werbung und Co. werden hier bekannte, deutsch-spezifische Elemente untersucht.
-Dieses Merkmal ermöglicht anhand eines großen Fundus an Informationen automatisiert solche Elemente zu erkennen. 
+Dieses Merkmal ermöglicht anhand eines großen Fundus an Informationen automatisiert solche Elemente zu erkennen.
 Es eliminiert aufwändiges Suchen durch Menschen und subjektive Entscheidungen.
 
 #### Quellen
@@ -631,7 +631,7 @@ Die Listen werden als open-source Repository von der Community gepflegt.
 Ein Überblick kann hier gefunden werden: `https://easylist.to/`.
 Weitere Listen werden hier bezogen: `https://github.com/easylist/easylistgermany`.
 Diese Listen werden für AdBlock-artige Plugins im Browser benutzt, um deutsch-spezifische Elemente zu blockieren.
-Die Syntax ermöglicht Elemente explizit zu blockieren oder zu erlauben, ganze Domänen zu sperren oder nur gewisse 
+Die Syntax ermöglicht Elemente explizit zu blockieren oder zu erlauben, ganze Domänen zu sperren oder nur gewisse
 Bausteine einer Webseite zu erlauben.
 Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockplus.org/filter-cheatsheet`.
 
@@ -663,7 +663,7 @@ Es nutzt dafür gepflegte open-source Online-Listen.
 #### Vorteil
 
 Da FSK18 Inhalte im Schulunterricht nicht akzeptabel sind, hilft dieses Merkmal bei der Vorauswahl entsprechender Seiten.
-Dieses Merkmal ermöglicht anhand eines großen Fundus an Informationen automatisiert solche Elemente zu erkennen. 
+Dieses Merkmal ermöglicht anhand eines großen Fundus an Informationen automatisiert solche Elemente zu erkennen.
 Es eliminiert aufwändiges Suchen durch Menschen und subjektive Entscheidungen.
 
 #### Quellen
@@ -672,7 +672,7 @@ Die Listen werden als open-source Repository von der Community gepflegt.
 Ein Überblick kann hier gefunden werden: `https://easylist.to/`.
 Weitere Listen werden hier bezogen: `https://github.com/easylist/easylistgermany`.
 Diese Listen werden für AdBlock-artige Plugins im Browser benutzt, um FSK18 Elemente zu blockieren.
-Die Syntax ermöglicht Elemente explizit zu blockieren oder zu erlauben, ganze Domänen zu sperren oder nur gewisse 
+Die Syntax ermöglicht Elemente explizit zu blockieren oder zu erlauben, ganze Domänen zu sperren oder nur gewisse
 Bausteine einer Webseite zu erlauben.
 Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockplus.org/filter-cheatsheet`.
 
@@ -697,8 +697,8 @@ Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockpl
 
 #### TODO
 
-- Die Auswertung bezieht sich allein auf Links. 
-  Der Fließtext der Webseite, sowie eingebettete Dateien, Audio- und Videolinks 
+- Die Auswertung bezieht sich allein auf Links.
+  Der Fließtext der Webseite, sowie eingebettete Dateien, Audio- und Videolinks
   und deren Inhalte werden bisher nicht untersucht.
 
 ### Bezahlbarrieren alias Paywalls
@@ -710,7 +710,7 @@ Wird eine solche Barriere entdeckt, so wird dieses Merkmal auf `wahr` gesetzt.
 
 Da Bezahlbarrieren erst nach einer gewissen Seitennutzung aufkommen, verringert dieses Merkmal die benötigte Zeit für die
 Webseitenklassifizierung.
-Dieses Merkmal ermöglicht anhand eines großen Fundus an Informationen automatisiert solche Elemente zu erkennen. 
+Dieses Merkmal ermöglicht anhand eines großen Fundus an Informationen automatisiert solche Elemente zu erkennen.
 Es eliminiert aufwändiges Suchen durch Menschen und subjektive Entscheidungen.
 
 #### Quellen
@@ -745,12 +745,12 @@ Wird die entsprechende Einstellung entdeckt, so gibt dieses Merkmal `wahr` zurü
 
 #### Vorteil
 
-Da das Einbetten von Webseiten klar durch den Header definiert wird, der für Browsernutzer*Innen nicht direkt ersichtlich 
+Da das Einbetten von Webseiten klar durch den Header definiert wird, der für Browsernutzer*Innen nicht direkt ersichtlich
 ist, ermöglicht dieses Merkmal eine Entscheidung, die sonst nicht direkt möglich wäre.
 
 #### Quellen
 
-Ob eine Webseite als IFrame einbettbar ist, wird über den Header `x-frame-options` definiert. 
+Ob eine Webseite als IFrame einbettbar ist, wird über den Header `x-frame-options` definiert.
 Ist dieser auf `same-origin` oder `deny`, so kann nicht eingebettet werden.
 Dieses Merkmal steht im Kontrast zum Sicherheits-Merkmal, welches denselben Header untersucht.
 
@@ -779,7 +779,7 @@ Dieses Merkmal untersucht, ob die Webseite Popups beinhaltet.
 
 Da PopUp erst nach einer gewissen Seitennutzung aufkommen, verringert dieses Merkmal die benötigte Zeit für die
 Webseitenklassifizierung.
-Dieses Merkmal ermöglicht anhand eines großen Fundus an Informationen automatisiert solche Elemente zu erkennen. 
+Dieses Merkmal ermöglicht anhand eines großen Fundus an Informationen automatisiert solche Elemente zu erkennen.
 Es eliminiert aufwändiges Suchen durch Menschen und subjektive Entscheidungen.
 
 #### Quellen
@@ -819,12 +819,12 @@ Wird eine solche Barriere entdeckt, so wird dieses Merkmal auf `wahr` gesetzt.
 
 Da Registrierbarrieren erst nach einer gewissen Seitennutzung aufkommen, verringert dieses Merkmal die benötigte Zeit für die
 Webseitenklassifizierung.
-Dieses Merkmal ermöglicht anhand eines großen Fundus an Informationen automatisiert solche Elemente zu erkennen. 
+Dieses Merkmal ermöglicht anhand eines großen Fundus an Informationen automatisiert solche Elemente zu erkennen.
 Es eliminiert aufwändiges Suchen durch Menschen und subjektive Entscheidungen.
 
 #### Quellen
 
-Die Stichwörter wurden manuell ausgewählt anhand einer Vielzahl von Webseiten mit Registrierbarrieren, bspw., 
+Die Stichwörter wurden manuell ausgewählt anhand einer Vielzahl von Webseiten mit Registrierbarrieren, bspw.,
 Online-Zeitungen.
 
 #### Ablauf
@@ -857,14 +857,14 @@ Es werden ausschließlich HTML Eingabeobjekte untersucht.
 
 #### Vorteil
 
-Da Eingabeobjekte häufig versteckt oder an mehreren Orten der Webseite vorkommen, verringert dieses Merkmal die 
+Da Eingabeobjekte häufig versteckt oder an mehreren Orten der Webseite vorkommen, verringert dieses Merkmal die
 benötigte Zeit für die Webseitenklassifizierung.
-Dieses Merkmal ermöglicht anhand eines großen Fundus an Informationen automatisiert solche Elemente zu erkennen. 
+Dieses Merkmal ermöglicht anhand eines großen Fundus an Informationen automatisiert solche Elemente zu erkennen.
 Es eliminiert aufwändiges Suchen durch Menschen und subjektive Entscheidungen.
 
 #### Quellen
 
-Die Stichwörter wurden manuell ausgewählt anhand einer Vielzahl von Webseiten mit Eingabeelementen, bspw., 
+Die Stichwörter wurden manuell ausgewählt anhand einer Vielzahl von Webseiten mit Eingabeelementen, bspw.,
 Online-Zeitungen.
 
 #### Ablauf
@@ -893,7 +893,7 @@ Online-Zeitungen.
 ### Weitere Merkmale
 
 TODO:
-- Verlustfreie und verlustbehaftete Bilder: wird ein verlustfreies Bild gefunden, welches einem verlustbehafteten entspricht, sodass ersteres bevorzugt werden kann? 
+- Verlustfreie und verlustbehaftete Bilder: wird ein verlustfreies Bild gefunden, welches einem verlustbehafteten entspricht, sodass ersteres bevorzugt werden kann?
 - PG18/FSK18
 - FAIR data
 - Wie werden Webseiten auf Google indiziert? SEO-Thema
@@ -904,16 +904,16 @@ TODO:
 
 ## Allgemeine TODOs
 
-Derzeit sind Merkmale unabhängig konstruiert, d. h., viele Merkmale überprüfen selbstständig anhand einer Liste 
+Derzeit sind Merkmale unabhängig konstruiert, d. h., viele Merkmale überprüfen selbstständig anhand einer Liste
 ob deren Inhalte in der Webseite vorgefunden werden können.
 Dies erzeugt Doppelungen, bspw., im Programmcode, der sich um die Verwaltung der Listen und deren Vorbereitung kümmert.
 Würden bestimmte Merkmale zusammengefasst, könnte sich dadurch ein Performanceboost ergeben.
 Weiterhin könnte es spannend sein, Merkmale zusammenzufassen und hernach anhand der gefundenen Listeneinträge festzustellen,
 ob bspw., Popups vorhanden sind o. ä.
-Inwiefern ein solcher Wandel in der Architektur lohnenswert ist, hängt auch vom jeweiligen Flaschenhals ab. 
+Inwiefern ein solcher Wandel in der Architektur lohnenswert ist, hängt auch vom jeweiligen Flaschenhals ab.
 Derzeit ist die Überprüfung auf Werbung und Privatsphäre der Flaschenhals, da speziell das Plugin `adblockparser`.
 Entweder wird dieses Plugin optimiert oder ersetzt.
 
 Wie besprochen, benötigen viele der Merkmale Daten aus der Produktion, um weiter verfeinert zu werden.
-Idealerweise werden die `values` der Merkmale, die neben `decision` und `probability` zurückgegeben, 
+Idealerweise werden die `values` der Merkmale, die neben `decision` und `probability` zurückgegeben,
 hinterlegt und nachträglich ausgewertet.
