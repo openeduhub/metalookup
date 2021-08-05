@@ -168,6 +168,7 @@ def extract_meta(input_data: Input):
 
 @app.get(
     "/records/",
+    response_model=RecordsOutput,
     description="Get all urls and their processed metadata.",
 )
 def show_records():
@@ -191,7 +192,7 @@ def show_records():
                 time_until_complete=record.time_until_complete,
             )
         )
-    return {"records": records}
+    return {"records": out}
 
 
 @app.get(
