@@ -23,7 +23,7 @@ class Cookies(MetadataBase):
 
         try:
             data: list = website_data.har["log"]["entries"]
-        except KeyError as e:
+        except KeyError:
             data = []
 
         raw_cookies = [
