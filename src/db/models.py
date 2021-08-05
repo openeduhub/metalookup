@@ -29,7 +29,6 @@ class CacheEntry(Base):
     malicious_extensions = Column(ARRAY(UnicodeText, dimensions=1), default=[])
     extracted_links = Column(ARRAY(UnicodeText, dimensions=1), default=[])
     extract_from_files = Column(ARRAY(UnicodeText, dimensions=1), default=[])
-    cookies_in_html = Column(ARRAY(UnicodeText, dimensions=1), default=[])
     cookies = Column(ARRAY(UnicodeText, dimensions=1), default=[])
     fanboy_annoyance = Column(ARRAY(UnicodeText, dimensions=1), default=[])
     fanboy_notification = Column(ARRAY(UnicodeText, dimensions=1), default=[])

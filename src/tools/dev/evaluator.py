@@ -25,7 +25,6 @@ def load_raw_data_and_save_to_dataframe():
         "malicious_extensions",
         "extracted_links",
         "extract_from_files",
-        "cookies_in_html",
         "fanboy_annoyance",
         "fanboy_notification",
         "fanboy_social_media",

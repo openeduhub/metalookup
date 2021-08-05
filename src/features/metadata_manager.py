@@ -17,7 +17,6 @@ from features.gdpr import GDPR
 from features.html_based import (
     Advertisement,
     AntiAdBlock,
-    CookiesInHtml,
     EasylistAdult,
     EasylistGermany,
     EasyPrivacy,
@@ -43,6 +42,7 @@ from lib.constants import (
     MESSAGE_ALLOW_LIST,
     MESSAGE_BYPASS_CACHE,
     MESSAGE_SHARED_MEMORY_NAME,
+    MESSAGE_URL,
     PROBABILITY,
     TIMESTAMP,
     VALUES,
@@ -78,7 +78,6 @@ class MetadataManager:
             EasyPrivacy,
             MaliciousExtensions,
             ExtractFromFiles,
-            CookiesInHtml,
             FanboyAnnoyance,
             FanboyNotification,
             FanboySocialMedia,

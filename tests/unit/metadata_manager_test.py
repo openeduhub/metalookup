@@ -19,5 +19,5 @@ def metadata_manager():
 
 def test_init(metadata_manager: MetadataManager):
     assert isinstance(metadata_manager._logger, Logger)
-    assert NUMBER_OF_EXTRACTORS == 22
+    assert NUMBER_OF_EXTRACTORS == 21
     assert len(metadata_manager.metadata_extractors) == NUMBER_OF_EXTRACTORS

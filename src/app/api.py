@@ -50,7 +50,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["POST", "GET", "OPTIONS"],
+    allow_methods=["POST", "GET", "OPTIONS", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 # noinspection PyTypeHints
@@ -192,7 +192,7 @@ def show_records():
                 time_until_complete=record.time_until_complete,
             )
         )
-    return records
+    return {"records": out}
 
 
 @app.get(

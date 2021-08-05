@@ -10,7 +10,6 @@ from features.gdpr import GDPR
 from features.html_based import (
     Advertisement,
     AntiAdBlock,
-    CookiesInHtml,
     EasylistAdult,
     EasylistGermany,
     EasyPrivacy,
@@ -57,8 +56,6 @@ def _test_feature(feature_class, html, expectation) -> tuple[bool, bool]:
         data = {}
     finally:
         website_manager.reset()
-
-    print(data)
 
     are_values_correct = False
     try:
@@ -175,7 +172,7 @@ def test_easylist_adult():
 
 
 def test_cookies_in_html():
-    feature = CookiesInHtml
+    feature = Cookies
     feature._create_key(feature)
     html = {
         "html": """<div class='ast-small-footer-section ast-small-footer-section-1 ast-small-footer-section-equally ast-col-md-6 ast-col-xs-12' >
