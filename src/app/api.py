@@ -169,7 +169,7 @@ def extract_meta(input_data: Input):
 @app.get(
     "/records/",
     response_model=RecordsOutput,
-    description="Extract all extracted records from the database",
+    description="Get all urls and their processed metadata.",
 )
 def show_records():
     records = load_records()
