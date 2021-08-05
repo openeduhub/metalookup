@@ -97,8 +97,10 @@ class CacheManager:
             decision = DecisionCase.FALSE
         elif DecisionCase.UNKNOWN in decision:
             decision = DecisionCase.UNKNOWN
-        else:
+        elif DecisionCase.TRUE in decision:
             decision = DecisionCase.TRUE
+        else:
+            decision = DecisionCase.UNKNOWN
 
         if key == ACCESSIBILITY:
             values = [get_mean(values)]
