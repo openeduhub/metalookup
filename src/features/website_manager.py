@@ -5,13 +5,13 @@ import time
 import traceback
 from dataclasses import dataclass, field
 from json import JSONDecodeError
-from typing import NoReturn
+from typing import NoReturn, Optional
 from urllib.parse import urlparse
 
 import requests
 from bs4 import BeautifulSoup
 from tldextract.suffix_list import SuffixListNotFound
-from tldextract.tldextract import TLDExtract
+from tldextract.tldextract import TLDExtract, extract
 
 from lib.constants import (
     MESSAGE_HAR,
@@ -72,7 +72,7 @@ class WebsiteManager:
         self._logger = get_logger()
 
         try:
-            self.tld_extractor = TLDExtract(cache_dir=False)
+            self.tld_extractor: Optional[TLDExtract] = TLDExtract(cache_dir=False)
         except (ConnectionError, SuffixListNotFound) as e:
             self._logger.error(
                 f"Cannot extract top_level_domain because '{e.args}'"
@@ -113,7 +113,7 @@ class WebsiteManager:
         try:
             if self.tld_extractor is not None:
                 self.website_data.top_level_domain = self.tld_extractor(
-                    url=self.website_data.url
+                    url=self.website_data.url.replace("http://", "").replace("https://", "")
                 ).domain
         except (ConnectionError, SuffixListNotFound, ValueError) as e:
             self._logger.error(
@@ -128,11 +128,11 @@ class WebsiteManager:
         if idx >= 0:
             header = (
                 header.replace("b'", '"')
-                .replace('b"', '"')
-                .replace("/'", '"')
-                .replace("'", '"')
-                .replace('""', '"')
-                .replace('/"', "/")
+                    .replace('b"', '"')
+                    .replace("/'", '"')
+                    .replace("'", '"')
+                    .replace('""', '"')
+                    .replace('/"', "/")
             )
 
         if len(header) > 0:
