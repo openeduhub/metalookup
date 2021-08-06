@@ -152,7 +152,7 @@ def print_accessibility_per_domain():
 
         website_manager.website_data.url = url
         website_manager._extract_top_level_domain()
-        top_level_domain = website_manager.website_data.top_level_domain
+        top_level_domain = website_manager.website_data.domain
         if top_level_domain == "":
             print("Top level domain not found for", url)
 
@@ -193,7 +193,7 @@ def print_url_per_domain():
 
         website_manager.website_data.url = url
         website_manager._extract_top_level_domain()
-        top_level_domain = website_manager.website_data.top_level_domain
+        top_level_domain = website_manager.website_data.domain
         if top_level_domain == "":
             print("Top level domain not found for", url)
 
@@ -202,7 +202,7 @@ def print_url_per_domain():
 
         print_data[top_level_domain].append(url)
 
-    print(f"Evaluated top level domains:")
+    print("Evaluated top level domains:")
     for domain in print_data.keys():
         if domain != "":
             print(
@@ -250,6 +250,6 @@ if __name__ == "__main__":
 
         print_accessibility_per_domain()
 
-        print_url_per_domain()
+    print_url_per_domain()
 
-    print_exceptions()
+    # print_exceptions()

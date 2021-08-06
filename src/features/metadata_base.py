@@ -331,7 +331,7 @@ class MetadataBase:
         return list({a["href"] for a in soup.find_all(href=True)})
 
     def _parse_adblock_rules(self, website_data: WebsiteData) -> list:
-        self.adblockparser_options["domain"] = website_data.top_level_domain
+        self.adblockparser_options["domain"] = website_data.domain
         values = [
             url
             for url in website_data.raw_links

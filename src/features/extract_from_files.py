@@ -121,7 +121,10 @@ class ExtractFromFiles(MetadataBase):
         subtype_tag = "/Subtype"
         for page in range(pdf_file.getNumPages()):
             pdf_page = pdf_file.getPage(page)
-            if resources_tag in pdf_page.keys() and xobject_tag in pdf_page[resources_tag].keys():
+            if (
+                resources_tag in pdf_page.keys()
+                and xobject_tag in pdf_page[resources_tag].keys()
+            ):
                 x_object = pdf_page[resources_tag][xobject_tag].getObject()
 
                 for obj in x_object:
