@@ -1,11 +1,10 @@
-local_tools
 setup.cfg
-scraped
-logs
-developer_tools
 .github
 .git
 .pytest_cache
 htmlcov
 .idea
 tests
+src/lib/logs
+src/tag_lists
+tag_lists

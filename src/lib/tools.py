@@ -1,4 +1,4 @@
-import tools
+import math
 
 
 def get_mean(values: list) -> float:
@@ -8,7 +8,7 @@ def get_mean(values: list) -> float:
 def get_std_dev(values: list) -> float:
     mean = get_mean(values)
     var = sum(pow(x - mean, 2) for x in values) / len(values)  # variance
-    std = tools.sqrt(var)
+    std = math.sqrt(var)
     return std
 
 

@@ -5,7 +5,7 @@ import time
 import traceback
 from dataclasses import dataclass, field
 from json import JSONDecodeError
-from typing import NoReturn
+from typing import NoReturn, Optional
 from urllib.parse import urlparse
 
 import requests
@@ -37,7 +37,7 @@ class WebsiteData:
     image_links: list = field(default_factory=list)
     extensions: list = field(default_factory=list)
     url: str = field(default_factory=str)
-    top_level_domain: str = field(default_factory=str)
+    domain: str = field(default_factory=str)
     har: dict = field(default_factory=dict)
 
 
@@ -72,7 +72,9 @@ class WebsiteManager:
         self._logger = get_logger()
 
         try:
-            self.tld_extractor = TLDExtract(cache_dir=False)
+            self.tld_extractor: Optional[TLDExtract] = TLDExtract(
+                cache_dir=False
+            )
         except (ConnectionError, SuffixListNotFound) as e:
             self._logger.error(
                 f"Cannot extract top_level_domain because '{e.args}'"
@@ -112,14 +114,20 @@ class WebsiteManager:
     def _extract_top_level_domain(self) -> None:
         try:
             if self.tld_extractor is not None:
-                self.website_data.top_level_domain = self.tld_extractor(
-                    url=self.website_data.url
-                ).domain
+                host = self.tld_extractor(
+                    url=self.website_data.url.replace("http://", "").replace(
+                        "https://", ""
+                    )
+                )
+                domain = [host.subdomain, host.domain, host.suffix]
+                self.website_data.domain = ".".join(
+                    [element for element in domain if element != ""]
+                )
         except (ConnectionError, SuffixListNotFound, ValueError) as e:
             self._logger.error(
                 f"Cannot extract top_level_domain because '{e.args}'"
             )
-            self.website_data.top_level_domain = ""
+            self.website_data.domain = ""
 
     def _preprocess_header(self) -> None:
         header: str = self.website_data.raw_header.lower()
