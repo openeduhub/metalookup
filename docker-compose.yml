@@ -21,6 +21,8 @@ services:
       start_period: 40s
     networks:
       - backend
+    environment:
+      - PRODUCTION=false
   splash:
     dns: 8.8.8.8
     image: scrapinghub/splash:master

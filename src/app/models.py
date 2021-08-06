@@ -275,10 +275,6 @@ class ProgressOutput(BaseModel):
     progress: float = Field(default=0.0, description="Progress of evaluation.")
 
 
-class CacheOutput(BaseModel):
-    cache: list = Field(default=[], description="Cache content.")
-
-
 class ResetCacheOutput(BaseModel):
     deleted_rows: int = Field(
         default=-1,
