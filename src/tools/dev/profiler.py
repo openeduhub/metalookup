@@ -144,7 +144,6 @@ def print_accessibility_per_domain():
     meta_rows = database.execute(query)
     url = "https://www.4teachers.de/?action=show&id=668772"
 
-
     print_data = {}
     for meta_row in meta_rows:
         url = meta_row[0]
@@ -176,6 +175,7 @@ def print_accessibility_per_domain():
                 get_std_dev(print_data[domain]),
             )
 
+
 def print_url_per_domain():
     database: Session = ProfilerSession()
 
@@ -184,21 +184,6 @@ def print_url_per_domain():
     website_manager = WebsiteManager.get_instance()
 
     meta_rows = database.execute(query)
-
-    url = "https://www.4teachers.de/?action=show&id=668772"
-
-
-    website_manager.website_data.url = url
-    website_manager._extract_top_level_domain()
-    top_level_domain = website_manager.website_data.top_level_domain
-    print(top_level_domain)
-
-    url = "https://www.4teachers.de/"
-    website_manager.website_data.url = url
-    website_manager._extract_top_level_domain()
-    top_level_domain = website_manager.website_data.top_level_domain
-
-    print(top_level_domain)
 
     print_data = {}
     for meta_row in meta_rows:
@@ -217,13 +202,37 @@ def print_url_per_domain():
 
         print_data[top_level_domain].append(url)
 
-    # print("print_data:", print_data)
+    print(f"Evaluated top level domains:")
     for domain in print_data.keys():
-        if domain != "" and len(print_data[domain]) > 0:
+        if domain != "":
             print(
                 domain,
-                print_data[domain]
             )
+
+
+def print_exceptions():
+    database: Session = ProfilerSession()
+
+    query = database.query(db_models.Record.exception)
+
+    meta_rows = database.execute(query)
+
+    print_data = {}
+    for meta_row in meta_rows:
+        exception = meta_row[0]
+        if exception == "":
+            continue
+
+        if exception not in print_data.keys():
+            print_data.update({exception: 0})
+
+        print_data[exception] += 1
+
+    print(f"Found exceptions: {len(print_data.items())}")
+    for exception, value in print_data.items():
+        if exception != "":
+            print(exception, value)
+            print("---------------------------")
 
 
 PROFILER_DEBUG = False
@@ -241,4 +250,6 @@ if __name__ == "__main__":
 
         print_accessibility_per_domain()
 
-    print_url_per_domain()
+        print_url_per_domain()
+
+    print_exceptions()

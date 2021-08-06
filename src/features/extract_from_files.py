@@ -116,13 +116,17 @@ class ExtractFromFiles(MetadataBase):
     @staticmethod
     def _get_pdf_images(pdf_file: PyPDF2.PdfFileReader) -> list:
         images = []
+        resources_tag = "/Resources"
+        xobject_tag = "/XObject"
+        subtype_tag = "/Subtype"
         for page in range(pdf_file.getNumPages()):
             pdf_page = pdf_file.getPage(page)
-            x_object = pdf_page["/Resources"]["/XObject"].getObject()
+            if resources_tag in pdf_page.keys() and xobject_tag in pdf_page[resources_tag].keys():
+                x_object = pdf_page[resources_tag][xobject_tag].getObject()
 
-            for obj in x_object:
-                if x_object[obj]["/Subtype"] == "/Image":
-                    images += obj
+                for obj in x_object:
+                    if x_object[obj][subtype_tag] == "/Image":
+                        images += obj
         return images
 
     def _extract_pdfs(self, filename: str) -> dict:
@@ -130,7 +134,7 @@ class ExtractFromFiles(MetadataBase):
             pdf_file = PyPDF2.PdfFileReader(open(filename, "rb"))
             extracted_content = self._get_pdf_content(filename, pdf_file)
             images = self._get_pdf_images(pdf_file)
-        except PdfReadError:
+        except (PdfReadError, OSError):
             extracted_content = []
             images = []
 

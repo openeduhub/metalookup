@@ -121,7 +121,7 @@ class CacheManager:
                 .filter_by(top_level_domain=self.top_level_domain)
                 .first()
             )
-        except ProgrammingError as e:
+        except (ProgrammingError, AttributeError) as e:
             self._logger.exception(f"Reading cache failed: {e.args}")
             entry = []
         if entry is None:
