@@ -34,7 +34,7 @@ class CacheManager:
 
     def __init__(self):
         super().__init__()
-        self.top_level_domain: str = ""
+        self.domain: str = ""
         self.hosts = {}
         self._logger = get_logger()
         self._logger.debug(
@@ -46,17 +46,20 @@ class CacheManager:
     def set_bypass(self, bypass: bool):
         self.bypass = bypass
 
+    def update_domains(self):
+        self.hosts = get_top_level_domains()
+
     def _prepare_cache_manager(self) -> None:
         self._logger.debug(
             f"get_top_level_domains at {time.perf_counter() - global_start} since start"
         )
-        self.hosts = get_top_level_domains()
+        self.update_domains()
         self._logger.debug(
             f"get_top_level_domains done at {time.perf_counter() - global_start} since start"
         )
 
     def is_host_predefined(self) -> bool:
-        return self.top_level_domain in self.hosts
+        return self.domain in self.hosts
 
     def is_enough_cached_data_present(self, key: str) -> bool:
         feature_values = self.read_cached_feature_values(key)
@@ -67,9 +70,8 @@ class CacheManager:
             if self.is_cached_value_recent(data[TIMESTAMP]):
                 suitable_entries += 1
             if suitable_entries >= MINIMUM_REQUIRED_ENTRIES:
-                break
-
-        return suitable_entries >= MINIMUM_REQUIRED_ENTRIES
+                return True
+        return False
 
     @staticmethod
     def is_cached_value_recent(timestamp: float) -> bool:
@@ -118,10 +120,10 @@ class CacheManager:
         try:
             entry = (
                 database.query(db_models.CacheEntry)
-                .filter_by(top_level_domain=self.top_level_domain)
+                .filter_by(top_level_domain=self.domain)
                 .first()
             )
-        except ProgrammingError as e:
+        except (ProgrammingError, AttributeError) as e:
             self._logger.exception(f"Reading cache failed: {e.args}")
             entry = []
         if entry is None:
