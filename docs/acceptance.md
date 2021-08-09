@@ -13,14 +13,14 @@ Die Unit- und Integrationstests vertiefen dies weiter.
 
 Merkmale geben drei wichtige Werte zurück:
 
-- `decision`:
+- `isHappyCase`:
     - Die getroffene Entscheidung.
-    - `wahr` oder `falsch`. `wahr` zeigt an, dass das Merkmal erfüllt ist.
-    - `decision` ist explizit nur in Kombination mit `probability` wertvoll.
+    - `true`, `unknown` oder `false`. `true` zeigt an, dass das Merkmal zum Knockout führt.
+    - `isHappyCase` ist explizit nur in Kombination mit `probability` wertvoll.
 - `probability`:
     - Die Wahrscheinlichkeit, dass die Entscheidung zutrifft.
-    - Ein Wert von 0 bedeutet, die Entscheidung hat keinen Wert. Egal ob `wahr` oder `falsch`, wir wissen nichts.
-    - Dies geschieht bspw., wenn das Merkmal exakt auf der Schwelle zwischen `wahr` und `falsch`.
+    - Ein Wert von 0 bedeutet, die Entscheidung hat keinen Wert. Egal ob `true` oder `false`, wir wissen nichts. Standardmäßig wird hier `unknown` zurück gegeben.
+    - Dies geschieht bspw., wenn das Merkmal exakt auf der Schwelle zwischen `true` und `false`.
       An diesem Punkt wären beide Entscheidungen möglich und würde sich die Webseite nur minimal ändern, wäre die Entscheidung anders.
       Daher ist hier nichts sicher auszusagen.
 - `values`:
@@ -34,7 +34,7 @@ Im Folgenden werden die verschiedenen Merkmale näher beschrieben und durch Beis
 Dieses Merkmal gibt an, ob die Webseite barrierefrei nach [Google Lighthouse](https://developers.google.com/web/tools/lighthouse/) ist.
 Dafür wird eine Punktezahl für mobile Endgeräte und Desktop-PCs berechnet.
 Deren Mittelwert wird benutzt, um eine Aussage über die Barrierefreiheit zu treffen.
-Ist der Mittelwert hoch genug, gilt Barrierefreiheit als `wahr`.
+Ist der Mittelwert hoch genug, gilt Barrierefreiheit als `true`.
 
 Barrierefreiheit wird hierbei durch Google definiert, bspw., ob zwingend eine Maus benutzt werden muss, um die Webseite zu navigieren.
 
@@ -42,14 +42,14 @@ Barrierefreiheit wird hierbei durch Google definiert, bspw., ob zwingend eine Ma
 
 Statt händisch und subjektiv einzuschätzen, ob eine Webseite, bspw. von Blinden, eingesetzt werden kann wird hier auf ein
 gepflegtes Werkzeug zurückgegriffen, welches reproduzierbare Ergebnisse liefert und damit Webseiten vergleichbar macht.
-
+daren
 #### Ablauf
 
 1. Das Merkmal sendet die Webseite-url an einen Lighthouse Container basierend auf:
    `https://github.com/femtopixel/docker-google-lighthouse`.
 2. Zurück kommen Fließkommazahlen zwischen `0` und `1`.
 3. Der Wert wird für mobile Endgeräte und Desktop-PCs einzeln berechnet und dann gemittelt.
-4. Liegt der Mittelwert über dem konfigurierten Schwellwert, e.g., `0.8`, so wird `decision` `wahr`.
+4. Liegt der Mittelwert über dem konfigurierten Schwellwert, e.g., `0.8`, so wird `decision` `true`.
 Die `probability` wird entsprechend zwischen dem Schwellwert und `1` linear skaliert.
 Je näher der Mittelwert am Schwellwert liegt, desto geringer ist `probability`.
 D. h., liegt der Mittelwert bei `0.85` und der Schwellwert bei `0.8`, so wird `probability` `0.25`.
@@ -111,7 +111,7 @@ Cookie 2:
 
 Dieses Merkmal untersucht die herunterladbaren Dateien einer Webseite darauf, ob diese als Volltext gelesen werden können.
 Unterstützte Dateiformate sind derzeit `.docx` und `.pdf`.
-Wenn mehr als die Hälfte aller Dateien extrahiert werden können, so gilt dieses Merkmal als `wahr`.
+Wenn mehr als die Hälfte aller Dateien extrahiert werden können, so gilt dieses Merkmal als `true`.
 
 #### Vorteil
 
@@ -127,12 +127,12 @@ angeboten werden.
 4. Lässt sich aus einer solchen Datei ohne Fehler ein Text extrahieren, so wird die Datei als lesbar eingestuft und zu
    `values` hinzugefügt.
 5. Die `probability` ergibt sich als Anteil solcher extrahierbarer Dateien im Vergleich zu allen vorhandenen Dateien.
-4. Ist die `probability` über dem Schwellwert, so wird `decision` auf `wahr` gesetzt.
+4. Ist die `probability` über dem Schwellwert, so wird `decision` auf `true` gesetzt.
 
 #### Beispiel
 
 1. Die url `https://digitallearninglab.de/unterrichtsbausteine/anlauttraining` enthält Pdf und Docx Dateien.
-2. Alle Dateien sind extrahierbar, sodass das Merkmal hier die `decision` `wahr` zurückgegeben wird.
+2. Alle Dateien sind extrahierbar, sodass das Merkmal hier die `decision` `true` zurückgegeben wird.
 3. Da dies programmatisch passiert, kann lediglich durch den Nutzer überprüft werden, dass die Dateien nicht
    passwortgeschützt sind und der Text in den PDFs selektiert und kopiert werden kann.
 
@@ -191,7 +191,7 @@ Wird ein Eingabefeld gefunden, gilt dies als negativ.
 
 ### Javascript
 
-Dieses Merkmal untersucht, ob und welche Javascripts werden ausgeführt.
+Dieses Merkmal untersucht, ob und welche Javaskripte werden ausgeführt.
 Da Javascript potenziell gefährliche Inhalte laden und ausführen kann wird dieses Merkmal `wahr` anzeigen, sobald ein Javascript gefunden wurde.
 
 #### Vorteil
@@ -745,14 +745,14 @@ Wird die entsprechende Einstellung entdeckt, so gibt dieses Merkmal `wahr` zurü
 
 #### Vorteil
 
-Da das Einbetten von Webseiten klar durch den Header definiert wird, der für Browsernutzer*Innen nicht direkt ersichtlich
+Da das Einbetten von Webseiten klar durch den Header definiert wird, der für Nutzer*Innen nicht direkt ersichtlich
 ist, ermöglicht dieses Merkmal eine Entscheidung, die sonst nicht direkt möglich wäre.
 
 #### Quellen
 
 Ob eine Webseite als IFrame einbettbar ist, wird über den Header `x-frame-options` definiert.
 Ist dieser auf `same-origin` oder `deny`, so kann nicht eingebettet werden.
-Dieses Merkmal steht im Kontrast zum Sicherheits-Merkmal, welches denselben Header untersucht.
+Dieses Merkmal steht im Kontrast zum Sicherheitsmerkmal, welches denselben Header untersucht.
 
 #### Ablauf
 
@@ -917,3 +917,6 @@ Entweder wird dieses Plugin optimiert oder ersetzt.
 Wie besprochen, benötigen viele der Merkmale Daten aus der Produktion, um weiter verfeinert zu werden.
 Idealerweise werden die `values` der Merkmale, die neben `decision` und `probability` zurückgegeben,
 hinterlegt und nachträglich ausgewertet.
+
+Weitere Listen:
+- https://github.com/hectorm/hblock
