@@ -48,7 +48,7 @@ Barrierefreiheit wird hierbei durch Google definiert, bspw., ob zwingend eine Ma
 
 Statt händisch und subjektiv einzuschätzen, ob eine Webseite, bspw. von Blinden, eingesetzt werden kann wird hier auf ein
 gepflegtes Werkzeug zurückgegriffen, welches reproduzierbare Ergebnisse liefert und damit Webseiten vergleichbar macht.
-daren
+
 #### Ablauf
 
 1. Das Merkmal sendet die Webseite-url an einen Lighthouse Container basierend auf:
