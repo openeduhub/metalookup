@@ -11,21 +11,27 @@ Die Unit- und Integrationstests vertiefen dies weiter.
 
 ## Merkmale
 
-Merkmale geben drei wichtige Werte zurück:
+Merkmale geben vier wichtige Werte zurück:
 
-- `decision`:
+- `isHappyCase`:
     - Die getroffene Entscheidung.
-    - `wahr` oder `falsch`. `wahr` zeigt an, dass das Merkmal erfüllt ist.
-    - `decision` ist explizit nur in Kombination mit `probability` wertvoll.
+    - `true`, `unknown` oder `false`. `true` zeigt an, ob das Merkmal zum Knockout oder zum HappyCase führt.
+    - Als HappyCase gilt im allgemeinen die Merkmalsfreiheit, also das bspw. eine Webseite frei von Werbung ist.
+    - Knockout bedeutet hingegen ein negatives Ergebnis zum Happy Case, also bspw. das DGSVO nicht erfüllt ist oder Werbung vorhanden ist.
+    - `isHappyCase` ist explizit nur in Kombination mit `probability` wertvoll.
 - `probability`:
     - Die Wahrscheinlichkeit, dass die Entscheidung zutrifft.
-    - Ein Wert von 0 bedeutet, die Entscheidung hat keinen Wert. Egal ob `wahr` oder `falsch`, wir wissen nichts.
-    - Dies geschieht bspw., wenn das Merkmal exakt auf der Schwelle zwischen `wahr` und `falsch`.
+    - Ein Wert von 0 bedeutet, die Entscheidung hat keinen Wert. Egal ob `true` oder `false`, wir wissen nichts. Standardmäßig wird hier `unknown` zurück gegeben.
+    - Dies geschieht bspw., wenn das Merkmal exakt auf der Schwelle zwischen `true` und `false`.
       An diesem Punkt wären beide Entscheidungen möglich und würde sich die Webseite nur minimal ändern, wäre die Entscheidung anders.
       Daher ist hier nichts sicher auszusagen.
 - `values`:
     - Die rohen Werte, welche das Merkmal gefunden hat
     - Basierend auf diesen Werten werden die Entscheidung und deren Wahrscheinlichkeit bestimmt
+- `explanation`:
+  - eine knappe, prägnante Erläuterung warum der entsprechende Wert für `isHappyCase` gewählt wurde.
+  - Der Eintrag `Cached` deutet hier an, dass die Daten aus dem Cache reproduziert worden.
+    - Möglicherweise hat die Webseite sich seit dem Cache-Eintrag verändert. Das Ergebnis sollte ggf. hinterfragt werden.
 
 Im Folgenden werden die verschiedenen Merkmale näher beschrieben und durch Beispiele erläutert.
 
@@ -34,7 +40,7 @@ Im Folgenden werden die verschiedenen Merkmale näher beschrieben und durch Beis
 Dieses Merkmal gibt an, ob die Webseite barrierefrei nach [Google Lighthouse](https://developers.google.com/web/tools/lighthouse/) ist.
 Dafür wird eine Punktezahl für mobile Endgeräte und Desktop-PCs berechnet.
 Deren Mittelwert wird benutzt, um eine Aussage über die Barrierefreiheit zu treffen.
-Ist der Mittelwert hoch genug, gilt Barrierefreiheit als `wahr`.
+Ist der Mittelwert hoch genug, gilt Barrierefreiheit als `true`.
 
 Barrierefreiheit wird hierbei durch Google definiert, bspw., ob zwingend eine Maus benutzt werden muss, um die Webseite zu navigieren.
 
@@ -49,7 +55,7 @@ gepflegtes Werkzeug zurückgegriffen, welches reproduzierbare Ergebnisse liefert
    `https://github.com/femtopixel/docker-google-lighthouse`.
 2. Zurück kommen Fließkommazahlen zwischen `0` und `1`.
 3. Der Wert wird für mobile Endgeräte und Desktop-PCs einzeln berechnet und dann gemittelt.
-4. Liegt der Mittelwert über dem konfigurierten Schwellwert, e.g., `0.8`, so wird `decision` `wahr`.
+4. Liegt der Mittelwert über dem konfigurierten Schwellwert, e.g., `0.8`, so wird `isHappyCase` `true`.
 Die `probability` wird entsprechend zwischen dem Schwellwert und `1` linear skaliert.
 Je näher der Mittelwert am Schwellwert liegt, desto geringer ist `probability`.
 D. h., liegt der Mittelwert bei `0.85` und der Schwellwert bei `0.8`, so wird `probability` `0.25`.
@@ -62,7 +68,7 @@ Damit liegt auch der Mittelwert bei `0.98` und die `probability` bei `0.9` für 
 ### Cookies
 
 Dieses Merkmal liest die Cookies ein, die von der Webseite benutzt werden.
-Wird eines dieser Cookies als unsicher dargestellt, so wird dieses Merkmal als `wahr` definiert.
+Wird eines dieser Cookies als unsicher dargestellt, so wird dieses Merkmal als `false` definiert.
 Idealerweise sollte eine Webseite so wenig Cookies wie möglich laden, bevor der Verwendung von Cookies (s. DSGVO) zugestimmt wird.
 Da diese Zustimmung nicht erfolgt, sollten keine oder wenige Cookies geladen werden.
 
@@ -78,7 +84,7 @@ entfallen.
 2. Jedes Cookie wird auf dessen Eigenschaften `httpOnly` sowie `secure` überprüft.
 3. Ist eine der beiden Eigenschaften `falsch`, so wird dieses Cookie als „unsicher“ eingestuft.
 4. Gibt es mindestens ein unsicheres Cookie auf der Webseite, so wird die `probability` auf `1` und
-`decision` auf `wahr` gesetzt.
+`isHappyCase` auf `false` gesetzt.
 
 #### Beispiel
 
@@ -111,7 +117,7 @@ Cookie 2:
 
 Dieses Merkmal untersucht die herunterladbaren Dateien einer Webseite darauf, ob diese als Volltext gelesen werden können.
 Unterstützte Dateiformate sind derzeit `.docx` und `.pdf`.
-Wenn mehr als die Hälfte aller Dateien extrahiert werden können, so gilt dieses Merkmal als `wahr`.
+Wenn mehr als die Hälfte aller Dateien extrahiert werden können, so gilt dieses Merkmal als `true`.
 
 #### Vorteil
 
@@ -127,12 +133,12 @@ angeboten werden.
 4. Lässt sich aus einer solchen Datei ohne Fehler ein Text extrahieren, so wird die Datei als lesbar eingestuft und zu
    `values` hinzugefügt.
 5. Die `probability` ergibt sich als Anteil solcher extrahierbarer Dateien im Vergleich zu allen vorhandenen Dateien.
-4. Ist die `probability` über dem Schwellwert, so wird `decision` auf `wahr` gesetzt.
+4. Ist die `probability` über dem Schwellwert, so wird `isHappyCase` auf `true` gesetzt.
 
 #### Beispiel
 
 1. Die url `https://digitallearninglab.de/unterrichtsbausteine/anlauttraining` enthält Pdf und Docx Dateien.
-2. Alle Dateien sind extrahierbar, sodass das Merkmal hier die `decision` `wahr` zurückgegeben wird.
+2. Alle Dateien sind extrahierbar, sodass das Merkmal hier die `isHappyCase` `true` zurückgegeben wird.
 3. Da dies programmatisch passiert, kann lediglich durch den Nutzer überprüft werden, dass die Dateien nicht
    passwortgeschützt sind und der Text in den PDFs selektiert und kopiert werden kann.
 
@@ -148,7 +154,7 @@ angeboten werden.
 ### DSGVO alias GDPR
 
 Dieses Merkmal untersucht die Übereinstimmung der Webseite mit den Anforderungen der DSGVO.
-Da dieses Merkmal eine juristische Behandlung nicht erfüllen kann, wird dieses Merkmal stets `falsch` anzeigen, wie abgesprochen.
+Da dieses Merkmal eine juristische Behandlung nicht erfüllen kann, wird dieses Merkmal stets `false` anzeigen, wie abgesprochen.
 
 Nichtsdestotrotz werden verschiedene Eigenschaften der Webseite untersucht und hinterlegt, um dieses Merkmal weiter zu verbessern.
 
@@ -179,20 +185,17 @@ und ob letzteres eine Zeitdauer über 100 Tagen enthält.
 Wird ein Font gefunden, gilt dies als negativ.
 6. Es wird untersucht, ob auf der Webseite Eingabefelder für Passwörter, E-Mail-Adressen und mehr da ist.
 Wird ein Eingabefeld gefunden, gilt dies als negativ.
-7. Da das Merkmal derzeit unzureichend auf DSGVO-Konformität untersucht wird `decision` immer `falsch` sein.
+7. Da das Merkmal derzeit unzureichend auf DSGVO-Konformität untersucht wird `isHappyCase` immer `false` oder `unknown` sein.
 8. Die `probability` wird verringert, wenn ein negativer Fall eintritt, bspw., `impressum` nicht gefunden wird.
 
 #### TODO
 
 - Welche Fonts sind „akzeptabel“, welche nicht?
-- Das Merkmal könnte invertiert werden im Sinne von, ob DSGVO sicher nicht (!) erfüllt ist.
-  D. h. `wahr` zeigt an, dass DSGVO nicht erfüllt ist.
-  Ein `falsch` zeigt an, dass unklar ist, ob DSGVO erfüllt wird oder nicht.
 
 ### Javascript
 
-Dieses Merkmal untersucht, ob und welche Javascripts werden ausgeführt.
-Da Javascript potenziell gefährliche Inhalte laden und ausführen kann wird dieses Merkmal `wahr` anzeigen, sobald ein Javascript gefunden wurde.
+Dieses Merkmal untersucht, ob und welche Javaskripte werden ausgeführt.
+Da Javascript potenziell gefährliche Inhalte laden und ausführen kann wird dieses Merkmal `false` anzeigen, sobald ein Javascript gefunden wurde.
 
 #### Vorteil
 
@@ -214,7 +217,7 @@ Code lesen müssen.
 
 - Auch wenn dies kein wirkliches Skript enthält, so deutet der Schlüssel `src` auf ein Skript hin.
 - Dieses wird entsprechend extrahiert und erkannt.
-- Hier wird `decision` `wahr`.
+- Hier wird `decision` `false`.
 
 #### TODO
 
@@ -225,8 +228,8 @@ Code lesen müssen.
 ### Gefährliche Dateierweiterungen alias MaliciousExtensions
 
 Dieses Merkmal untersucht, ob und welche bekannten gefährlichen Dateiendungen in Dateien der Webseite vorkommen.
-Beispiele enthalten, u. a., `.exe`, `.com`, `.js` und `.dll`.
-Dieses Merkmal ist noch recht grob und wird `wahr` sobald irgendeine Datei mit solch einer Endung gefunden wird.
+Beispiele enthalten, u. a., `.exe`, `.com` und `.dll`.
+Dieses Merkmal ist noch recht grob und wird `false` sobald irgendeine Datei mit solch einer Endung gefunden wird.
 
 #### Vorteil
 
@@ -248,17 +251,17 @@ https://www.howtogeek.com/127154/how-hackers-can-disguise-malicious-programs-wit
 
 1. Das Merkmal untersucht alle Links der Webseite auf Dateien mit Dateiendungen.
 2. Die Dateiendung wird mit den einprogrammierten Endungen verglichen.
-3. Wird eine potenziell gefährliche Dateiendung erkannt, so wird direkt `decision` auf `wahr` gesetzt.
+3. Wird eine potenziell gefährliche Dateiendung erkannt, so wird direkt `isHappyCase` auf `false` gesetzt.
 
 #### Beispiel
 
 1. Die url `https://digitallearninglab.de/unterrichtsbausteine/anlauttraining` enthält Pdf und Docx Dateien.
-2. Da diese potenziell gefährlich sein könnten, wird für diese Webseite die `decision` auf `wahr` gesetzt.
+2. Da diese potenziell gefährlich sein könnten, wird für diese Webseite `isHappyCase` auf `false` gesetzt.
 
 ### Metabeschreibungsentdecker alias MetatagExplorer
 
 Dieses Merkmal sammelt alle `meta` HTML Elemente der Webseite für zukünftige Auswertung nach Produktivlauf.
-Da es derzeit rein explorativ ist, wird dieses Merkmal stets `falsch` als `decision` zurückgeben.
+Da es derzeit rein explorativ ist, wird dieses Merkmal stets `unknown` als `isHappyCase` zurückgeben.
 
 #### Ablauf
 
@@ -274,7 +277,7 @@ Da es derzeit rein explorativ ist, wird dieses Merkmal stets `falsch` als `decis
 ### Sicherheit alias Security
 
 Dieses Merkmal untersucht verschiedene HTML-Header Eigenschaften, um Aussagen über optimal konfigurierte Sicherheitseinstellungen zu liefern.
-Sind alle Eigenschaften gesetzt, so gibt dieses Merkmal `wahr` zurück, d. h., es ist strikt.
+Sind alle Eigenschaften gesetzt, so gibt dieses Merkmal `true` zurück, d. h., es ist strikt.
 Es ist zu erwarten, dass nur die wenigsten Webseiten dieses Merkmal erfüllen.
 
 #### Vorteil
@@ -306,7 +309,7 @@ Damit kann die Webseite nicht als iFrame eingebettet werden.
 
 Dieses Merkmal nutzt Adblock-Listen, um Werbung, ungewollte Frames, Bilder und Objekte zu erkennen.
 Diese Listen werden für Browser-Plugins zur Werbungsblockierung eingesetzt.
-Wird ein Werbeelement entdeckt, so wird dieses Merkmal auf `wahr` gesetzt.
+Wird ein Werbeelement entdeckt, so wird dieses Merkmal auf `false` gesetzt.
 
 #### Vorteil
 
@@ -328,7 +331,7 @@ Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockpl
 1. Das Merkmal lädt die aktuellsten Listen aus dem Repository und verarbeitet diese zu Adblock-Filterregeln.
 2. Alle Links auf der Webseite werden mit diesen Filterregeln verglichen.
 3. Wird eine Übereinstimmung gefunden, so wird der Link zu `values` hinzugefügt.
-4. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `wahr`.
+4. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `false`.
 5. Die `probability` gibt den Anteil von Links mit Werbung zu allen Links an.
 
 #### Beispiel
@@ -339,7 +342,7 @@ Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockpl
     ```
     enthält Werbung, in diesem Falle den Baustein `/xlayer/layer.php?uid=`.
 2. Das Merkmal erkennt diesen Baustein und gibt den Link entsprechend zu `values` zurück.
-3. Damit wird `decision` als `wahr` gesetzt.
+3. Damit wird `isHappyCase` als `false` gesetzt.
 4. Die `probability` wird hier auf `1.0` gesetzt, da es nur einen Link im HTML Schnipsel gibt.
 
 #### TODO
@@ -355,7 +358,7 @@ Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockpl
 Dieses Merkmal untersucht ob bspw. Tracker u. ä. auf der Webseite eingesetzt werden um die Privatsphäre des Nutzenden zu
 kompromittieren.
 Es nutzt dafür gepflegte open-source Online-Listen.
-Wird ein entsprechendes Element entdeckt, so wird dieses Merkmal auf `wahr` gesetzt.
+Wird ein entsprechendes Element entdeckt, so wird dieses Merkmal auf `false` gesetzt.
 
 #### Vorteil
 
@@ -379,7 +382,7 @@ Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockpl
 1. Das Merkmal lädt die aktuellsten Listen aus dem Repository und verarbeitet diese zu Adblock-Filterregeln.
 2. Alle Links auf der Webseite werden mit diesen Filterregeln verglichen.
 3. Wird eine Übereinstimmung gefunden, so wird der Link zu `values` hinzugefügt.
-4. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `wahr`.
+4. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `false`.
 5. Die `probability` gibt den Anteil von Links mit kompromittierenden Inhalten zu allen Links an.
 
 #### Beispiel
@@ -390,51 +393,7 @@ Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockpl
     ```
     enthält den Baustein `//www.googletagmanager.com`.
 2. Das Merkmal erkennt diesen Baustein und gibt den Link entsprechend zu `values` zurück.
-3. Damit wird `decision` als `wahr` gesetzt.
-4. Die `probability` wird hier auf `1.0` gesetzt, da es nur einen Link im HTML Schnipsel gibt.
-
-
-### Cookies in Html alias CookiesInHtml
-
-Dieses Merkmal untersucht direkt den HTML-Quellcode auf bekannte Cookiesignaturen.
-Es erkennt auch DSGVO Fenster und privatsphärenbezogene Benachrichtigungen.
-Es nutzt dafür gepflegte open-source Online-Listen.
-Wird ein solches Cookie entdeckt, so wird dieses Merkmal auf `wahr` gesetzt.
-
-#### Vorteil
-
-Da Cookies teilweise auch im HTML Code versteckt sind, ermöglicht dieses Merkmal anhand eines großen Fundus an
-Informationen automatisiert solche Elemente zu erkennen.
-Es eliminiert aufwändiges Suchen durch Menschen und subjektive Entscheidungen.
-
-#### Quellen
-
-Die Listen werden als open-source Repository von der Community gepflegt.
-Ein Überblick kann hier gefunden werden: `https://easylist.to/`.
-Weitere Listen werden hier bezogen: `https://github.com/easylist/easylist/tree/master/easylist_cookie`.
-Diese Listen werden für AdBlock-artige Plugins im Browser benutzt, um entsprechende Cookies zu blockieren.
-Die Syntax ermöglicht Elemente explizit zu blockieren oder zu erlauben, ganze Domänen zu sperren oder nur gewisse
-Bausteine einer Webseite zu erlauben.
-Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockplus.org/filter-cheatsheet`.
-
-#### Ablauf
-
-1. Das Merkmal lädt die aktuellsten Listen aus dem Repository und verarbeitet diese zu Adblock-Filterregeln.
-2. Alle Links auf der Webseite werden mit diesen Filterregeln verglichen.
-3. Wird eine Übereinstimmung gefunden, so wird der Link zu `values` hinzugefügt.
-4. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `wahr`.
-5. Die `probability` gibt den Anteil von Links mit Cookies zu allen Links an.
-
-#### Beispiel
-
-1. Das HTML Schnipsel
-    ```
-    <a href='https://www.iubenda.com/privacy-policy/24196256'
-class='iubenda-black iubenda-embed" title="Privacy Policy ">Privacy Policy</a>
-    ```
-    enthält den Baustein `https://www.iubenda.com/privacy-policy/24196256`.
-2. Das Merkmal erkennt diesen Baustein und gibt den Link entsprechend zu `values` zurück.
-3. Damit wird `decision` als `wahr` gesetzt.
+3. Damit wird `isHappyCase` als `false` gesetzt.
 4. Die `probability` wird hier auf `1.0` gesetzt, da es nur einen Link im HTML Schnipsel gibt.
 
 ### FanboyAnnoyance
@@ -465,7 +424,7 @@ Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockpl
 1. Das Merkmal lädt die aktuellsten Listen aus dem Repository und verarbeitet diese zu Adblock-Filterregeln.
 2. Alle Links auf der Webseite werden mit diesen Filterregeln verglichen.
 3. Wird eine Übereinstimmung gefunden, so wird der Link zu `values` hinzugefügt.
-4. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `wahr`.
+4. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `false`.
 5. Die `probability` gibt den Anteil von Links mit `nervigen` Elementen zu allen Links an.
 
 #### Beispiel
@@ -476,7 +435,7 @@ Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockpl
     ```
     enthält den Link zum Javascript `/build/push.js`.
 2. Das Merkmal erkennt diesen Baustein und gibt den Link entsprechend zu `values` zurück.
-3. Damit wird `decision` als `wahr` gesetzt.
+3. Damit wird `isHappyCase` als `false` gesetzt.
 4. Die `probability` wird hier auf `1.0` gesetzt, da es nur einen Link im HTML Schnipsel gibt.
 
 #### TODO
@@ -510,7 +469,7 @@ Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockpl
 1. Das Merkmal lädt die aktuellsten Listen aus dem Repository und verarbeitet diese zu Adblock-Filterregeln.
 2. Alle Links auf der Webseite werden mit diesen Filterregeln verglichen.
 3. Wird eine Übereinstimmung gefunden, so wird der Link zu `values` hinzugefügt.
-4. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `wahr`.
+4. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `false`.
 5. Die `probability` gibt den Anteil von Links, welche als Benachrichtigungen fungieren, zu allen Links an.
 
 #### Beispiel
@@ -521,7 +480,7 @@ Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockpl
     ```
     enthält den Link zum Javascript `/build/push.js`.
 2. Das Merkmal erkennt diesen Baustein und gibt den Link entsprechend zu `values` zurück.
-3. Damit wird `decision` als `wahr` gesetzt.
+3. Damit wird `isHappyCase` als `false` gesetzt.
 4. Die `probability` wird hier auf `1.0` gesetzt, da es nur einen Link im HTML Schnipsel gibt.
 
 ### Soziale Netzwerke alias FanboySocialMedia
@@ -552,7 +511,7 @@ Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockpl
 1. Das Merkmal lädt die aktuellsten Listen aus dem Repository und verarbeitet diese zu Adblock-Filterregeln.
 2. Alle Links auf der Webseite werden mit diesen Filterregeln verglichen.
 3. Wird eine Übereinstimmung gefunden, so wird der Link zu `values` hinzugefügt.
-4. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `wahr`.
+4. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `false`.
 5. Die `probability` gibt den Anteil von Links, welche als Elemente sozialer Netzwerke fungieren, zu allen Links an.
 
 #### Beispiel
@@ -565,7 +524,7 @@ id='share-link-js'></script>
     ```
     enthält den Link zum Javascript `share-link.min.js`.
 2. Das Merkmal erkennt diesen Baustein und gibt den Link entsprechend zu `values` zurück.
-3. Damit wird `decision` als `wahr` gesetzt.
+3. Damit wird `isHappyCase` als `false` gesetzt.
 4. Die `probability` wird hier auf `1.0` gesetzt, da es nur einen Link im HTML Schnipsel gibt.
 
 #### TODO
@@ -600,7 +559,7 @@ Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockpl
 1. Das Merkmal lädt die aktuellsten Listen aus dem Repository und verarbeitet diese zu Adblock-Filterregeln.
 2. Alle Links auf der Webseite werden mit diesen Filterregeln verglichen.
 3. Wird eine Übereinstimmung gefunden, so wird der Link zu `values` hinzugefügt.
-4. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `wahr`.
+4. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `false`.
 5. Die `probability` gibt den Anteil von Links, welche Anti-Werbeblocker Elemente enthalten, zu allen Links an.
 
 #### Beispiel
@@ -611,7 +570,7 @@ Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockpl
     ```
     enthält den Link `/adb_script/`, also ein Adblock Script.
 2. Das Merkmal erkennt diesen Baustein und gibt den Link entsprechend zu `values` zurück.
-3. Damit wird `decision` als `wahr` gesetzt.
+3. Damit wird `isHappyCase` als `false` gesetzt.
 4. Die `probability` wird hier auf `1.0` gesetzt, da es nur einen Link im HTML Schnipsel gibt.
 
 ### spezifisch deutsche Merkmale alias EasylistGermany
@@ -640,7 +599,7 @@ Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockpl
 1. Das Merkmal lädt die aktuellsten Listen aus dem Repository und verarbeitet diese zu Adblock-Filterregeln.
 2. Alle Links auf der Webseite werden mit diesen Filterregeln verglichen.
 3. Wird eine Übereinstimmung gefunden, so wird der Link zu `values` hinzugefügt.
-4. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `wahr`.
+4. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `false`.
 5. Die `probability` gibt den Anteil von Links, welche deutsch-spezifische Elemente enthalten, zu allen Links an.
 
 #### Beispiel
@@ -652,7 +611,7 @@ Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockpl
     enthält das Werbebanner `/werbung/banner_`.
    Dies kann lediglich durch eine sprach-sensible Filterregel erkannt werden.
 2. Das Merkmal erkennt diesen Baustein und gibt den Link entsprechend zu `values` zurück.
-3. Damit wird `decision` als `wahr` gesetzt.
+3. Damit wird `isHappyCase` als `false` gesetzt.
 4. Die `probability` wird hier auf `1.0` gesetzt, da es nur einen Link im HTML Schnipsel gibt.
 
 ### FSK18 alias EasylistAdult
@@ -681,7 +640,7 @@ Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockpl
 1. Das Merkmal lädt die aktuellsten Listen aus dem Repository und verarbeitet diese zu Adblock-Filterregeln.
 2. Alle Links auf der Webseite werden mit diesen Filterregeln verglichen.
 3. Wird eine Übereinstimmung gefunden, so wird der Link zu `values` hinzugefügt.
-4. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `wahr`.
+4. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `false`.
 5. Die `probability` gibt den Anteil von Links, welche FSK18 Elemente enthalten, zu allen Links an.
 
 #### Beispiel
@@ -692,7 +651,7 @@ Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockpl
     ```
     enthält einen FSK18 Link.
 2. Das Merkmal erkennt diesen Baustein und gibt den Link entsprechend zu `values` zurück.
-3. Damit wird `decision` als `wahr` gesetzt.
+3. Damit wird `isHappyCase` als `false` gesetzt.
 4. Die `probability` wird hier auf `1.0` gesetzt, da es nur einen Link im HTML Schnipsel gibt.
 
 #### TODO
@@ -704,7 +663,7 @@ Die Semantik der Filterregeln kann hier nachvollzogen werden: `https://adblockpl
 ### Bezahlbarrieren alias Paywalls
 
 Dieses Merkmal untersucht, ob die Webseite Barrieren beinhaltet, sodass Inhalte nur gegen Bezahlung konsumiert werden können.
-Wird eine solche Barriere entdeckt, so wird dieses Merkmal auf `wahr` gesetzt.
+Wird eine solche Barriere entdeckt, so wird dieses Merkmal auf `false` gesetzt.
 
 #### Vorteil
 
@@ -721,7 +680,7 @@ Die Stichwörter wurden manuell ausgewählt anhand einer Vielzahl von Webseiten 
 
 1. Alle Links auf der Webseite werden mit den Stichwörtern verglichen.
 2. Wird eine Übereinstimmung gefunden, so wird der Link zu `values` hinzugefügt.
-3. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `wahr`.
+3. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `false`.
 4. Die `probability` gibt den Anteil von Links, welche Paywall Elemente enthalten, zu allen Links an.
 
 #### Beispiel
@@ -732,7 +691,7 @@ Die Stichwörter wurden manuell ausgewählt anhand einer Vielzahl von Webseiten 
     ```
     enthält ein Paywallelement.
 2. Das Merkmal erkennt diesen Baustein und gibt den Link entsprechend zu `values` zurück.
-3. Damit wird `decision` als `wahr` gesetzt.
+3. Damit wird `isHappyCase` als `false` gesetzt.
 4. Die `probability` wird hier auf `1.0` gesetzt, da es nur einen Link im HTML Schnipsel gibt.
 
 #### TODO
@@ -741,23 +700,23 @@ Die Stichwörter wurden manuell ausgewählt anhand einer Vielzahl von Webseiten 
 ### Webseite einbettbar alias IFrameEmbeddable
 
 Dieses Merkmal untersucht, ob die Webseite in einen IFrame auf einer externen Webseite einbettbar ist.
-Wird die entsprechende Einstellung entdeckt, so gibt dieses Merkmal `wahr` zurück.
+Wird die entsprechende Einstellung entdeckt, so gibt dieses Merkmal `true` zurück.
 
 #### Vorteil
 
-Da das Einbetten von Webseiten klar durch den Header definiert wird, der für Browsernutzer*Innen nicht direkt ersichtlich
+Da das Einbetten von Webseiten klar durch den Header definiert wird, der für Nutzer*Innen nicht direkt ersichtlich
 ist, ermöglicht dieses Merkmal eine Entscheidung, die sonst nicht direkt möglich wäre.
 
 #### Quellen
 
 Ob eine Webseite als IFrame einbettbar ist, wird über den Header `x-frame-options` definiert.
 Ist dieser auf `same-origin` oder `deny`, so kann nicht eingebettet werden.
-Dieses Merkmal steht im Kontrast zum Sicherheits-Merkmal, welches denselben Header untersucht.
+Dieses Merkmal steht im Kontrast zum Sicherheitsmerkmal, welches denselben Header untersucht.
 
 #### Ablauf
 
 1. Der Webseitenheader wird auf `x-frame-options` geprüft.
-2. Wird `same-origin` oder `deny` gefunden, so ist `decision` sofort `falsch`.
+2. Wird `same-origin` oder `deny` gefunden, so ist `isHappyCase` sofort `false`.
 3. Die `probability` ist `0`, falls kein Header definiert wurde, sonst `1`.
 
 #### Beispiel
@@ -768,7 +727,7 @@ Dieses Merkmal steht im Kontrast zum Sicherheits-Merkmal, welches denselben Head
     ```
     enthält den korrekten Header.
 2. Das Merkmal erkennt diesen Baustein und gibt den Wert `same-origin` zu `values` zurück.
-3. Damit wird `decision` als `falsch` gesetzt.
+3. Damit wird `isHappyCase` als `false` gesetzt.
 4. Die `probability` wird hier auf `1.0` gesetzt.
 
 ### PopUp
@@ -790,7 +749,7 @@ Die Stichwörter wurden manuell ausgewählt anhand einer Vielzahl von Webseiten 
 
 1. Alle Links auf der Webseite werden mit den Stichwörtern verglichen.
 2. Wird eine Übereinstimmung gefunden, so wird der Link zu `values` hinzugefügt.
-3. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `wahr`.
+3. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `false`.
 4. Die `probability` ist `1` sobald Popups gefunden wurden.
 
 #### Beispiel
@@ -803,7 +762,7 @@ alt="Scum Interstitial Ad Placement" loading="lazy" /></noscript>
     ```
     enthält ein Interstitial, also ein Popup.
 2. Das Merkmal erkennt diesen Baustein und gibt den Link entsprechend zu `values` zurück.
-3. Damit wird `decision` als `wahr` gesetzt.
+3. Damit wird `isHappyCase` als `false` gesetzt.
 4. Die `probability` wird hier auf `1.0` gesetzt, da es nur einen Link im HTML Schnipsel gibt.
 
 #### TODO
@@ -813,7 +772,7 @@ alt="Scum Interstitial Ad Placement" loading="lazy" /></noscript>
 ### Registrierbarriere alias RegWall
 
 Dieses Merkmal untersucht, ob die Webseite Barrieren beinhaltet, sodass Inhalte nur nach erfolgter Registrierung konsumiert werden können.
-Wird eine solche Barriere entdeckt, so wird dieses Merkmal auf `wahr` gesetzt.
+Wird eine solche Barriere entdeckt, so wird dieses Merkmal auf `false` gesetzt.
 
 #### Vorteil
 
@@ -831,7 +790,7 @@ Online-Zeitungen.
 
 1. Alle Links auf der Webseite werden mit den Stichwörtern verglichen.
 2. Wird eine Übereinstimmung gefunden, so wird der Link zu `values` hinzugefügt.
-3. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `wahr`.
+3. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `false`.
 4. Die `probability` ist `1` sobald Registrierbarrieren gefunden wurden.
 
 #### Beispiel
@@ -842,7 +801,7 @@ Online-Zeitungen.
     ```
     enthält `regwall`, also eine Registrierbarriere.
 2. Das Merkmal erkennt diesen Baustein und gibt den Link entsprechend zu `values` zurück.
-3. Damit wird `decision` als `wahr` gesetzt.
+3. Damit wird `isHappyCase` als `false` gesetzt.
 4. Die `probability` wird hier auf `1.0` gesetzt, da es nur einen Link im HTML Schnipsel gibt.
 
 #### TODO
@@ -852,7 +811,7 @@ Online-Zeitungen.
 ### LogInOut
 
 Dieses Merkmal untersucht, ob die Webseite Login/Logout Eingaben beinhaltet und damit potenziell den Nutzer auffordert sich einzuloggen.
-Wird eine solche Eingabe entdeckt, so wird dieses Merkmal auf `wahr` gesetzt.
+Wird eine solche Eingabe entdeckt, so wird dieses Merkmal auf `false` gesetzt.
 Es werden ausschließlich HTML Eingabeobjekte untersucht.
 
 #### Vorteil
@@ -871,7 +830,7 @@ Online-Zeitungen.
 
 1. Alle Links auf der Webseite werden mit den Stichwörtern verglichen.
 2. Wird eine Übereinstimmung gefunden, so wird der Link zu `values` hinzugefügt.
-3. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `wahr`.
+3. Sobald ein Link gefunden wurde, gilt dieses Merkmal als `false`.
 4. Die `probability` ist `1` sobald Eingabeelemente gefunden wurden.
 
 #### Beispiel
@@ -882,7 +841,7 @@ Online-Zeitungen.
     ```
     enthält ein Eingabeelement für `email`.
 2. Das Merkmal erkennt diesen Baustein und gibt den Link entsprechend zu `values` zurück.
-3. Damit wird `decision` als `wahr` gesetzt.
+3. Damit wird `isHappyCase` als `false` gesetzt.
 4. Die `probability` wird hier auf `1.0` gesetzt, da es nur einen Link im HTML Schnipsel gibt.
 
 #### TODO
@@ -902,6 +861,16 @@ TODO:
 - RDFa
 - GDPR/DSGVO
 
+### Merkmale, die nie `true` zurückgeben
+
+Manche Merkmale sind so komplex, dass eine sichere Rückmeldung `true` nicht möglich ist.
+Diese Merkmale geben lediglich `false` (Knockout) oder `unknown` zurück.
+Somit haben die Nutzer*Innen lediglich einen Einblick, ob Mindestanforderungen erfüllt sind.
+
+Beispiele:
+- DSGVO
+- Sicherheit
+
 ## Allgemeine TODOs
 
 Derzeit sind Merkmale unabhängig konstruiert, d. h., viele Merkmale überprüfen selbstständig anhand einer Liste
@@ -915,5 +884,8 @@ Derzeit ist die Überprüfung auf Werbung und Privatsphäre der Flaschenhals, da
 Entweder wird dieses Plugin optimiert oder ersetzt.
 
 Wie besprochen, benötigen viele der Merkmale Daten aus der Produktion, um weiter verfeinert zu werden.
-Idealerweise werden die `values` der Merkmale, die neben `decision` und `probability` zurückgegeben,
+Idealerweise werden die `values` der Merkmale, die neben `isHappyCase` und `probability` zurückgegeben,
 hinterlegt und nachträglich ausgewertet.
+
+Weitere Listen:
+- https://github.com/hectorm/hblock
