@@ -42,6 +42,7 @@ from lib.constants import (
     MESSAGE_ALLOW_LIST,
     MESSAGE_BYPASS_CACHE,
     MESSAGE_SHARED_MEMORY_NAME,
+    MESSAGE_URL,
     PROBABILITY,
     TIMESTAMP,
     VALUES,
@@ -187,6 +188,14 @@ class MetadataManager:
             f"Start metadata_manager at {time.perf_counter() - global_start} since start"
         )
 
+        shared_status = shared_memory.ShareableList(
+            name=message[MESSAGE_SHARED_MEMORY_NAME]
+        )
+        url = message[MESSAGE_URL]
+        if len(url) > 1024:
+            url = url[0:1024]
+        shared_status[1] = url
+
         website_manager = WebsiteManager.get_instance()
         self._logger.debug(
             f"WebsiteManager initialized at {time.perf_counter() - global_start} since start"
@@ -253,6 +262,7 @@ class MetadataManager:
         )
 
         website_manager.reset()
+        shared_status[1] = ""
 
         self._logger.debug(
             f"website_manager.reset() at {time.perf_counter() - global_start} since start"
