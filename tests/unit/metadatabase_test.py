@@ -195,24 +195,24 @@ def test_easylist_filter():
 @pytest.mark.parametrize(
     "values, decision_threshold, expected_decision, expected_probability, expected_explanation",
     [
-        ([], -1, DecisionCase.UNKNOWN, -0.9, [Explanation.FoundNoListMatches]),
+        ([], -1, DecisionCase.TRUE, 0, [Explanation.FoundNoListMatches]),
         (
             [0.5],
             -1,
-            DecisionCase.UNKNOWN,
+            DecisionCase.FALSE,
             -1.1,
             [Explanation.FoundListMatches],
         ),
         (
             [0.5, 1],
             -1,
-            DecisionCase.UNKNOWN,
-            -1.1,
+            DecisionCase.FALSE,
+            1,
             [Explanation.FoundListMatches],
         ),
-        ([0.5], 0.5, DecisionCase.FALSE, 0.55, [Explanation.FoundListMatches]),
-        ([0.5], 1, DecisionCase.FALSE, 1.1, [Explanation.FoundListMatches]),
-        ([], 1, DecisionCase.TRUE, 0.9, [Explanation.FoundNoListMatches]),
+        ([0.5], 0.5, DecisionCase.FALSE, 1, [Explanation.FoundListMatches]),
+        ([0.5], 1, DecisionCase.FALSE, 1, [Explanation.FoundListMatches]),
+        ([], 1, DecisionCase.TRUE, 0, [Explanation.FoundNoListMatches]),
     ],
 )
 def test_decide_single(
