@@ -14,6 +14,7 @@ from app.models import (
     MetadataTags,
     Output,
     Ping,
+    ProgressInput,
     ProgressOutput,
     ResetCacheOutput,
 )
@@ -56,7 +57,7 @@ app.add_middleware(
 # noinspection PyTypeHints
 app.communicator: QueueCommunicator
 
-shared_status = shared_memory.ShareableList([0])
+shared_status = shared_memory.ShareableList([0, " " * 1024])
 db.base.create_metadata(db.base.database_engine)
 
 
@@ -180,9 +181,17 @@ def ping():
     description="Returns progress of the metadata extraction. From 0 to 1 (=100%).",
     response_model=ProgressOutput,
 )
-def get_progress():
+def get_progress(progress_input: ProgressInput):
+    if (
+        progress_input.url != ""
+        and shared_status[1] != ""
+        and shared_status[1] in progress_input.url
+    ):
+        progress = round(shared_status[0] / NUMBER_OF_EXTRACTORS, 2)
+    else:
+        progress = -1
     return {
-        "progress": round(shared_status[0] / NUMBER_OF_EXTRACTORS, 2),
+        "progress": progress,
     }
 
 
