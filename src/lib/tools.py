@@ -1,4 +1,6 @@
 import math
+import os
+from distutils import util
 
 
 def get_mean(values: list) -> float:
@@ -21,3 +23,7 @@ def get_unique_list(items: list) -> list:
         else:
             seen.add(item)
     return items
+
+
+def is_production_environment() -> bool:
+    return bool(util.strtobool(os.getenv("PRODUCTION", "True")))

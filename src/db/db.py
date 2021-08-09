@@ -1,5 +1,6 @@
 import json
 
+import sqlalchemy.exc
 from fastapi.encoders import jsonable_encoder
 from sqlalchemy.exc import (
     OperationalError,
@@ -49,11 +50,12 @@ def create_request_record(
         time_until_complete=0,
     )
 
-    session.add(new_input)
     try:
+        session.add(new_input)
         session.commit()
         session.close()
-    except Exception:
+    except sqlalchemy.exc.SQLAlchemyError as err:
+        print(f"Writing request failed with {err.args}, {str(err)}")
         session.rollback()
         raise
     finally:
@@ -67,7 +69,6 @@ def create_response_record(
     allowance: dict,
     output: Output,
 ):
-    print("Writing response to db")
     json_compatible_meta = jsonable_encoder(output.meta)
     session = SessionLocal()
     new_input = db_models.Record(
@@ -85,11 +86,12 @@ def create_response_record(
         time_until_complete=output.time_until_complete,
     )
 
-    session.add(new_input)
     try:
+        session.add(new_input)
         session.commit()
         session.close()
-    except Exception:
+    except sqlalchemy.exc.SQLAlchemyError as err:
+        print(f"Writing response failed with {err.args}, {str(err)}")
         session.rollback()
         raise
     finally:
@@ -118,25 +120,43 @@ def create_dummy_record() -> RecordSchema:
 def load_records(session: Session = SessionLocal()) -> [db_models.Record]:
     try:
         records = session.query(db_models.Record).all()
-    except (OperationalError, ProgrammingError, PendingRollbackError) as err:
+    except (
+        OperationalError,
+        ProgrammingError,
+        PendingRollbackError,
+        sqlalchemy.exc.SQLAlchemyError,
+    ) as err:
+        session.rollback()
         dummy_record = create_dummy_record()
-        dummy_record.exception = f"Database exception: {err.args}"
+        dummy_record.exception = f"Database exception: {err.args}, {str(err)}"
         records = [dummy_record]
+    finally:
+        session.close()
     return records
 
 
 def load_cache(session: Session = SessionLocal()):
     try:
         cache = session.query(db_models.CacheEntry).all()
-    except (OperationalError, ProgrammingError) as err:
-        print("Error while loading cache:", err.args)
+    except sqlalchemy.exc.SQLAlchemyError as err:
+        session.rollback()
+        print(f"Error while loading cache: {err.args}")
         cache = []
+    finally:
+        session.close()
     return cache
 
 
 def get_top_level_domains():
     session = SessionLocal()
-    entries = session.query(db_models.CacheEntry.top_level_domain).all()
+    try:
+        entries = session.query(db_models.CacheEntry.top_level_domain).all()
+    except sqlalchemy.exc.SQLAlchemyError as err:
+        session.rollback()
+        entries = []
+        print(f"Error while loading top level domains: {err.args}, {str(err)}")
+    finally:
+        session.close()
     return [entry[0] for entry in entries]
 
 
@@ -170,12 +190,12 @@ def create_cache_entry(
             ).update({feature: updated_values})
 
         session.commit()
-    except Exception:
+    except sqlalchemy.exc.SQLAlchemyError as err:
         session.rollback()
+        logger.error(f"Writing failed with {err.args}, {str(err)}")
         raise
     finally:
         session.close()
-        logger.debug("Writing done")
 
 
 def reset_cache() -> int:
@@ -183,12 +203,13 @@ def reset_cache() -> int:
     logger.info("Resetting cache")
 
     session = SessionLocal()
-    resulting_row_count: int = session.query(db_models.CacheEntry).delete()
     try:
+        resulting_row_count: int = session.query(db_models.CacheEntry).delete()
         session.commit()
         session.close()
-    except Exception:
+    except sqlalchemy.exc.SQLAlchemyError as err:
         session.rollback()
+        logger.error(f"Resetting cache failed with {err.args}, {str(err)}")
         raise
     finally:
         session.close()
