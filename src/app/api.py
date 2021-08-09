@@ -28,8 +28,8 @@ from db.db import (
     load_records,
 )
 from lib.constants import (
-    DECISION,
     EXPLANATION,
+    IS_HAPPY_CASE,
     MESSAGE_ALLOW_LIST,
     MESSAGE_BYPASS_CACHE,
     MESSAGE_EXCEPTION,
@@ -77,7 +77,7 @@ def _convert_dict_to_output_model(
                 MetadataTags(
                     values=meta[key][VALUES],
                     probability=meta[key][PROBABILITY],
-                    isHappyCase=meta[key][DECISION],
+                    isHappyCase=meta[key][IS_HAPPY_CASE],
                     time_for_completion=meta[key][TIME_REQUIRED],
                     explanation=meta[key][EXPLANATION],
                 ),
@@ -159,7 +159,7 @@ def extract_meta(input_data: Input):
             status_code=400,
             detail={
                 MESSAGE_URL: input_data.url,
-                "meta": extractor_tags,
+                "meta": meta_data,
                 MESSAGE_EXCEPTION: exception,
                 "time_until_complete": end_time - starting_extraction,
             },

@@ -10,8 +10,8 @@ from db.db import SessionLocal, get_top_level_domains, reset_cache
 from features.website_manager import Singleton
 from lib.constants import (
     ACCESSIBILITY,
-    DECISION,
     EXPLANATION,
+    IS_HAPPY_CASE,
     PROBABILITY,
     SECONDS_PER_DAY,
     TIME_REQUIRED,
@@ -90,7 +90,7 @@ class CacheManager:
                 values.extend(data[VALUES])
                 probability.append(data[PROBABILITY])
                 explanation.extend(data[EXPLANATION])
-                decision.append(data[DECISION])
+                decision.append(data[IS_HAPPY_CASE])
 
         explanation = get_unique_list(explanation)
 
@@ -112,7 +112,7 @@ class CacheManager:
             VALUES: values,
             EXPLANATION: get_unique_list(explanation),
             PROBABILITY: get_mean(probability),
-            DECISION: decision,
+            IS_HAPPY_CASE: decision,
         }
 
     def read_cached_feature_values(self, key: str) -> list:

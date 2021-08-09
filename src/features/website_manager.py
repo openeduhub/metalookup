@@ -186,10 +186,8 @@ class WebsiteManager:
         except KeyError as e:
             exception = (
                 f"Key error caught from splash container data: '{e.args}'. "
-                "".join(
-                    traceback.format_exception(None, e, e.__traceback__)
-                    + f"\n Continuing with empty html. Data keys: {data.keys()}"
-                )
+                "".join(traceback.format_exception(None, e, e.__traceback__))
+                + f"\n Continuing with empty html. Data keys: {data.keys()}"
             )
             self._logger.exception(
                 exception,

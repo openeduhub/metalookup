@@ -37,8 +37,8 @@ from features.security import Security
 from features.website_manager import Singleton, WebsiteManager
 from lib.constants import (
     ACCESSIBILITY,
-    DECISION,
     EXPLANATION,
+    IS_HAPPY_CASE,
     MESSAGE_ALLOW_LIST,
     MESSAGE_BYPASS_CACHE,
     MESSAGE_SHARED_MEMORY_NAME,
@@ -170,7 +170,7 @@ class MetadataManager:
                 data_to_be_cached = {
                     VALUES: values,
                     PROBABILITY: meta_data[PROBABILITY],
-                    DECISION: meta_data[DECISION],
+                    IS_HAPPY_CASE: meta_data[IS_HAPPY_CASE],
                     TIMESTAMP: get_utc_now(),
                     EXPLANATION: meta_data[EXPLANATION],
                 }

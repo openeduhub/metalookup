@@ -13,8 +13,8 @@ from bs4 import BeautifulSoup
 from app.models import DecisionCase, Explanation
 from features.website_manager import WebsiteData, WebsiteManager
 from lib.constants import (
-    DECISION,
     EXPLANATION,
+    IS_HAPPY_CASE,
     PROBABILITY,
     TIME_REQUIRED,
     VALUES,
@@ -194,19 +194,21 @@ class MetadataBase:
     def _decide_single_occurrence(
         self, website_data: WebsiteData
     ) -> tuple[DecisionCase, float, list[Explanation]]:
-        slightly_above_threshold = self.decision_threshold * 1.1
-        slightly_below_threshold = self.decision_threshold * 0.9
-        probability = (
-            slightly_above_threshold
-            if (website_data.values and len(website_data.values) > 0)
-            else slightly_below_threshold
+
+        an_occurence_has_been_found: bool = (
+            website_data.values and len(website_data.values) > 0
         )
+        probability = 1 if an_occurence_has_been_found else 0
         explanation = (
             [Explanation.FoundListMatches]
-            if (website_data.values and len(website_data.values) > 0)
+            if an_occurence_has_been_found
             else [Explanation.FoundNoListMatches]
         )
-        decision = self._get_decision(probability)
+        decision = (
+            DecisionCase.FALSE
+            if an_occurence_has_been_found
+            else DecisionCase.TRUE
+        )
         return decision, probability, explanation
 
     def _decide_first_value(
@@ -282,7 +284,7 @@ class MetadataBase:
                 TIME_REQUIRED: get_utc_now() - before,
                 **values,
                 PROBABILITY: probability,
-                DECISION: decision,
+                IS_HAPPY_CASE: decision,
                 EXPLANATION: explanation,
             }
         }

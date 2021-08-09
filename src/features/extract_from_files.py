@@ -11,7 +11,7 @@ from pdfminer.high_level import extract_text
 from PyPDF2.utils import PdfReadError
 
 from app.models import DecisionCase, Explanation
-from features.metadata_base import MetadataBase, ProbabilityDeterminationMethod
+from features.metadata_base import MetadataBase
 from features.website_manager import WebsiteData
 from lib.constants import VALUES
 from lib.settings import RETURN_IMAGES_IN_METADATA
@@ -19,9 +19,6 @@ from lib.settings import RETURN_IMAGES_IN_METADATA
 
 class ExtractFromFiles(MetadataBase):
     decision_threshold = 0.5
-    probability_determination_method = (
-        ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
-    )
     call_async = True
 
     xmp_metadata = [
