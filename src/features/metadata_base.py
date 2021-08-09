@@ -251,7 +251,7 @@ class MetadataBase:
                 decision = DecisionCase.FALSE
                 explanation = [Explanation.KnockoutMatchFound]
                 break
-        # TODO: If for is run through without break, then decision could be TRUE
+
         return decision, probability, explanation
 
     @staticmethod

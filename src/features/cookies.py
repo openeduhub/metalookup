@@ -53,7 +53,7 @@ class Cookies(MetadataBase):
         decision = self._get_decision(probability)
         explanation = (
             [Explanation.CookiesFound]
-            if decision == DecisionCase.TRUE
+            if decision == DecisionCase.FALSE
             else [Explanation.NoCookiesFound]
         )
         return decision, probability, explanation
