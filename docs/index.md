@@ -5,6 +5,13 @@ Topics:
 - [Config](config.md)
 - [Features](features.md)
 - [Acceptance](acceptance.md)
+- [Cache](cache.md)
+
+# General
+
+This service extracts metadata from a given URL.
+It cannot yield answers regarding legal questions and issues or laws.
+It requires iterative optimization and continuous maintenance due to th ever changing nature of URL content.
 
 # Definition of Done:
 

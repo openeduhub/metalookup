@@ -1,7 +1,7 @@
 # Features
 
 A feature is a kind of metadata extracted from the desired url.
-This can be header information regarding security, whether the url contains advertisement, 
+This can be header information regarding security, whether the url contains advertisement,
 PG18 content or complies to GDPR.
 Many features are opinionated and require feedback from production for hardening.
 Some features "react" hysterically, e.g., flag the website as insecure because one cookie has `secure=False`.
@@ -37,7 +37,7 @@ The `probability` scales from `0` to `1`.
   - generally, `isHappyCase` will be `Unknown` in this case
 - `1` indicates certainty, i.e., either False or True are certain.
 
-Both `isHappyCase` and `probability` are determined specifically for each feature based on developer-chosen thresholds 
+Both `isHappyCase` and `probability` are determined specifically for each feature based on developer-chosen thresholds
 and methods.
 Therefore, all results are opinionated and heavily biased.
 With more production data, these features may be improved.
