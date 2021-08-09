@@ -53,7 +53,7 @@ class MetadataTags(BaseModel):
         " or whether everything is unclear",
     )
     explanation: list[Explanation] = Field(
-        default=Explanation.none,
+        default=[Explanation.none],
         description="A brief explanation to be displayed in the frontend what"
         " reasons the code had for its isHappyCase.",
     )
@@ -61,6 +61,10 @@ class MetadataTags(BaseModel):
         default=-1,
         description="Debug information. How long did this metadata take?",
     )
+
+    class Config:
+        orm_mode = True
+        arbitrary_types_allowed = True
 
 
 class ListTags(BaseModel):
@@ -219,6 +223,10 @@ class ExtractorTags(BaseModel):
         "Ratio fo javascript files versus all files.",
     )
 
+    class Config:
+        orm_mode = True
+        arbitrary_types_allowed = True
+
 
 class Input(BaseModel):
     url: str = Field(..., description="The base url of the scraped website.")
@@ -263,6 +271,10 @@ class Output(BaseModel):
         " until sending the resulting meta data out.",
     )
 
+    class Config:
+        orm_mode = True
+        arbitrary_types_allowed = True
+
 
 class Ping(BaseModel):
     status: str = Field(
@@ -275,8 +287,18 @@ class ProgressOutput(BaseModel):
     progress: float = Field(default=0.0, description="Progress of evaluation.")
 
 
+class ProgressInput(BaseModel):
+    url: str = Field(..., description="The base url of the scraped website.")
+
+
 class ResetCacheOutput(BaseModel):
     deleted_rows: int = Field(
         default=-1,
         description="Number of deleted rows from cache. Each row represents one top-level-domain.",
+    )
+
+
+class ResetCacheInput(BaseModel):
+    domain: Optional[str] = Field(
+        default="", description="The host domain to be reset."
     )

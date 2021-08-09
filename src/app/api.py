@@ -14,7 +14,9 @@ from app.models import (
     MetadataTags,
     Output,
     Ping,
+    ProgressInput,
     ProgressOutput,
+    ResetCacheInput,
     ResetCacheOutput,
 )
 from app.schemas import CacheOutput, RecordSchema, RecordsOutput
@@ -26,8 +28,8 @@ from db.db import (
     load_records,
 )
 from lib.constants import (
-    DECISION,
     EXPLANATION,
+    IS_HAPPY_CASE,
     MESSAGE_ALLOW_LIST,
     MESSAGE_BYPASS_CACHE,
     MESSAGE_EXCEPTION,
@@ -56,7 +58,7 @@ app.add_middleware(
 # noinspection PyTypeHints
 app.communicator: QueueCommunicator
 
-shared_status = shared_memory.ShareableList([0])
+shared_status = shared_memory.ShareableList([0, " " * 1024])
 db.base.create_metadata(db.base.database_engine)
 
 
@@ -75,7 +77,7 @@ def _convert_dict_to_output_model(
                 MetadataTags(
                     values=meta[key][VALUES],
                     probability=meta[key][PROBABILITY],
-                    isHappyCase=meta[key][DECISION],
+                    isHappyCase=meta[key][IS_HAPPY_CASE],
                     time_for_completion=meta[key][TIME_REQUIRED],
                     explanation=meta[key][EXPLANATION],
                 ),
@@ -157,7 +159,7 @@ def extract_meta(input_data: Input):
             status_code=400,
             detail={
                 MESSAGE_URL: input_data.url,
-                "meta": extractor_tags,
+                "meta": meta_data,
                 MESSAGE_EXCEPTION: exception,
                 "time_until_complete": end_time - starting_extraction,
             },
@@ -180,9 +182,17 @@ def ping():
     description="Returns progress of the metadata extraction. From 0 to 1 (=100%).",
     response_model=ProgressOutput,
 )
-def get_progress():
+def get_progress(progress_input: ProgressInput):
+    if (
+        progress_input.url != ""
+        and shared_status[1] != ""
+        and shared_status[1] in progress_input.url
+    ):
+        progress = round(shared_status[0] / NUMBER_OF_EXTRACTORS, 2)
+    else:
+        progress = -1
     return {
-        "progress": round(shared_status[0] / NUMBER_OF_EXTRACTORS, 2),
+        "progress": progress,
     }
 
 
@@ -230,7 +240,7 @@ if not is_production_environment():
         description="Endpoint to reset cache",
         response_model=ResetCacheOutput,
     )
-    def reset_cache_post():
+    def reset_cache_post(reset_input: ResetCacheInput):
         cache_manager = CacheManager.get_instance()
-        row_count = cache_manager.reset_cache()
+        row_count = cache_manager.reset_cache(reset_input.domain)
         return {"deleted_rows": row_count}

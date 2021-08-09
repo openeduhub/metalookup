@@ -16,7 +16,7 @@ LOGFILE_MANAGER = "manager"
 
 VALUES = "values"
 PROBABILITY = "probability"
-DECISION = "isHappyCase"
+IS_HAPPY_CASE = "isHappyCase"
 TIME_REQUIRED = "time_required"
 EXPLANATION = "explanation"
 TIMESTAMP = "timestamp"

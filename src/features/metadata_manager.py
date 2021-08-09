@@ -37,11 +37,12 @@ from features.security import Security
 from features.website_manager import Singleton, WebsiteManager
 from lib.constants import (
     ACCESSIBILITY,
-    DECISION,
     EXPLANATION,
+    IS_HAPPY_CASE,
     MESSAGE_ALLOW_LIST,
     MESSAGE_BYPASS_CACHE,
     MESSAGE_SHARED_MEMORY_NAME,
+    MESSAGE_URL,
     PROBABILITY,
     TIMESTAMP,
     VALUES,
@@ -169,7 +170,7 @@ class MetadataManager:
                 data_to_be_cached = {
                     VALUES: values,
                     PROBABILITY: meta_data[PROBABILITY],
-                    DECISION: meta_data[DECISION],
+                    IS_HAPPY_CASE: meta_data[IS_HAPPY_CASE],
                     TIMESTAMP: get_utc_now(),
                     EXPLANATION: meta_data[EXPLANATION],
                 }
@@ -186,6 +187,14 @@ class MetadataManager:
         self._logger.debug(
             f"Start metadata_manager at {time.perf_counter() - global_start} since start"
         )
+
+        shared_status = shared_memory.ShareableList(
+            name=message[MESSAGE_SHARED_MEMORY_NAME]
+        )
+        url = message[MESSAGE_URL]
+        if len(url) > 1024:
+            url = url[0:1024]
+        shared_status[1] = url
 
         website_manager = WebsiteManager.get_instance()
         self._logger.debug(
@@ -253,6 +262,7 @@ class MetadataManager:
         )
 
         website_manager.reset()
+        shared_status[1] = ""
 
         self._logger.debug(
             f"website_manager.reset() at {time.perf_counter() - global_start} since start"
