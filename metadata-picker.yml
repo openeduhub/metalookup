@@ -20,6 +20,8 @@ services:
       retries: 3
     networks:
       - traefik-public
+    environment:
+      - PRODUCTION=false
     deploy:
       labels:
         - traefik.frontend.rule=Host:metalookup.openeduhub.net

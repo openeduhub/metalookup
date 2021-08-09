@@ -179,22 +179,25 @@ class WebsiteManager:
         except (KeyError, IndexError):
             raw_headers = []
 
-        html = ""
-        har = ""
-        headers = ""
         try:
             html = data["html"]
             har = str(json.dumps(data["har"]))
             headers = str(json.dumps(self._transform_raw_header(raw_headers)))
         except KeyError as e:
             exception = (
-                f"Key error from splash container data: '{e.args}'. "
-                "".join(traceback.format_exception(None, e, e.__traceback__))
+                f"Key error caught from splash container data: '{e.args}'. "
+                "".join(
+                    traceback.format_exception(None, e, e.__traceback__)
+                    + f"\n Continuing with empty html. Data keys: {data.keys()}"
+                )
             )
             self._logger.exception(
                 exception,
                 exc_info=True,
             )
+            html = ""
+            har = ""
+            headers = ""
 
         return {
             MESSAGE_HTML: html,

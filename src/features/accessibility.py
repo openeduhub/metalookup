@@ -51,11 +51,10 @@ class Accessibility(MetadataBase):
         except (
             asyncio.exceptions.TimeoutError,
             ClientConnectorError,
-            ConnectionRefusedError,
             OSError,
-        ) as e:
+        ) as err:
             self._logger.exception(
-                f"Timeout for url {container_url} after 60s: {e.args}"
+                f"Timeout for url {container_url} after 60s: {err.args}, {str(err)}"
             )
             process = None
 

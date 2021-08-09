@@ -8,7 +8,6 @@ from sqlalchemy.exc import OperationalError
 import db.base
 from app.communication import QueueCommunicator
 from app.models import (
-    CacheOutput,
     ExtractorTags,
     Input,
     ListTags,
@@ -18,7 +17,7 @@ from app.models import (
     ProgressOutput,
     ResetCacheOutput,
 )
-from app.schemas import RecordSchema, RecordsOutput
+from app.schemas import CacheOutput, RecordSchema, RecordsOutput
 from cache.cache_manager import CacheManager
 from db.db import (
     create_request_record,
@@ -44,6 +43,7 @@ from lib.constants import (
 )
 from lib.settings import NUMBER_OF_EXTRACTORS, VERSION
 from lib.timing import get_utc_now
+from lib.tools import is_production_environment
 
 app = FastAPI(title=METADATA_EXTRACTOR, version=VERSION)
 app.add_middleware(
@@ -167,35 +167,6 @@ def extract_meta(input_data: Input):
 
 
 @app.get(
-    "/records/",
-    response_model=RecordsOutput,
-    description="Get all urls and their processed metadata.",
-)
-def show_records():
-    records = load_records()
-    out = []
-    for record in records:
-        out.append(
-            RecordSchema(
-                id=record.id,
-                timestamp=record.timestamp,
-                start_time=record.start_time,
-                action=record.action,
-                allow_list=record.allow_list,
-                meta=record.meta,
-                url=record.url,
-                html=record.html,
-                headers=record.headers,
-                har=record.har,
-                debug=record.debug,
-                exception=record.exception,
-                time_until_complete=record.time_until_complete,
-            )
-        )
-    return {"records": out}
-
-
-@app.get(
     "/_ping",
     description="Ping function for automatic health check.",
     response_model=Ping,
@@ -215,21 +186,51 @@ def get_progress():
     }
 
 
-@app.get(
-    "/cache/",
-    response_model=CacheOutput,
-    description="Developer endpoint to receive cache content.",
-)
-def get_cache():
-    return {"cache": load_cache()}
+# Developer endpoints
+if not is_production_environment():
 
+    @app.get(
+        "/records/",
+        response_model=RecordsOutput,
+        description="Get all urls and their processed metadata.",
+    )
+    def show_records():
+        records = load_records()
+        out = []
+        for record in records:
+            out.append(
+                RecordSchema(
+                    id=record.id,
+                    timestamp=record.timestamp,
+                    start_time=record.start_time,
+                    action=record.action,
+                    allow_list=record.allow_list,
+                    meta=record.meta,
+                    url=record.url,
+                    html=record.html,
+                    headers=record.headers,
+                    har=record.har,
+                    debug=record.debug,
+                    exception=record.exception,
+                    time_until_complete=record.time_until_complete,
+                )
+            )
+        return {"records": out}
 
-@app.post(
-    "/cache/reset",
-    description="Endpoint to reset cache",
-    response_model=ResetCacheOutput,
-)
-def reset_cache_post():
-    cache_manager = CacheManager.get_instance()
-    row_count = cache_manager.reset_cache()
-    return {"deleted_rows": row_count}
+    @app.get(
+        "/cache/",
+        response_model=CacheOutput,
+        description="Developer endpoint to receive cache content.",
+    )
+    def get_cache():
+        return {"cache": load_cache()}
+
+    @app.post(
+        "/cache/reset",
+        description="Endpoint to reset cache",
+        response_model=ResetCacheOutput,
+    )
+    def reset_cache_post():
+        cache_manager = CacheManager.get_instance()
+        row_count = cache_manager.reset_cache()
+        return {"deleted_rows": row_count}
