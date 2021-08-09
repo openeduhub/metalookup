@@ -200,7 +200,7 @@ def test_easylist_filter():
             [0.5],
             -1,
             DecisionCase.FALSE,
-            -1.1,
+            1,
             [Explanation.FoundListMatches],
         ),
         (

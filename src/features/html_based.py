@@ -24,7 +24,6 @@ class Advertisement(MetadataBase):
         "https://raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_thirdparty.txt",
         "https://raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_thirdparty_popup.txt",
     ]
-    decision_threshold = 0.5
     call_async = True
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
@@ -42,7 +41,6 @@ class EasyPrivacy(MetadataBase):
         "https://raw.githubusercontent.com/easylist/easylist/master/easyprivacy/easyprivacy_thirdparty.txt",
         "https://raw.githubusercontent.com/easylist/easylist/master/easyprivacy/easyprivacy_thirdparty_international.txt",
     ]
-    decision_threshold = 0
     call_async = True
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
@@ -58,7 +56,6 @@ class FanboyAnnoyance(MetadataBase):
         "https://raw.githubusercontent.com/easylist/easylist/master/fanboy-addon/fanboy_annoyance_specific_block.txt",
         "https://raw.githubusercontent.com/easylist/easylist/master/fanboy-addon/fanboy_annoyance_thirdparty.txt",
     ]
-    decision_threshold = 0
     call_async = True
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
@@ -73,7 +70,6 @@ class FanboyNotification(MetadataBase):
         "https://raw.githubusercontent.com/easylist/easylist/master/fanboy-addon/fanboy_notifications_specific_hide.txt",
         "https://raw.githubusercontent.com/easylist/easylist/master/fanboy-addon/fanboy_notifications_thirdparty.txt",
     ]
-    decision_threshold = 0
     call_async = True
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
@@ -90,7 +86,6 @@ class FanboySocialMedia(MetadataBase):
         "https://raw.githubusercontent.com/easylist/easylist/master/fanboy-addon/fanboy_social_specific_hide.txt",
         "https://raw.githubusercontent.com/easylist/easylist/master/fanboy-addon/fanboy_social_thirdparty.txt",
     ]
-    decision_threshold = 0
     call_async = True
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
@@ -102,7 +97,6 @@ class AntiAdBlock(MetadataBase):
         "https://raw.githubusercontent.com/easylist/antiadblockfilters/master/antiadblockfilters/antiadblock_english.txt",
     ]
     key: str = "anti_adblock"
-    decision_threshold = 0
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
 
@@ -124,7 +118,6 @@ class EasylistGermany(MetadataBase):
         "https://raw.githubusercontent.com/easylist/easylistgermany/master/easylistgermany/easylistgermany_thirdparty.txt",
         "https://raw.githubusercontent.com/easylist/easylistgermany/master/easylistgermany/easylistgermany_thirdparty_popup.txt",
     ]
-    decision_threshold = 0
     call_async = True
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
@@ -141,7 +134,6 @@ class EasylistAdult(MetadataBase):
         "https://raw.githubusercontent.com/easylist/easylist/master/easylist_adult/adult_thirdparty.txt",
         "https://raw.githubusercontent.com/easylist/easylist/master/easylist_adult/adult_thirdparty_popup.txt",
     ]
-    decision_threshold = 0
     call_async = True
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
@@ -149,7 +141,6 @@ class EasylistAdult(MetadataBase):
 class Paywalls(MetadataBase):
     tag_list = ["paywall", "paywalluser"]
     key: str = "paywall"
-    decision_threshold = 0
 
 
 class IFrameEmbeddable(MetadataBase):
@@ -174,7 +165,6 @@ class PopUp(MetadataBase):
         "Interstitial",
         "ToSeeWithEyesUncloudedByHate",
     ]
-    decision_threshold = 0
 
 
 class RegWall(MetadataBase):
@@ -189,7 +179,6 @@ class RegWall(MetadataBase):
         "Registration",
         "registerbtn",
     ]
-    decision_threshold = 0
 
 
 class LogInOut(MetadataBase):
@@ -208,4 +197,3 @@ class LogInOut(MetadataBase):
         "Submit",
         "Username",
     ]
-    decision_threshold = 0

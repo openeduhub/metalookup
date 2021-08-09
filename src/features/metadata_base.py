@@ -363,9 +363,6 @@ class MetadataBase:
         return {VALUES: values}
 
     def _start(self, website_data: WebsiteData) -> dict:
-        self._logger.debug(
-            f"Evaluating {self.__class__.__name__} sync header: {self.evaluate_header}"
-        )
         if self.evaluate_header:
             values = self._work_header(website_data.headers)
         else:
