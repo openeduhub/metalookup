@@ -198,13 +198,24 @@ def create_cache_entry(
         session.close()
 
 
-def reset_cache() -> int:
+def reset_cache(domain: str) -> int:
     logger = get_logger()
-    logger.info("Resetting cache")
+    logger.info(
+        f"Resetting cache for domain: {'all' if domain == '' else domain}"
+    )
 
     session = SessionLocal()
     try:
-        resulting_row_count: int = session.query(db_models.CacheEntry).delete()
+        if domain == "":
+            resulting_row_count: int = session.query(
+                db_models.CacheEntry
+            ).delete()
+        else:
+            resulting_row_count: int = (
+                session.query(db_models.CacheEntry)
+                .filter_by(top_level_domain=domain)
+                .delete()
+            )
         session.commit()
         session.close()
     except sqlalchemy.exc.SQLAlchemyError as err:

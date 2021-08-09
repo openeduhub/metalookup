@@ -16,6 +16,7 @@ from app.models import (
     Ping,
     ProgressInput,
     ProgressOutput,
+    ResetCacheInput,
     ResetCacheOutput,
 )
 from app.schemas import CacheOutput, RecordSchema, RecordsOutput
@@ -239,7 +240,7 @@ if not is_production_environment():
         description="Endpoint to reset cache",
         response_model=ResetCacheOutput,
     )
-    def reset_cache_post():
+    def reset_cache_post(reset_input: ResetCacheInput):
         cache_manager = CacheManager.get_instance()
-        row_count = cache_manager.reset_cache()
+        row_count = cache_manager.reset_cache(reset_input.domain)
         return {"deleted_rows": row_count}

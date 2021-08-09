@@ -284,3 +284,9 @@ class ResetCacheOutput(BaseModel):
         default=-1,
         description="Number of deleted rows from cache. Each row represents one top-level-domain.",
     )
+
+
+class ResetCacheInput(BaseModel):
+    domain: Optional[str] = Field(
+        default="", description="The host domain to be reset."
+    )

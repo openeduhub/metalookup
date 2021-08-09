@@ -144,5 +144,5 @@ class CacheManager:
         return meta_data
 
     @staticmethod
-    def reset_cache():
-        return reset_cache()
+    def reset_cache(domain: str):
+        return reset_cache(domain)
