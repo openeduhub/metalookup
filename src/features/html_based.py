@@ -24,10 +24,7 @@ class Advertisement(MetadataBase):
         "https://raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_thirdparty.txt",
         "https://raw.githubusercontent.com/easylist/easylist/master/easylist/easylist_thirdparty_popup.txt",
     ]
-    decision_threshold = 0
-    probability_determination_method = (
-        ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
-    )
+    decision_threshold = 0.5
     call_async = True
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
@@ -47,9 +44,6 @@ class EasyPrivacy(MetadataBase):
     ]
     decision_threshold = 0
     call_async = True
-    probability_determination_method = (
-        ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
-    )
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
 
@@ -66,9 +60,6 @@ class FanboyAnnoyance(MetadataBase):
     ]
     decision_threshold = 0
     call_async = True
-    probability_determination_method = (
-        ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
-    )
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
 
@@ -83,9 +74,6 @@ class FanboyNotification(MetadataBase):
         "https://raw.githubusercontent.com/easylist/easylist/master/fanboy-addon/fanboy_notifications_thirdparty.txt",
     ]
     decision_threshold = 0
-    probability_determination_method = (
-        ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
-    )
     call_async = True
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
@@ -186,9 +174,6 @@ class PopUp(MetadataBase):
         "Interstitial",
         "ToSeeWithEyesUncloudedByHate",
     ]
-    probability_determination_method = (
-        ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
-    )
     decision_threshold = 0
 
 
@@ -204,9 +189,6 @@ class RegWall(MetadataBase):
         "Registration",
         "registerbtn",
     ]
-    probability_determination_method = (
-        ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
-    )
     decision_threshold = 0
 
 
@@ -226,7 +208,4 @@ class LogInOut(MetadataBase):
         "Submit",
         "Username",
     ]
-    probability_determination_method = (
-        ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
-    )
     decision_threshold = 0

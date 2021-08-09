@@ -189,6 +189,9 @@ class MaliciousExtensions(MetadataBase):
     decision_threshold = 0
 
     def _start(self, website_data: WebsiteData) -> dict:
+        self._logger.debug(
+            f"Starting malicious extensions for extensions: {website_data.extensions}"
+        )
         malicious_extensions = [
             extension
             for extension in website_data.extensions
