@@ -65,7 +65,7 @@ class Accessibility(MetadataBase):
         return score
 
     def _start(self, website_data: WebsiteData) -> dict:
-        self._logger.debug(f"Calling accessibility through start")
+        self._logger.debug("Calling accessibility through start")
         return asyncio.run(self._astart(website_data))
 
     async def _astart(self, website_data: WebsiteData) -> dict:

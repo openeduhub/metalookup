@@ -314,11 +314,15 @@ class MetadataBase:
         before, website_data = self._prepare_start("sync")
         values = self._start(website_data=website_data)
 
-        self._logger.debug(f"returned values: {self.__class__.__name__},{len(self.tag_list)}: {values}")
+        self._logger.debug(
+            f"returned values: {self.__class__.__name__},{len(self.tag_list)}: {values}"
+        )
         output = self._processing_values(
             values=values, website_data=website_data, before=before
         )
-        self._logger.debug(f"output: {self.__class__.__name__},{len(self.tag_list)}: {output}")
+        self._logger.debug(
+            f"output: {self.__class__.__name__},{len(self.tag_list)}: {output}"
+        )
         return output
 
     def _work_header(self, header: dict) -> list:
@@ -372,7 +376,9 @@ class MetadataBase:
         else:
             values = self._work_html_content(website_data)
 
-        self._logger.debug(f"Returning: {self.__class__.__name__},{len(self.tag_list)}: {values}")
+        self._logger.debug(
+            f"Returning: {self.__class__.__name__},{len(self.tag_list)}: {values}"
+        )
         return {VALUES: values}
 
     async def _download_multiple_tag_lists(

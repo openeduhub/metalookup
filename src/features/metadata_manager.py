@@ -173,32 +173,44 @@ class MetadataManager:
                     )
                     data.update(extracted_metadata)
                     shared_status[0] += 1
-                elif metadata_extractor.key == "advertisement" or metadata_extractor.key == "easy_privacy":
+                elif (
+                    metadata_extractor.key == "advertisement"
+                    or metadata_extractor.key == "easy_privacy"
+                ):
                     self._logger.debug(f"Bypass for {metadata_extractor}")
                     data.update(metadata_extractor.start())
                 else:
                     pool_tasks.append(metadata_extractor)
 
-        #self._logger.debug(f"setup before gather {time.perf_counter() - global_start} since start")
-        self._logger.debug(f"pool_tasks {time.perf_counter() - global_start} since start: {pool_tasks}")
+        # self._logger.debug(f"setup before gather {time.perf_counter() - global_start} since start")
+        self._logger.debug(
+            f"pool_tasks {time.perf_counter() - global_start} since start: {pool_tasks}"
+        )
 
         # extracted_metadata: tuple[dict] = await asyncio.gather(*tasks)
-        #self._logger.debug(f"setup after gather {time.perf_counter() - global_start} since start")
+        # self._logger.debug(f"setup after gather {time.perf_counter() - global_start} since start")
 
-        self._logger.debug(f"setup before pool {time.perf_counter() - global_start} since start.")
+        self._logger.debug(
+            f"setup before pool {time.perf_counter() - global_start} since start."
+        )
         pool = multiprocessing.Pool(processes=10)
 
         try:
-            extracted_metadata = pool.starmap(parallel_tasks, zip(pool_tasks, repeat(self._logger)))
+            extracted_metadata = pool.starmap(
+                parallel_tasks, zip(pool_tasks, repeat(self._logger))
+            )
         except Exception as e:
             extracted_metadata = {}
             self._logger.debug(f"3: {e.args}")
             for task in pool_tasks:
                 self._logger.debug(f"Task: {task}")
                 self._logger.debug(f"Task.start: {task.start()}")
-        self._logger.debug(f"setup after pool {time.perf_counter() - global_start} since start")
         self._logger.debug(
-            f"setup after pool2 {time.perf_counter() - global_start} since start: {extracted_metadata}")
+            f"setup after pool {time.perf_counter() - global_start} since start"
+        )
+        self._logger.debug(
+            f"setup after pool2 {time.perf_counter() - global_start} since start: {extracted_metadata}"
+        )
 
         shared_status[0] += len(tasks)
         data = {**data, **dict(ChainMap(*extracted_metadata))}
