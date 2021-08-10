@@ -170,7 +170,7 @@ def test_get_predefined_metadata(mocker, cache_manager: CacheManager):
         cache_manager.convert_cached_data = mocker.MagicMock()
         cache_manager.convert_cached_data.return_value = json.loads(meta_data)
         cache_output = cache_manager.get_predefined_metadata(feature)
-    print(cache_output)
+
     assert isinstance(cache_output, dict)
     assert len(cache_output.keys()) == 1
     assert len(cache_output[feature].keys()) == 5

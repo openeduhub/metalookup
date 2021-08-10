@@ -28,7 +28,7 @@ from lib.settings import NUMBER_OF_EXTRACTORS
 
 
 @pytest.fixture
-def metadata_manager(mocker):
+def metadata_manager():
     manager = MetadataManager.get_instance()
     return manager
 
@@ -216,10 +216,6 @@ def test_start(mocker, metadata_manager: MetadataManager):
                         with mock.patch(
                             "features.metadata_manager.WebsiteManager._class.load_website_data"
                         ):
-                            print(
-                                website_manager.get_instance().website_data.html
-                            )
-                            print(website_manager()._class.website_data.html)
                             website_manager.get_instance().website_data.html = (
                                 "non-empty html"
                             )
