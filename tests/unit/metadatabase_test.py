@@ -3,7 +3,7 @@ from unittest import mock
 import adblockparser
 import pytest
 
-from app.models import DecisionCase
+from app.models import DecisionCase, Explanation
 from features.metadata_base import MetadataBase, ProbabilityDeterminationMethod
 from features.website_manager import WebsiteData
 
@@ -193,33 +193,26 @@ def test_easylist_filter():
 
 
 @pytest.mark.parametrize(
-    "values, decision_threshold, expected_decision, expected_probability",
+    "values, decision_threshold, expected_decision, expected_probability, expected_explanation",
     [
-        ([], -1, DecisionCase.UNKNOWN, 0),
+        ([], -1, DecisionCase.TRUE, 0, [Explanation.FoundNoListMatches]),
         (
             [0.5],
             -1,
-            DecisionCase.UNKNOWN,
+            DecisionCase.FALSE,
             1,
+            [Explanation.FoundListMatches],
         ),
         (
             [0.5, 1],
             -1,
-            DecisionCase.UNKNOWN,
-            1,
-        ),
-        (
-            [0.5],
-            0.5,
-            DecisionCase.TRUE,
-            1,
-        ),
-        (
-            [0.5],
-            1,
             DecisionCase.FALSE,
             1,
+            [Explanation.FoundListMatches],
         ),
+        ([0.5], 0.5, DecisionCase.FALSE, 1, [Explanation.FoundListMatches]),
+        ([0.5], 1, DecisionCase.FALSE, 1, [Explanation.FoundListMatches]),
+        ([], 1, DecisionCase.TRUE, 0, [Explanation.FoundNoListMatches]),
     ],
 )
 def test_decide_single(
@@ -228,6 +221,7 @@ def test_decide_single(
     decision_threshold,
     expected_decision,
     expected_probability,
+    expected_explanation,
 ):
     website_data = WebsiteData()
 
@@ -236,10 +230,13 @@ def test_decide_single(
     metadatabase.probability_determination_method = (
         ProbabilityDeterminationMethod.SINGLE_OCCURRENCE
     )
-    decision, probability = metadatabase._decide(website_data=website_data)
+    decision, probability, explanation = metadatabase._decide(
+        website_data=website_data
+    )
 
     assert decision == expected_decision
     assert probability == expected_probability
+    assert explanation == expected_explanation
 
 
 """
@@ -248,7 +245,7 @@ def test_decide_single(
 
 
 @pytest.mark.parametrize(
-    "values, decision_threshold, expected_decision, expected_probability, raw_links",
+    "values, decision_threshold, expected_decision, expected_probability, raw_links, expected_explanation",
     [
         (
             [0.5],
@@ -256,27 +253,31 @@ def test_decide_single(
             DecisionCase.UNKNOWN,
             0,
             [],
+            [Explanation.FoundNoListMatches],
         ),
         (
             [0.5, 1, 1, 1],
             0,
-            DecisionCase.TRUE,
+            DecisionCase.FALSE,
             1,
             [1, 1, 1, 1],
+            [Explanation.FoundListMatches],
         ),
         (
             [0.5],
             0,
-            DecisionCase.TRUE,
+            DecisionCase.FALSE,
             0.25,
             [1, 1, 1, 1],
+            [Explanation.FoundListMatches],
         ),
         (
             [0.5],
             0.5,
-            DecisionCase.FALSE,
+            DecisionCase.TRUE,
             0.5,
             [1, 1, 1, 1],
+            [Explanation.FoundListMatches],
         ),
     ],
 )
@@ -287,6 +288,7 @@ def test_decide_number_of_elements(
     expected_decision,
     expected_probability,
     raw_links,
+    expected_explanation,
 ):
     website_data = WebsiteData()
 
@@ -296,10 +298,13 @@ def test_decide_number_of_elements(
     metadatabase.probability_determination_method = (
         ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
     )
-    decision, probability = metadatabase._decide(website_data=website_data)
+    decision, probability, explanation = metadatabase._decide(
+        website_data=website_data
+    )
 
     assert decision == expected_decision
     assert probability == expected_probability
+    assert explanation == expected_explanation
 
 
 """
@@ -308,26 +313,13 @@ def test_decide_number_of_elements(
 
 
 @pytest.mark.parametrize(
-    "values, decision_threshold, expected_decision, expected_probability",
+    "values, decision_threshold, expected_decision, expected_probability, expected_explanation",
     [
-        (
-            [0.5],
-            0,
-            DecisionCase.TRUE,
-            0.5,
-        ),
-        (
-            [0.5],
-            0.5,
-            DecisionCase.FALSE,
-            0,
-        ),
-        (
-            [0.75, 0.1],
-            0.5,
-            DecisionCase.TRUE,
-            0.5,
-        ),
+        ([0.5], 0, DecisionCase.FALSE, 0.5, [Explanation.none]),
+        ([0.5], 0.5, DecisionCase.FALSE, 0, [Explanation.none]),
+        ([0.75, 0.1], 0.5, DecisionCase.FALSE, 0.5, [Explanation.none]),
+        ([], 0.5, DecisionCase.UNKNOWN, 0, [Explanation.none]),
+        ([0.25], 0.5, DecisionCase.TRUE, 0.5, [Explanation.none]),
     ],
 )
 def test_first_value(
@@ -336,6 +328,7 @@ def test_first_value(
     decision_threshold,
     expected_decision,
     expected_probability,
+    expected_explanation,
 ):
     website_data = WebsiteData()
 
@@ -344,10 +337,13 @@ def test_first_value(
     metadatabase.probability_determination_method = (
         ProbabilityDeterminationMethod.FIRST_VALUE
     )
-    decision, probability = metadatabase._decide(website_data=website_data)
+    decision, probability, explanation = metadatabase._decide(
+        website_data=website_data
+    )
 
     assert decision == expected_decision
     assert probability == expected_probability
+    assert explanation == expected_explanation
 
 
 """
@@ -356,31 +352,29 @@ def test_first_value(
 
 
 @pytest.mark.parametrize(
-    "values, decision_threshold, expected_decision, expected_probability",
+    "values, decision_threshold, expected_decision, expected_probability, expected_explanation",
     [
         (
             [0.5],
             0,
             DecisionCase.TRUE,
             0.5,
+            [Explanation.AccessibilitySuitable],
         ),
-        (
-            [0.5],
-            0.5,
-            DecisionCase.FALSE,
-            0,
-        ),
+        ([0.5], 0.5, DecisionCase.FALSE, 0, [Explanation.AccessibilityTooLow]),
         (
             [0.75, 0.25],
             0.5,
             DecisionCase.FALSE,
             0,
+            [Explanation.AccessibilityTooLow],
         ),
         (
             [0.6, 0.8],
             0.5,
             DecisionCase.TRUE,
             0.4,
+            [Explanation.AccessibilitySuitable],
         ),
     ],
 )
@@ -390,18 +384,22 @@ def test_mean_value(
     decision_threshold,
     expected_decision,
     expected_probability,
+    expected_explanation,
 ):
     website_data = WebsiteData()
 
     website_data.values = values
     metadatabase.decision_threshold = decision_threshold
     metadatabase.probability_determination_method = (
-        ProbabilityDeterminationMethod.MEAN_VALUE
+        ProbabilityDeterminationMethod.ACCESSIBILITY
     )
-    decision, probability = metadatabase._decide(website_data=website_data)
+    decision, probability, explanation = metadatabase._decide(
+        website_data=website_data
+    )
 
     assert decision == expected_decision
     assert probability == expected_probability
+    assert explanation == expected_explanation
 
 
 """
@@ -410,14 +408,56 @@ def test_mean_value(
 
 
 @pytest.mark.parametrize(
-    "values, decision_threshold, expected_decision, expected_probability, false_list",
+    "values, decision_threshold, expected_decision, expected_probability, false_list, expected_explanation",
     [
-        ([0.5], 1, DecisionCase.UNKNOWN, 1, [0]),
-        ([0.5], 1, DecisionCase.FALSE, 1, [0.5]),
-        ([0.5, 0.1, 0, "hello"], 1, DecisionCase.FALSE, 1, ["hello"]),
-        ([0.5, 0.1, 0, "hello"], 1, DecisionCase.UNKNOWN, 1, ["hell"]),
-        ([0.5, 0.1, 0, "hello"], 1, DecisionCase.UNKNOWN, 1, ["0"]),
-        ([0.5, 0.1, 0, "hello"], 1, DecisionCase.FALSE, 1, ["0", "hello"]),
+        (
+            [0.5],
+            1,
+            DecisionCase.TRUE,
+            1,
+            [0],
+            [Explanation.NoKnockoutMatchFound],
+        ),
+        (
+            [0.5],
+            1,
+            DecisionCase.FALSE,
+            1,
+            [0.5],
+            [Explanation.KnockoutMatchFound],
+        ),
+        (
+            [0.5, 0.1, 0, "hello"],
+            1,
+            DecisionCase.FALSE,
+            1,
+            ["hello"],
+            [Explanation.KnockoutMatchFound],
+        ),
+        (
+            [0.5, 0.1, 0, "hello"],
+            1,
+            DecisionCase.TRUE,
+            1,
+            ["hell"],
+            [Explanation.NoKnockoutMatchFound],
+        ),
+        (
+            [0.5, 0.1, 0, "hello"],
+            1,
+            DecisionCase.TRUE,
+            1,
+            ["0"],
+            [Explanation.NoKnockoutMatchFound],
+        ),
+        (
+            [0.5, 0.1, 0, "hello"],
+            1,
+            DecisionCase.FALSE,
+            1,
+            ["0", "hello"],
+            [Explanation.KnockoutMatchFound],
+        ),
     ],
 )
 def test_false_list(
@@ -427,6 +467,7 @@ def test_false_list(
     expected_decision,
     expected_probability,
     false_list,
+    expected_explanation,
 ):
     website_data = WebsiteData()
 
@@ -436,7 +477,10 @@ def test_false_list(
     metadatabase.probability_determination_method = (
         ProbabilityDeterminationMethod.FALSE_LIST
     )
-    decision, probability = metadatabase._decide(website_data=website_data)
+    decision, probability, explanation = metadatabase._decide(
+        website_data=website_data
+    )
 
     assert decision == expected_decision
     assert probability == expected_probability
+    assert explanation == expected_explanation

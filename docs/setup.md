@@ -9,7 +9,7 @@ The pipeline is a bit rough and is going to change in the future.
 
 You will need poetry and python3.9.1:
 
-`sudo apt-get install python3.9`     
+`sudo apt-get install python3.9`
 `python3.9 -m pip3 install poetry`
 
 ## Launching the container
@@ -28,17 +28,17 @@ The Swagger UI of FastApi can be access by:
 
 1. Start the container
 2. Execute:
-   
+
     ```
     curl --location --request POST '0.0.0.0:5057/extract_meta' \
     --header 'Content-Type: application/json' \
     --data-raw '{"url": "here", "html": "cool_content123", "headers": ""}'
     ```
-   
+
 3. You should get
-   
+
     ```
-   {"url":"here","meta":{...}}     
+   {"url":"here","meta":{...}}
     ```
 
 # Pre commit
@@ -46,7 +46,7 @@ The Swagger UI of FastApi can be access by:
 To see tracebacks of why the pre commit hook fails run in terminal:
 
 ```
-pre-commit run --all-files 
+pre-commit run --all-files
 ```
 
 

@@ -1,6 +1,6 @@
 import re
 
-from app.models import DecisionCase
+from app.models import DecisionCase, Explanation
 from features.metadata_base import MetadataBase
 from features.website_manager import WebsiteData
 from lib.constants import STRICT_TRANSPORT_SECURITY, VALUES
@@ -8,7 +8,7 @@ from lib.constants import STRICT_TRANSPORT_SECURITY, VALUES
 
 class GDPR(MetadataBase):
     tag_list = ["impressum"]
-    decision_threshold = 0.9
+    decision_threshold = 0.3
 
     @staticmethod
     def _check_https_in_url(website_data: WebsiteData) -> list:
@@ -148,7 +148,9 @@ class GDPR(MetadataBase):
 
         return {VALUES: list(set(flat_values))}
 
-    def _decide(self, website_data: WebsiteData) -> tuple[DecisionCase, float]:
+    def _decide(
+        self, website_data: WebsiteData
+    ) -> tuple[DecisionCase, float, list[Explanation]]:
         probability = 0.5
 
         if (
@@ -157,12 +159,19 @@ class GDPR(MetadataBase):
             or "impressum" not in website_data.values
         ):
             probability = 0
-        elif (
-            "max_age" not in website_data.values
-            or "found_no_fonts" in website_data.values
-            or "found_no_inputs" in website_data.values
-        ):
+
+        if "max_age" not in website_data.values:
+            probability -= 0.1
+        if "found_no_fonts" in website_data.values:
             probability -= 0.1
 
-        decision = self._get_decision(probability)
-        return decision, probability
+        decision = self._get_inverted_decision(probability)
+        if decision == DecisionCase.TRUE:
+            decision = DecisionCase.UNKNOWN
+
+        explanation = (
+            [Explanation.MinimumGDPRRequirementsCovered]
+            if decision == DecisionCase.UNKNOWN
+            else [Explanation.PotentiallyInsufficientGDPRFound]
+        )
+        return decision, probability, explanation

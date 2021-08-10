@@ -1,5 +1,4 @@
 import json
-import math
 import sys
 
 import requests
@@ -32,7 +31,6 @@ ProfilerSession = sessionmaker(
 
 def download_remote_records():
     url = "https://metalookup.openeduhub.net/records"
-    # url = "http://extractor:5057/records"
 
     payload = {}
     headers = {}
@@ -40,7 +38,7 @@ def download_remote_records():
     response = requests.request("GET", url, headers=headers, data=payload)
 
     try:
-        records = json.loads(response.text)["out"]
+        records = json.loads(response.text)["records"]
     except TypeError as err:
         print(
             f"Exception when loading records with {err.args}.\nPotentially due to outdated record schema. "
@@ -48,7 +46,7 @@ def download_remote_records():
         sys.exit(1)
     print("Number of records loaded: ", len(records))
 
-    db = ProfilerSession()
+    session = ProfilerSession()
     for record in records:
         if PROFILER_DEBUG:
             print("Writing record #", record["id"])
@@ -67,10 +65,16 @@ def download_remote_records():
             exception=record["exception"],
             time_until_complete=record["time_until_complete"],
         )
-        db.add(db_record)
+        session.add(db_record)
 
-    db.commit()
-    db.close()
+    try:
+        session.commit()
+        session.close()
+    except Exception:
+        session.rollback()
+        raise
+    finally:
+        session.close()
 
 
 def print_schemas():
@@ -138,6 +142,7 @@ def print_accessibility_per_domain():
     website_manager = WebsiteManager.get_instance()
 
     meta_rows = database.execute(query)
+    url = "https://www.4teachers.de/?action=show&id=668772"
 
     print_data = {}
     for meta_row in meta_rows:
@@ -147,7 +152,7 @@ def print_accessibility_per_domain():
 
         website_manager.website_data.url = url
         website_manager._extract_top_level_domain()
-        top_level_domain = website_manager.website_data.top_level_domain
+        top_level_domain = website_manager.website_data.domain
         if top_level_domain == "":
             print("Top level domain not found for", url)
 
@@ -161,21 +166,73 @@ def print_accessibility_per_domain():
                 if value != -1:
                     print_data[top_level_domain].append(value)
 
-    # print("print_data:", print_data)
+    for domain in print_data.keys():
+        if domain != "" and len(print_data[domain]) > 0:
+            continue
+            print(
+                domain,
+                get_mean(print_data[domain]),
+                get_std_dev(print_data[domain]),
+            )
+
+
+def print_url_per_domain():
+    database: Session = ProfilerSession()
+
+    query = database.query(db_models.Record.url)
+
+    website_manager = WebsiteManager.get_instance()
+
+    meta_rows = database.execute(query)
+
+    print_data = {}
+    for meta_row in meta_rows:
+        url = meta_row[0]
+        if url == "":
+            continue
+
+        website_manager.website_data.url = url
+        website_manager._extract_top_level_domain()
+        top_level_domain = website_manager.website_data.domain
+        if top_level_domain == "":
+            print("Top level domain not found for", url)
+
+        if top_level_domain not in print_data.keys():
+            print_data.update({top_level_domain: []})
+
+        print_data[top_level_domain].append(url)
+
+    print("Evaluated top level domains:")
     for domain in print_data.keys():
         if domain != "":
-            if len(print_data[domain]) > 0:
-                print(
-                    domain,
-                    len(print_data[domain]),
-                    get_mean(print_data[domain]),
-                    get_std_dev(print_data[domain]),
-                )
-            else:
-                print(
-                    domain,
-                    len(print_data[domain]),
-                )
+            print(
+                domain,
+            )
+
+
+def print_exceptions():
+    database: Session = ProfilerSession()
+
+    query = database.query(db_models.Record.exception)
+
+    meta_rows = database.execute(query)
+
+    print_data = {}
+    for meta_row in meta_rows:
+        exception = meta_row[0]
+        if exception == "":
+            continue
+
+        if exception not in print_data.keys():
+            print_data.update({exception: 0})
+
+        print_data[exception] += 1
+
+    print(f"Found exceptions: {len(print_data.items())}")
+    for exception, value in print_data.items():
+        if exception != "":
+            print(exception, value)
+            print("---------------------------")
 
 
 PROFILER_DEBUG = False
@@ -187,8 +244,12 @@ if __name__ == "__main__":
     if PROFILER_DEBUG:
         print_schemas()
 
-    get_total_time()
+        get_total_time()
 
-    parse_meta()
+        parse_meta()
 
-    print_accessibility_per_domain()
+        print_accessibility_per_domain()
+
+    print_url_per_domain()
+
+    # print_exceptions()

@@ -13,8 +13,8 @@ from bs4 import BeautifulSoup
 from app.models import DecisionCase, Explanation
 from features.website_manager import WebsiteData, WebsiteManager
 from lib.constants import (
-    DECISION,
     EXPLANATION,
+    IS_HAPPY_CASE,
     PROBABILITY,
     TIME_REQUIRED,
     VALUES,
@@ -28,7 +28,7 @@ class ProbabilityDeterminationMethod(Enum):
     SINGLE_OCCURRENCE = 2
     FIRST_VALUE = 3
     FALSE_LIST = 4
-    MEAN_VALUE = 5
+    ACCESSIBILITY = 5
 
 
 class ExtractionMethod(Enum):
@@ -94,15 +94,21 @@ class MetadataBase:
             self._create_key()
 
     @staticmethod
-    def _get_ratio_of_elements(website_data: WebsiteData) -> float:
+    def _get_ratio_of_elements(
+        website_data: WebsiteData,
+    ) -> tuple[float, list[Explanation]]:
         if website_data.values and len(website_data.raw_links) > 0:
-            ratio = len(website_data.values) / len(website_data.raw_links)
+            ratio = round(
+                len(website_data.values) / len(website_data.raw_links), 2
+            )
+            explanation = [Explanation.FoundListMatches]
         else:
             ratio = 0
-        return round(ratio, 2)
+            explanation = [Explanation.FoundNoListMatches]
+        return ratio, explanation
 
     def _calculate_probability_from_ratio(
-            self, decision_indicator: float
+        self, decision_indicator: float
     ) -> float:
         return (
             round(
@@ -118,19 +124,31 @@ class MetadataBase:
 
     def _get_decision(self, probability: float) -> DecisionCase:
         decision = DecisionCase.UNKNOWN
+        print("probability: ", probability, self.decision_threshold)
         if probability > 0 and self.decision_threshold != -1:
-            if probability > self.decision_threshold:
-                decision = DecisionCase.TRUE
-            else:
+            if probability >= self.decision_threshold:
                 decision = DecisionCase.FALSE
+            else:
+                decision = DecisionCase.TRUE
         return decision
 
-    def _decide(self, website_data: WebsiteData) -> tuple[DecisionCase, float]:
+    def _get_inverted_decision(self, probability: float) -> DecisionCase:
+        decision = DecisionCase.UNKNOWN
+        if probability > 0 and self.decision_threshold != -1:
+            if probability <= self.decision_threshold:
+                decision = DecisionCase.FALSE
+            else:
+                decision = DecisionCase.TRUE
+        return decision
+
+    def _decide(
+        self, website_data: WebsiteData
+    ) -> tuple[DecisionCase, float, list[Explanation]]:
         if (
-                self.probability_determination_method
-                == ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
+            self.probability_determination_method
+            == ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
         ):
-            decision_indicator = self._get_ratio_of_elements(
+            decision_indicator, explanation = self._get_ratio_of_elements(
                 website_data=website_data
             )
             probability = self._calculate_probability_from_ratio(
@@ -138,85 +156,114 @@ class MetadataBase:
             )
             decision = self._get_decision(decision_indicator)
         elif (
-                self.probability_determination_method
-                == ProbabilityDeterminationMethod.SINGLE_OCCURRENCE
+            self.probability_determination_method
+            == ProbabilityDeterminationMethod.SINGLE_OCCURRENCE
         ):
-            decision, probability = self._decide_single_occurrence(
+            (
+                decision,
+                probability,
+                explanation,
+            ) = self._decide_single_occurrence(website_data)
+        elif (
+            self.probability_determination_method
+            == ProbabilityDeterminationMethod.FIRST_VALUE
+        ):
+            # TODO: Case unused, remove if possible
+            decision, probability, explanation = self._decide_first_value(
                 website_data
             )
         elif (
-                self.probability_determination_method
-                == ProbabilityDeterminationMethod.FIRST_VALUE
+            self.probability_determination_method
+            == ProbabilityDeterminationMethod.ACCESSIBILITY
         ):
-            decision, probability = self._decide_first_value(website_data)
+            decision, probability, explanation = self._decide_accessibility(
+                website_data
+            )
         elif (
-                self.probability_determination_method
-                == ProbabilityDeterminationMethod.MEAN_VALUE
+            self.probability_determination_method
+            == ProbabilityDeterminationMethod.FALSE_LIST
         ):
-            decision, probability = self._decide_mean_value(website_data)
-        elif (
-                self.probability_determination_method
-                == ProbabilityDeterminationMethod.FALSE_LIST
-        ):
-            decision, probability = self._decide_false_list(website_data)
+            decision, probability, explanation = self._decide_false_list(
+                website_data
+            )
         else:
-            decision, probability = self._get_default_decision()
+            decision, probability, explanation = self._get_default_decision()
 
-        return decision, probability
+        return decision, probability, explanation
 
     def _decide_single_occurrence(
-            self, website_data: WebsiteData
-    ) -> tuple[DecisionCase, float]:
-        probability = (
-            1.0
-            if (website_data.values and len(website_data.values) > 0)
-            else 0.0
+        self, website_data: WebsiteData
+    ) -> tuple[DecisionCase, float, list[Explanation]]:
+
+        an_occurence_has_been_found: bool = (
+            website_data.values and len(website_data.values) > 0
         )
-        decision = self._get_decision(probability)
-        return decision, probability
+        probability = 1 if an_occurence_has_been_found else 0
+        explanation = (
+            [Explanation.FoundListMatches]
+            if an_occurence_has_been_found
+            else [Explanation.FoundNoListMatches]
+        )
+        decision = (
+            DecisionCase.FALSE
+            if an_occurence_has_been_found
+            else DecisionCase.TRUE
+        )
+        return decision, probability, explanation
 
     def _decide_first_value(
-            self, website_data: WebsiteData
-    ) -> tuple[DecisionCase, float]:
+        self, website_data: WebsiteData
+    ) -> tuple[DecisionCase, float, list[Explanation]]:
         if website_data.values:
             probability = self._calculate_probability_from_ratio(
                 website_data.values[0]
             )
             decision = self._get_decision(website_data.values[0])
+            explanation = [Explanation.none]
         else:
-            decision, probability = self._get_default_decision()
-        return decision, probability
+            decision, probability, explanation = self._get_default_decision()
+        return decision, probability, explanation
 
-    def _decide_mean_value(
-            self, website_data: WebsiteData
-    ) -> tuple[DecisionCase, float]:
+    def _decide_accessibility(
+        self, website_data: WebsiteData
+    ) -> tuple[DecisionCase, float, list[Explanation]]:
+        decision, probability, explanation = self._get_default_decision()
         if website_data.values:
             mean = round(
                 sum(website_data.values) / (len(website_data.values)), 2
             )
             probability = self._calculate_probability_from_ratio(mean)
-            decision = self._get_decision(mean)
-        else:
-            decision, probability = self._get_default_decision()
-        return decision, probability
+            decision = self._get_inverted_decision(mean)
+            if decision == DecisionCase.FALSE:
+                explanation = [Explanation.AccessibilityTooLow]
+            elif decision == DecisionCase.UNKNOWN:
+                explanation = [Explanation.AccessibilityServiceReturnedFailure]
+            else:
+                explanation = [Explanation.AccessibilitySuitable]
+        return decision, probability, explanation
 
     def _decide_false_list(
-            self, website_data: WebsiteData
-    ) -> tuple[DecisionCase, float]:
+        self, website_data: WebsiteData
+    ) -> tuple[DecisionCase, float, list[Explanation]]:
         probability = 1
-        decision = DecisionCase.UNKNOWN
+        decision = DecisionCase.TRUE
+        explanation = [Explanation.NoKnockoutMatchFound]
         for false_element in self.false_list:
             if false_element in website_data.values:
                 decision = DecisionCase.FALSE
+                explanation = [Explanation.KnockoutMatchFound]
                 break
-        # TODO: If for is run through without break, then decision could be TRUE
-        return decision, probability
+
+        return decision, probability, explanation
 
     @staticmethod
-    def _get_default_decision() -> tuple[DecisionCase, float]:
+    def _get_default_decision() -> tuple[
+        DecisionCase, float, list[Explanation]
+    ]:
         probability = 0
         decision = DecisionCase.UNKNOWN
-        return decision, probability
+        explanation = [Explanation.none]
+        return decision, probability, explanation
 
     @staticmethod
     def _prepare_website_data() -> WebsiteData:
@@ -224,19 +271,21 @@ class MetadataBase:
         return website_manager.website_data
 
     def _processing_values(
-            self, values: dict, website_data: WebsiteData, before: float
+        self, values: dict, website_data: WebsiteData, before: float
     ) -> dict:
         website_data.values = values[VALUES]
 
-        decision, probability = self._decide(website_data=website_data)
+        decision, probability, explanation = self._decide(
+            website_data=website_data
+        )
 
         data = {
             self.key: {
                 TIME_REQUIRED: get_utc_now() - before,
                 **values,
                 PROBABILITY: probability,
-                DECISION: decision,
-                EXPLANATION: [Explanation.none, Explanation.NoHTTPS],
+                IS_HAPPY_CASE: decision,
+                EXPLANATION: explanation,
             }
         }
         if self.tag_list_last_modified != "":
@@ -249,7 +298,7 @@ class MetadataBase:
         return data
 
     def _prepare_start(self, key: str) -> tuple[float, WebsiteData]:
-        self._logger.debug(f"Starting {self.__class__.__name__} {key}.")
+        self._logger.info(f"Starting {self.__class__.__name__} {key}.")
         before = get_utc_now()
         website_data = self._prepare_website_data()
         return before, website_data
@@ -288,7 +337,7 @@ class MetadataBase:
         return list({a["href"] for a in soup.find_all(href=True)})
 
     def _parse_adblock_rules(self, website_data: WebsiteData) -> list:
-        self.adblockparser_options["domain"] = website_data.top_level_domain
+        self.adblockparser_options["domain"] = website_data.domain
         values = [
             url
             for url in website_data.raw_links
@@ -327,7 +376,7 @@ class MetadataBase:
         return {VALUES: values}
 
     async def _download_multiple_tag_lists(
-            self, session: ClientSession
+        self, session: ClientSession
     ) -> list[str]:
         tasks = [
             self._download_tag_list(url=url, session=session)
@@ -338,7 +387,7 @@ class MetadataBase:
         return complete_list
 
     async def _download_tag_list(
-            self, url: str, session: ClientSession
+        self, url: str, session: ClientSession
     ) -> list[str]:
         taglist_path = "tag_lists/"
         if not os.path.isdir(taglist_path):
@@ -380,8 +429,8 @@ class MetadataBase:
                 self.tag_list_expires = int(match.group(1))
 
             if (
-                    self.tag_list_last_modified != ""
-                    and self.tag_list_expires != 0
+                self.tag_list_last_modified != ""
+                and self.tag_list_expires != 0
             ):
                 break
 
@@ -391,10 +440,10 @@ class MetadataBase:
             el.lower()
             for el in self.tag_list
             if el != ""
-               and (
-                       self.comment_symbol == ""
-                       or not el.startswith(self.comment_symbol)
-               )
+            and (
+                self.comment_symbol == ""
+                or not el.startswith(self.comment_symbol)
+            )
         ]
 
         self.tag_list = list(OrderedDict.fromkeys(tag_list))

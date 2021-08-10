@@ -10,8 +10,8 @@ from bs4 import BeautifulSoup
 from pdfminer.high_level import extract_text
 from PyPDF2.utils import PdfReadError
 
-from app.models import DecisionCase
-from features.metadata_base import MetadataBase, ProbabilityDeterminationMethod
+from app.models import DecisionCase, Explanation
+from features.metadata_base import MetadataBase
 from features.website_manager import WebsiteData
 from lib.constants import VALUES
 from lib.settings import RETURN_IMAGES_IN_METADATA
@@ -19,9 +19,6 @@ from lib.settings import RETURN_IMAGES_IN_METADATA
 
 class ExtractFromFiles(MetadataBase):
     decision_threshold = 0.5
-    probability_determination_method = (
-        ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
-    )
     call_async = True
 
     xmp_metadata = [
@@ -116,13 +113,20 @@ class ExtractFromFiles(MetadataBase):
     @staticmethod
     def _get_pdf_images(pdf_file: PyPDF2.PdfFileReader) -> list:
         images = []
+        resources_tag = "/Resources"
+        xobject_tag = "/XObject"
+        subtype_tag = "/Subtype"
         for page in range(pdf_file.getNumPages()):
             pdf_page = pdf_file.getPage(page)
-            x_object = pdf_page["/Resources"]["/XObject"].getObject()
+            if (
+                resources_tag in pdf_page.keys()
+                and xobject_tag in pdf_page[resources_tag].keys()
+            ):
+                x_object = pdf_page[resources_tag][xobject_tag].getObject()
 
-            for obj in x_object:
-                if x_object[obj]["/Subtype"] == "/Image":
-                    images += obj
+                for obj in x_object:
+                    if x_object[obj][subtype_tag] == "/Image":
+                        images += obj
         return images
 
     def _extract_pdfs(self, filename: str) -> dict:
@@ -130,7 +134,7 @@ class ExtractFromFiles(MetadataBase):
             pdf_file = PyPDF2.PdfFileReader(open(filename, "rb"))
             extracted_content = self._get_pdf_content(filename, pdf_file)
             images = self._get_pdf_images(pdf_file)
-        except PdfReadError:
+        except (PdfReadError, OSError):
             extracted_content = []
             images = []
 
@@ -189,11 +193,18 @@ class ExtractFromFiles(MetadataBase):
         values = await self._work_files(files=extractable_files)
         return {**values}
 
-    def _decide(self, website_data: WebsiteData) -> tuple[DecisionCase, float]:
+    def _decide(
+        self, website_data: WebsiteData
+    ) -> tuple[DecisionCase, float, list[Explanation]]:
         probability = 0
         extractable_files = self._get_extractable_files(website_data)
 
         if website_data.values:
             probability = len(extractable_files) / len(website_data.values)
-        decision = self._get_decision(probability)
-        return decision, probability
+        decision = self._get_inverted_decision(probability)
+        explanation = (
+            [Explanation.ExtractableFilesFound]
+            if decision == DecisionCase.TRUE
+            else [Explanation.InsufficientlyExtractableFilesFound]
+        )
+        return decision, probability, explanation

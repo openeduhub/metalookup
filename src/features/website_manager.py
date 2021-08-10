@@ -5,7 +5,7 @@ import time
 import traceback
 from dataclasses import dataclass, field
 from json import JSONDecodeError
-from typing import NoReturn
+from typing import NoReturn, Optional
 from urllib.parse import urlparse
 
 import requests
@@ -20,7 +20,7 @@ from lib.constants import (
     MESSAGE_URL,
     SCRIPT,
 )
-from lib.logger import create_logger
+from lib.logger import get_logger
 from lib.settings import SPLASH_HEADERS, SPLASH_URL
 from lib.timing import global_start
 from lib.tools import get_unique_list
@@ -37,7 +37,7 @@ class WebsiteData:
     image_links: list = field(default_factory=list)
     extensions: list = field(default_factory=list)
     url: str = field(default_factory=str)
-    top_level_domain: str = field(default_factory=str)
+    domain: str = field(default_factory=str)
     har: dict = field(default_factory=dict)
 
 
@@ -69,10 +69,12 @@ class WebsiteManager:
 
     def __init__(self) -> None:
         super().__init__()
-        self._logger = create_logger()
+        self._logger = get_logger()
 
         try:
-            self.tld_extractor = TLDExtract(cache_dir=False)
+            self.tld_extractor: Optional[TLDExtract] = TLDExtract(
+                cache_dir=False
+            )
         except (ConnectionError, SuffixListNotFound) as e:
             self._logger.error(
                 f"Cannot extract top_level_domain because '{e.args}'"
@@ -112,14 +114,20 @@ class WebsiteManager:
     def _extract_top_level_domain(self) -> None:
         try:
             if self.tld_extractor is not None:
-                self.website_data.top_level_domain = self.tld_extractor(
-                    url=self.website_data.url
-                ).domain
+                host = self.tld_extractor(
+                    url=self.website_data.url.replace("http://", "").replace(
+                        "https://", ""
+                    )
+                )
+                domain = [host.subdomain, host.domain, host.suffix]
+                self.website_data.domain = ".".join(
+                    [element for element in domain if element != ""]
+                )
         except (ConnectionError, SuffixListNotFound, ValueError) as e:
             self._logger.error(
                 f"Cannot extract top_level_domain because '{e.args}'"
             )
-            self.website_data.top_level_domain = ""
+            self.website_data.domain = ""
 
     def _preprocess_header(self) -> None:
         header: str = self.website_data.raw_header.lower()
@@ -149,7 +157,7 @@ class WebsiteManager:
     def _get_html_and_har(self, url: str) -> dict:
         splash_url = (
             f"{SPLASH_URL}/render.json?url={url}&html={1}&iframes={1}"
-            f"&har={1}&response_body={1}&wait={1}"
+            f"&har={1}&response_body={1}&wait={10}&render_all={1}"
         )
         try:
             response = requests.get(
@@ -171,9 +179,6 @@ class WebsiteManager:
         except (KeyError, IndexError):
             raw_headers = []
 
-        html = ""
-        har = ""
-        headers = ""
         try:
             print(f"data.keys() {data.keys()}")
             html = data["html"]
@@ -181,13 +186,17 @@ class WebsiteManager:
             headers = str(json.dumps(self._transform_raw_header(raw_headers)))
         except KeyError as e:
             exception = (
-                f"Key error from splash container data: '{e.args}'. "
+                f"Key error caught from splash container data: '{e.args}'. "
                 "".join(traceback.format_exception(None, e, e.__traceback__))
+                + f"\n Continuing with empty html. Data keys: {data.keys()}"
             )
             self._logger.exception(
                 exception,
                 exc_info=True,
             )
+            html = ""
+            har = ""
+            headers = ""
 
         return {
             MESSAGE_HTML: html,
@@ -205,6 +214,7 @@ class WebsiteManager:
         unique_tags = get_unique_list(
             [tag.name for tag in self.website_data.soup.find_all()]
         )
+        self._logger.debug((f"unique_tags: {unique_tags}"))
         if SCRIPT in unique_tags:
             unique_tags.remove(SCRIPT)
             source_regex = self.source_regex.findall

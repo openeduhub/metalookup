@@ -10,7 +10,6 @@ from features.gdpr import GDPR
 from features.html_based import (
     Advertisement,
     AntiAdBlock,
-    CookiesInHtml,
     EasylistAdult,
     EasylistGermany,
     EasyPrivacy,
@@ -28,11 +27,11 @@ from features.malicious_extensions import MaliciousExtensions
 from features.metatag_explorer import MetatagExplorer
 from features.website_manager import WebsiteManager
 from lib.constants import VALUES
-from lib.logger import create_logger
+from lib.logger import get_logger
 
 
 def _test_feature(feature_class, html, expectation) -> tuple[bool, bool]:
-    _logger = create_logger()
+    _logger = get_logger()
 
     feature = feature_class(_logger)
 
@@ -57,8 +56,6 @@ def _test_feature(feature_class, html, expectation) -> tuple[bool, bool]:
         data = {}
     finally:
         website_manager.reset()
-
-    print(data)
 
     are_values_correct = False
     try:
@@ -175,7 +172,7 @@ def test_easylist_adult():
 
 
 def test_cookies_in_html():
-    feature = CookiesInHtml
+    feature = Cookies
     feature._create_key(feature)
     html = {
         "html": """<div class='ast-small-footer-section ast-small-footer-section-1 ast-small-footer-section-equally ast-col-md-6 ast-col-xs-12' >
@@ -283,7 +280,7 @@ src='https://cdn.fluidplayer.com/v2/current/fluidplayer.min.js?ver=5.6' id='flui
     }
     expected = {
         feature.key: {
-            "values": [".exe", ".pdf", ".js"],
+            "values": [".exe", ".pdf"],
             "excluded_values": [".6"],
             "runs_within": 10,  # time the evaluation may take AT MAX -> acceptance test}
         }

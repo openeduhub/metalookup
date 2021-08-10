@@ -7,8 +7,20 @@ from sqlalchemy.exc import OperationalError
 
 import db.base
 from app.communication import QueueCommunicator
-from app.models import ExtractorTags, Input, ListTags, MetadataTags, Output
-from app.schemas import RecordSchema
+from app.models import (
+    ExtractorTags,
+    Input,
+    ListTags,
+    MetadataTags,
+    Output,
+    Ping,
+    ProgressInput,
+    ProgressOutput,
+    ResetCacheInput,
+    ResetCacheOutput,
+)
+from app.schemas import CacheOutput, RecordSchema, RecordsOutput
+from cache.cache_manager import CacheManager
 from db.db import (
     create_request_record,
     create_response_record,
@@ -16,9 +28,10 @@ from db.db import (
     load_records,
 )
 from lib.constants import (
-    DECISION,
     EXPLANATION,
+    IS_HAPPY_CASE,
     MESSAGE_ALLOW_LIST,
+    MESSAGE_BYPASS_CACHE,
     MESSAGE_EXCEPTION,
     MESSAGE_HAR,
     MESSAGE_HEADERS,
@@ -32,19 +45,20 @@ from lib.constants import (
 )
 from lib.settings import NUMBER_OF_EXTRACTORS, VERSION
 from lib.timing import get_utc_now
+from lib.tools import is_production_environment
 
 app = FastAPI(title=METADATA_EXTRACTOR, version=VERSION)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["*"],
+    allow_credentials=True,
+    allow_methods=["POST", "GET", "OPTIONS", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 # noinspection PyTypeHints
 app.communicator: QueueCommunicator
 
-shared_status = shared_memory.ShareableList([0])
+shared_status = shared_memory.ShareableList([0, " " * 1024])
 db.base.create_metadata(db.base.database_engine)
 
 
@@ -63,7 +77,7 @@ def _convert_dict_to_output_model(
                 MetadataTags(
                     values=meta[key][VALUES],
                     probability=meta[key][PROBABILITY],
-                    isHappyCase=meta[key][DECISION],
+                    isHappyCase=meta[key][IS_HAPPY_CASE],
                     time_for_completion=meta[key][TIME_REQUIRED],
                     explanation=meta[key][EXPLANATION],
                 ),
@@ -102,6 +116,7 @@ def extract_meta(input_data: Input):
             MESSAGE_HAR: input_data.har,
             MESSAGE_ALLOW_LIST: allowance,
             MESSAGE_SHARED_MEMORY_NAME: shared_status.shm.name,
+            MESSAGE_BYPASS_CACHE: input_data.bypass_cache,
         }
     )
 
@@ -144,7 +159,7 @@ def extract_meta(input_data: Input):
             status_code=400,
             detail={
                 MESSAGE_URL: input_data.url,
-                "meta": extractor_tags,
+                "meta": meta_data,
                 MESSAGE_EXCEPTION: exception,
                 "time_until_complete": end_time - starting_extraction,
             },
@@ -153,32 +168,11 @@ def extract_meta(input_data: Input):
     return out
 
 
-@app.get("/records/")
-def show_records():
-    records = load_records()
-    out = []
-    for record in records:
-        out.append(
-            RecordSchema(
-                id=record.id,
-                timestamp=record.timestamp,
-                start_time=record.start_time,
-                action=record.action,
-                allow_list=record.allow_list,
-                meta=record.meta,
-                url=record.url,
-                html=record.html,
-                headers=record.headers,
-                har=record.har,
-                debug=record.debug,
-                exception=record.exception,
-                time_until_complete=record.time_until_complete,
-            )
-        )
-    return {"out": records}
-
-
-@app.get("/_ping", description="Ping function for automatic health check.")
+@app.get(
+    "/_ping",
+    description="Ping function for automatic health check.",
+    response_model=Ping,
+)
 def ping():
     return {"status": "ok"}
 
@@ -186,13 +180,67 @@ def ping():
 @app.get(
     "/get_progress",
     description="Returns progress of the metadata extraction. From 0 to 1 (=100%).",
+    response_model=ProgressOutput,
 )
-def get_progress():
+def get_progress(progress_input: ProgressInput):
+    if (
+        progress_input.url != ""
+        and shared_status[1] != ""
+        and shared_status[1] in progress_input.url
+    ):
+        progress = round(shared_status[0] / NUMBER_OF_EXTRACTORS, 2)
+    else:
+        progress = -1
     return {
-        "progress": round(shared_status[0] / NUMBER_OF_EXTRACTORS, 2),
+        "progress": progress,
     }
 
 
-@app.get("/cache/")
-def get_cache():
-    return {"cache": load_cache()}
+# Developer endpoints
+if not is_production_environment():
+
+    @app.get(
+        "/records/",
+        response_model=RecordsOutput,
+        description="Get all urls and their processed metadata.",
+    )
+    def show_records():
+        records = load_records()
+        out = []
+        for record in records:
+            out.append(
+                RecordSchema(
+                    id=record.id,
+                    timestamp=record.timestamp,
+                    start_time=record.start_time,
+                    action=record.action,
+                    allow_list=record.allow_list,
+                    meta=record.meta,
+                    url=record.url,
+                    html=record.html,
+                    headers=record.headers,
+                    har=record.har,
+                    debug=record.debug,
+                    exception=record.exception,
+                    time_until_complete=record.time_until_complete,
+                )
+            )
+        return {"records": out}
+
+    @app.get(
+        "/cache/",
+        response_model=CacheOutput,
+        description="Developer endpoint to receive cache content.",
+    )
+    def get_cache():
+        return {"cache": load_cache()}
+
+    @app.post(
+        "/cache/reset",
+        description="Endpoint to reset cache",
+        response_model=ResetCacheOutput,
+    )
+    def reset_cache_post(reset_input: ResetCacheInput):
+        cache_manager = CacheManager.get_instance()
+        row_count = cache_manager.reset_cache(reset_input.domain)
+        return {"deleted_rows": row_count}

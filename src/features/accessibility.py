@@ -18,7 +18,7 @@ from lib.settings import ACCESSIBILITY_URL
 
 class Accessibility(MetadataBase):
     probability_determination_method = (
-        ProbabilityDeterminationMethod.MEAN_VALUE
+        ProbabilityDeterminationMethod.ACCESSIBILITY
     )
     decision_threshold = 0.8
     call_async = True
@@ -32,10 +32,10 @@ class Accessibility(MetadataBase):
         return score
 
     async def _execute_api_call(
-            self,
-            website_data: WebsiteData,
-            session: ClientSession,
-            strategy: str = DESKTOP,
+        self,
+        website_data: WebsiteData,
+        session: ClientSession,
+        strategy: str = DESKTOP,
     ) -> float:
         params = {
             MESSAGE_URL: website_data.url,
@@ -49,13 +49,12 @@ class Accessibility(MetadataBase):
                 url=container_url, timeout=60, json=params
             )
         except (
-                asyncio.exceptions.TimeoutError,
-                ClientConnectorError,
-                ConnectionRefusedError,
-                OSError,
-        ) as e:
+            asyncio.exceptions.TimeoutError,
+            ClientConnectorError,
+            OSError,
+        ) as err:
             self._logger.exception(
-                f"Timeout for url {container_url} after 60s: {e.args}"
+                f"Timeout for url {container_url} after 60s: {err.args}, {str(err)}"
             )
             process = None
 
@@ -81,4 +80,5 @@ class Accessibility(MetadataBase):
                     for strategy in [DESKTOP, MOBILE]
                 ]
             )
+        score = [value for value in score if value != -1]
         return {VALUES: score}

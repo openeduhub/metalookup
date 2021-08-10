@@ -47,7 +47,6 @@ def rester():
         "malicious_extensions": True,
         "extracted_links": True,
         "extract_from_files": True,
-        "cookies_in_html": True,
         "fanboy_annoyance": True,
         "fanboy_notification": True,
         "fanboy_social_media": True,

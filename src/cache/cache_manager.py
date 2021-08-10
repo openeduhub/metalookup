@@ -2,22 +2,28 @@ import json
 import logging
 import time
 
+from psycopg2 import ProgrammingError
+
 import db.models as db_models
 from app.models import DecisionCase, Explanation
-from db.db import SessionLocal, get_top_level_domains, load_cache
+from db.db import SessionLocal, get_top_level_domains, reset_cache
 from features.website_manager import Singleton
 from lib.constants import (
     ACCESSIBILITY,
-    DECISION,
     EXPLANATION,
+    IS_HAPPY_CASE,
     PROBABILITY,
     SECONDS_PER_DAY,
     TIME_REQUIRED,
     TIMESTAMP,
     VALUES,
 )
-from lib.logger import create_logger
-from lib.settings import CACHE_RETENTION_TIME_DAYS, MINIMUM_REQUIRED_ENTRIES
+from lib.logger import get_logger
+from lib.settings import (
+    BYPASS_CACHE,
+    CACHE_RETENTION_TIME_DAYS,
+    MINIMUM_REQUIRED_ENTRIES,
+)
 from lib.timing import get_utc_now, global_start
 from lib.tools import get_mean, get_unique_list
 
@@ -28,25 +34,32 @@ class CacheManager:
 
     def __init__(self):
         super().__init__()
-        self.top_level_domain: str = ""
+        self.domain: str = ""
         self.hosts = {}
-        self._logger = create_logger()
+        self._logger = get_logger()
         self._logger.debug(
             f"CacheManager loaded at {time.perf_counter() - global_start} since start"
         )
+        self.bypass = BYPASS_CACHE
         self._prepare_cache_manager()
+
+    def set_bypass(self, bypass: bool):
+        self.bypass = bypass
+
+    def update_domains(self):
+        self.hosts = get_top_level_domains()
 
     def _prepare_cache_manager(self) -> None:
         self._logger.debug(
             f"get_top_level_domains at {time.perf_counter() - global_start} since start"
         )
-        self.hosts = get_top_level_domains()
+        self.update_domains()
         self._logger.debug(
             f"get_top_level_domains done at {time.perf_counter() - global_start} since start"
         )
 
     def is_host_predefined(self) -> bool:
-        return False #self.top_level_domain in self.hosts
+        return self.domain in self.hosts
 
     def is_enough_cached_data_present(self, key: str) -> bool:
         feature_values = self.read_cached_feature_values(key)
@@ -57,9 +70,8 @@ class CacheManager:
             if self.is_cached_value_recent(data[TIMESTAMP]):
                 suitable_entries += 1
             if suitable_entries >= MINIMUM_REQUIRED_ENTRIES:
-                break
-
-        return suitable_entries >= MINIMUM_REQUIRED_ENTRIES
+                return True
+        return False
 
     @staticmethod
     def is_cached_value_recent(timestamp: float) -> bool:
@@ -78,7 +90,7 @@ class CacheManager:
                 values.extend(data[VALUES])
                 probability.append(data[PROBABILITY])
                 explanation.extend(data[EXPLANATION])
-                decision.extend(data[DECISION])
+                decision.append(data[IS_HAPPY_CASE])
 
         explanation = get_unique_list(explanation)
 
@@ -87,28 +99,35 @@ class CacheManager:
             decision = DecisionCase.FALSE
         elif DecisionCase.UNKNOWN in decision:
             decision = DecisionCase.UNKNOWN
-        else:
+        elif DecisionCase.TRUE in decision:
             decision = DecisionCase.TRUE
-
-        if key == ACCESSIBILITY:
-            values = [get_mean(values)]
         else:
-            values = []
+            decision = DecisionCase.UNKNOWN
+
+        values = []
+        if key == ACCESSIBILITY and len(values) > 0:
+            values = [get_mean(values)]
 
         return {
             VALUES: values,
             EXPLANATION: get_unique_list(explanation),
             PROBABILITY: get_mean(probability),
-            DECISION: decision,
+            IS_HAPPY_CASE: decision,
         }
 
     def read_cached_feature_values(self, key: str) -> list:
         database = SessionLocal()
-        entry = (
-            database.query(db_models.CacheEntry)
-            .filter_by(top_level_domain=self.top_level_domain)
-            .first()
-        )
+        try:
+            entry = (
+                database.query(db_models.CacheEntry)
+                .filter_by(top_level_domain=self.domain)
+                .first()
+            )
+        except (ProgrammingError, AttributeError) as e:
+            self._logger.exception(f"Reading cache failed: {e.args}")
+            entry = []
+        if entry is None:
+            return []
         return entry.__getattribute__(key)
 
     def get_predefined_metadata(self, key: str) -> dict:
@@ -123,3 +142,7 @@ class CacheManager:
             }
         )
         return meta_data
+
+    @staticmethod
+    def reset_cache(domain: str):
+        return reset_cache(domain)

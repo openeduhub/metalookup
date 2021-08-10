@@ -8,8 +8,23 @@ class Explanation(str, Enum):
     none = "NoExplanation"
     NoHTTPS = "NoHTTPS"
     AccessibilityTooLow = "AccessibilityTooLow"
-    FoundAds = "FoundAds"
+    AccessibilitySuitable = "AccessibilitySuitable"
+    AccessibilityServiceReturnedFailure = "AccessibilityServiceReturnedFailure"
+    FoundListMatches = "FoundListMatches"
+    FoundNoListMatches = "FoundNoListMatches"
     Cached = "Cached"
+    KnockoutMatchFound = "KnockoutMatchFound"
+    NoKnockoutMatchFound = "NoKnockoutMatchFound"
+    NoCookiesFound = "NoCookiesFound"
+    CookiesFound = "CookiesFound"
+    ExtractableFilesFound = "ExtractableFilesFound"
+    InsufficientlyExtractableFilesFound = "InsufficientlyExtractableFilesFound"
+    PotentiallyInsufficientGDPRFound = "PotentiallyInsufficientGDPRFound"
+    MinimumGDPRRequirementsCovered = "MinimumGDPRRequirementsCovered"
+    IndicatorsForInsufficientSecurityFound = (
+        "IndicatorsForInsufficientSecurityFound"
+    )
+    MinimumSecurityRequirementsCovered = "MinimumSecurityRequirementsCovered"
 
     def __repr__(self):
         return str(self.value)
@@ -38,7 +53,7 @@ class MetadataTags(BaseModel):
         " or whether everything is unclear",
     )
     explanation: list[Explanation] = Field(
-        default=Explanation.none,
+        default=[Explanation.none],
         description="A brief explanation to be displayed in the frontend what"
         " reasons the code had for its isHappyCase.",
     )
@@ -47,6 +62,10 @@ class MetadataTags(BaseModel):
         description="Debug information. How long did this metadata take?",
     )
 
+    class Config:
+        orm_mode = True
+        arbitrary_types_allowed = True
+
 
 class ListTags(BaseModel):
     advertisement: Optional[bool] = True
@@ -54,7 +73,6 @@ class ListTags(BaseModel):
     malicious_extensions: Optional[bool] = True
     extracted_links: Optional[bool] = True
     extract_from_files: Optional[bool] = True
-    cookies_in_html: Optional[bool] = True
     cookies: Optional[bool] = True
     fanboy_annoyance: Optional[bool] = True
     fanboy_notification: Optional[bool] = True
@@ -99,12 +117,6 @@ class ExtractorTags(BaseModel):
         "e.g., is the text in a PDF readable?"
         "Probability = "
         "Ratio of found files which are extractable.",
-    )
-    cookies_in_html: MetadataTags = Field(
-        default=None,
-        description="Beta. Are parts of the html matching with known cookie code?"
-        "Probability = "
-        "1 If any matching element is found, else 0.",
     )
     cookies: MetadataTags = Field(
         default=None,
@@ -211,6 +223,10 @@ class ExtractorTags(BaseModel):
         "Ratio fo javascript files versus all files.",
     )
 
+    class Config:
+        orm_mode = True
+        arbitrary_types_allowed = True
+
 
 class Input(BaseModel):
     url: str = Field(..., description="The base url of the scraped website.")
@@ -233,6 +249,10 @@ class Input(BaseModel):
         default=True,
         description="Developer flag to receive more information through API",
     )
+    bypass_cache: Optional[bool] = Field(
+        default=False,
+        description="Bypass the cache (true) or not in evaluation.",
+    )
 
 
 class Output(BaseModel):
@@ -249,4 +269,36 @@ class Output(BaseModel):
         default=-1,
         description="The time needed from starting the extraction"
         " until sending the resulting meta data out.",
+    )
+
+    class Config:
+        orm_mode = True
+        arbitrary_types_allowed = True
+
+
+class Ping(BaseModel):
+    status: str = Field(
+        default="not ok",
+        description="Ping output. Should be 'ok' in happy case.",
+    )
+
+
+class ProgressOutput(BaseModel):
+    progress: float = Field(default=0.0, description="Progress of evaluation.")
+
+
+class ProgressInput(BaseModel):
+    url: str = Field(..., description="The base url of the scraped website.")
+
+
+class ResetCacheOutput(BaseModel):
+    deleted_rows: int = Field(
+        default=-1,
+        description="Number of deleted rows from cache. Each row represents one top-level-domain.",
+    )
+
+
+class ResetCacheInput(BaseModel):
+    domain: Optional[str] = Field(
+        default="", description="The host domain to be reset."
     )
