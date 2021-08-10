@@ -37,9 +37,6 @@ def _test_feature(feature_class, html, expectation) -> tuple[bool, bool]:
 
     before = time.perf_counter()
     feature.setup()
-    print(
-        f"setup for '{feature.__class__.__name__}' took {round(time.perf_counter() - before, 2)}s."
-    )
 
     website_manager: WebsiteManager = WebsiteManager.get_instance()
 
