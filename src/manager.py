@@ -1,7 +1,9 @@
 import cProfile
 import multiprocessing
 import signal
+import sys
 import time
+import traceback
 from queue import Empty
 
 import uvicorn
@@ -9,6 +11,7 @@ import uvicorn
 from app.api import app
 from app.communication import QueueCommunicator
 from features.metadata_manager import MetadataManager
+from lib.constants import MESSAGE_EXCEPTION
 from lib.logger import create_logger
 from lib.settings import API_PORT, WANT_PROFILING
 from lib.timing import get_utc_now, global_start
@@ -50,7 +53,15 @@ class Manager:
         for uuid, message in request.items():
             self._logger.debug(f"message: {message}")
 
-            response = self.metadata_manager.start(message=message)
+            try:
+                response = self.metadata_manager.start(message=message)
+            except Exception as err:
+                exception = (
+                    f"Unknown global exception: {err}, {err.args}, "
+                    f"{''.join(traceback.format_exception(None, err, err.__traceback__))}"
+                )
+                self._logger.exception(exception)
+                response = {MESSAGE_EXCEPTION: exception}
 
             self._logger.debug(
                 f"got response at {time.perf_counter() - global_start} since start"
@@ -108,3 +119,6 @@ if __name__ == "__main__":
         profiler.enable()
 
     manager = Manager()
+
+    print("Manager exited")
+    sys.exit(0)
