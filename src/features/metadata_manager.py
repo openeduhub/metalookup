@@ -1,10 +1,7 @@
 import asyncio
-import multiprocessing
 import time
 import traceback
 from collections import ChainMap
-from itertools import repeat
-from logging import Logger
 from multiprocessing import shared_memory
 
 from app.models import Explanation
@@ -51,16 +48,6 @@ from lib.logger import get_logger
 from lib.timing import get_utc_now, global_start
 
 
-def _parallel_setup(
-    extractor_class: type(MetadataBase), logger: Logger
-) -> MetadataBase:
-    logger.debug(f"Starting setup for {extractor_class} {get_utc_now()}")
-    extractor = extractor_class(logger)
-    extractor.setup()
-    logger.debug(f"Finished setup for {extractor_class} {get_utc_now()}")
-    return extractor
-
-
 @Singleton
 class MetadataManager:
     metadata_extractors: list[type(MetadataBase)] = []
@@ -70,6 +57,19 @@ class MetadataManager:
     def __init__(self) -> None:
         self._logger = get_logger()
         self._setup_extractors()
+
+    def _setup_extractor(
+        self, extractor_class: type(MetadataBase)
+    ) -> MetadataBase:
+        self._logger.debug(
+            f"Starting setup for {extractor_class} {get_utc_now()}"
+        )
+        extractor = extractor_class(self._logger)
+        extractor.setup()
+        self._logger.debug(
+            f"Finished setup for {extractor_class} {get_utc_now()}"
+        )
+        return extractor
 
     def _setup_extractors(self) -> None:
 
@@ -97,10 +97,9 @@ class MetadataManager:
             Accessibility,
         ]
 
-        pool = multiprocessing.Pool(processes=6)
-        self.metadata_extractors: list[type(MetadataBase)] = pool.starmap(
-            _parallel_setup, zip(extractors, repeat(self._logger))
-        )
+        self.metadata_extractors: list[type(MetadataBase)] = [
+            self._setup_extractor(extractor) for extractor in extractors
+        ]
 
     def is_feature_whitelisted_for_cache(
         self, extractor: type(MetadataBase)
