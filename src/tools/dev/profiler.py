@@ -252,4 +252,4 @@ if __name__ == "__main__":
 
     print_url_per_domain()
 
-    # print_exceptions()
+    print_exceptions()

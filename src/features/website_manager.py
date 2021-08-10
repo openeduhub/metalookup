@@ -157,7 +157,7 @@ class WebsiteManager:
     def _get_html_and_har(self, url: str) -> dict:
         splash_url = (
             f"{SPLASH_URL}/render.json?url={url}&html={1}&iframes={1}"
-            f"&har={1}&response_body={1}&wait={10}&render_all={1}"
+            f"&har={1}&response_body={1}&wait={10}&render_all={1}&script={1}"
         )
         try:
             response = requests.get(
@@ -188,6 +188,9 @@ class WebsiteManager:
                 f"Key error caught from splash container data: '{e.args}'. "
                 "".join(traceback.format_exception(None, e, e.__traceback__))
                 + f"\n Continuing with empty html. Data keys: {data.keys()}"
+                + f"\nerror: {data['error'] if 'error' in data.keys() else ''}"
+                + f"\ndescription: {data['description'] if 'description' in data.keys() else ''}"
+                + f"\ninfo: {data['info'] if 'info' in data.keys() else ''}"
             )
             self._logger.exception(
                 exception,

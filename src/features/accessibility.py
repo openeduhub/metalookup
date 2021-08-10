@@ -3,7 +3,8 @@ import json
 
 from aiohttp import ClientConnectorError, ClientSession
 
-from features.metadata_base import MetadataBase, ProbabilityDeterminationMethod
+from app.models import DecisionCase, Explanation
+from features.metadata_base import MetadataBase
 from features.website_manager import WebsiteData
 from lib.constants import (
     ACCESSIBILITY,
@@ -17,9 +18,6 @@ from lib.settings import ACCESSIBILITY_URL
 
 
 class Accessibility(MetadataBase):
-    probability_determination_method = (
-        ProbabilityDeterminationMethod.ACCESSIBILITY
-    )
     decision_threshold = 0.8
     call_async = True
 
@@ -78,3 +76,21 @@ class Accessibility(MetadataBase):
             )
         score = [value for value in score if value != -1]
         return {VALUES: score}
+
+    def _decide(
+        self, website_data: WebsiteData
+    ) -> tuple[DecisionCase, float, list[Explanation]]:
+        decision, probability, explanation = self._get_default_decision()
+        if website_data.values:
+            mean = round(
+                sum(website_data.values) / (len(website_data.values)), 2
+            )
+            probability = self._calculate_probability_from_ratio(mean)
+            decision = self._get_inverted_decision(mean)
+            if decision == DecisionCase.FALSE:
+                explanation = [Explanation.AccessibilityTooLow]
+            elif decision == DecisionCase.UNKNOWN:
+                explanation = [Explanation.AccessibilityServiceReturnedFailure]
+            else:
+                explanation = [Explanation.AccessibilitySuitable]
+        return decision, probability, explanation

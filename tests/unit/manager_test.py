@@ -2,6 +2,7 @@ from unittest import mock
 
 import pytest
 
+from features.website_manager import WebsiteManager
 from lib.settings import WANT_PROFILING
 from manager import Manager
 
@@ -89,3 +90,6 @@ def test_handle_content(manager: Manager, mocker):
         == {"message": request["some_uuid"]}
     )
     assert is_extract_meta_data_called_with_empty_html
+
+    website_manager = WebsiteManager.get_instance()
+    website_manager.reset()

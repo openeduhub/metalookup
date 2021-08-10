@@ -9,10 +9,10 @@ cffi==1.14.6
 chardet==4.0.0; python_version > "3.0" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version > "3.0"
 charset-normalizer==2.0.4; python_full_version >= "3.5.0" and python_version >= "3"
 click==7.1.2; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0"
-cryptography==3.3.1; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.6.0")
-fastapi==0.63.0; python_version >= "3.6"
+cryptography==3.3.2; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.6.0")
+fastapi==0.65.3; python_version >= "3.6"
 filelock==3.0.12
-greenlet==1.1.0; python_version >= "3" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version >= "3"
+greenlet==1.1.1; python_version >= "3" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version >= "3"
 h11==0.12.0; python_version >= "3.6"
 idna==3.2; python_version >= "3.5"
 lxml==4.6.3; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.5.0")
@@ -28,7 +28,7 @@ six==1.16.0; python_version >= "2.7" and python_full_version < "3.0.0" or python
 sortedcontainers==2.4.0
 soupsieve==2.2.1; python_version >= "3.6"
 sqlalchemy==1.4.22; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.6.0")
-starlette==0.13.6; python_version >= "3.6"
+starlette==0.14.2; python_version >= "3.6"
 tldextract==3.1.0; python_version >= "3.5"
 typing-extensions==3.10.0.0
 urllib3==1.26.6; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version < "4"

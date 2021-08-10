@@ -2,11 +2,12 @@ import json
 import logging
 import time
 
-from psycopg2 import ProgrammingError
-
-import db.models as db_models
 from app.models import DecisionCase, Explanation
-from db.db import SessionLocal, get_top_level_domains, reset_cache
+from db.db import (
+    get_top_level_domains,
+    read_cached_values_by_feature,
+    reset_cache,
+)
 from features.website_manager import Singleton
 from lib.constants import (
     ACCESSIBILITY,
@@ -35,7 +36,7 @@ class CacheManager:
     def __init__(self):
         super().__init__()
         self.domain: str = ""
-        self.hosts = {}
+        self._hosts = {}
         self._logger = get_logger()
         self._logger.debug(
             f"CacheManager loaded at {time.perf_counter() - global_start} since start"
@@ -46,23 +47,31 @@ class CacheManager:
     def set_bypass(self, bypass: bool):
         self.bypass = bypass
 
-    def update_domains(self):
-        self.hosts = get_top_level_domains()
+    def get_domain(self):
+        return self._domain
+
+    def set_domain(self, value: str):
+        self._domain = value
+
+    domain = property(get_domain, set_domain)
+
+    def update_hosts(self):
+        self._hosts = get_top_level_domains()
 
     def _prepare_cache_manager(self) -> None:
         self._logger.debug(
             f"get_top_level_domains at {time.perf_counter() - global_start} since start"
         )
-        self.update_domains()
+        self.update_hosts()
         self._logger.debug(
             f"get_top_level_domains done at {time.perf_counter() - global_start} since start"
         )
 
     def is_host_predefined(self) -> bool:
-        return self.domain in self.hosts
+        return self._domain in self._hosts
 
     def is_enough_cached_data_present(self, key: str) -> bool:
-        feature_values = self.read_cached_feature_values(key)
+        feature_values = read_cached_values_by_feature(key, self._domain)
 
         suitable_entries = 0
         for entry in feature_values:
@@ -83,64 +92,48 @@ class CacheManager:
         values = []
         probability = []
         explanation = [Explanation.Cached]
-        decision = []
+        isHappyCase = []
         for entry in meta_data:
             data = json.loads(entry)
             if self.is_cached_value_recent(data[TIMESTAMP]):
                 values.extend(data[VALUES])
                 probability.append(data[PROBABILITY])
                 explanation.extend(data[EXPLANATION])
-                decision.append(data[IS_HAPPY_CASE])
+                isHappyCase.append(data[IS_HAPPY_CASE])
 
         explanation = get_unique_list(explanation)
 
-        decision = get_unique_list(decision)
-        if DecisionCase.FALSE in decision:
-            decision = DecisionCase.FALSE
-        elif DecisionCase.UNKNOWN in decision:
-            decision = DecisionCase.UNKNOWN
-        elif DecisionCase.TRUE in decision:
-            decision = DecisionCase.TRUE
+        isHappyCase = get_unique_list(isHappyCase)
+        if DecisionCase.FALSE in isHappyCase:
+            isHappyCase = DecisionCase.FALSE
+        elif DecisionCase.UNKNOWN in isHappyCase:
+            isHappyCase = DecisionCase.UNKNOWN
+        elif DecisionCase.TRUE in isHappyCase:
+            isHappyCase = DecisionCase.TRUE
         else:
-            decision = DecisionCase.UNKNOWN
+            isHappyCase = DecisionCase.UNKNOWN
 
-        values = []
         if key == ACCESSIBILITY and len(values) > 0:
-            values = [get_mean(values)]
+            values = [round(get_mean(values), 2)]
+        else:
+            values = []
 
+        mean_probability: float = (
+            get_mean(probability) if len(probability) > 0 else 0
+        )
         return {
             VALUES: values,
             EXPLANATION: get_unique_list(explanation),
-            PROBABILITY: get_mean(probability),
-            IS_HAPPY_CASE: decision,
+            PROBABILITY: mean_probability,
+            IS_HAPPY_CASE: isHappyCase,
         }
 
-    def read_cached_feature_values(self, key: str) -> list:
-        database = SessionLocal()
-        try:
-            entry = (
-                database.query(db_models.CacheEntry)
-                .filter_by(top_level_domain=self.domain)
-                .first()
-            )
-        except (ProgrammingError, AttributeError) as e:
-            self._logger.exception(f"Reading cache failed: {e.args}")
-            entry = []
-        if entry is None:
-            return []
-        return entry.__getattribute__(key)
-
     def get_predefined_metadata(self, key: str) -> dict:
-        feature_values = self.read_cached_feature_values(key)
+        feature_values = read_cached_values_by_feature(key, self._domain)
         converted_data = self.convert_cached_data(feature_values, key=key)
 
         meta_data = {key: converted_data}
-        meta_data[key].update(
-            {
-                TIME_REQUIRED: 0,
-                EXPLANATION: converted_data[EXPLANATION],
-            }
-        )
+        meta_data[key].update({TIME_REQUIRED: 0})
         return meta_data
 
     @staticmethod
