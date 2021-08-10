@@ -35,7 +35,7 @@ class CacheManager:
     def __init__(self):
         super().__init__()
         self.domain: str = ""
-        self.hosts = {}
+        self._hosts = {}
         self._logger = get_logger()
         self._logger.debug(
             f"CacheManager loaded at {time.perf_counter() - global_start} since start"
@@ -46,20 +46,28 @@ class CacheManager:
     def set_bypass(self, bypass: bool):
         self.bypass = bypass
 
-    def update_domains(self):
-        self.hosts = get_top_level_domains()
+    def get_domain(self):
+        return self._domain
+
+    def set_domain(self, value: str):
+        self._domain = value
+
+    domain = property(get_domain, set_domain)
+
+    def update_hosts(self):
+        self._hosts = get_top_level_domains()
 
     def _prepare_cache_manager(self) -> None:
         self._logger.debug(
             f"get_top_level_domains at {time.perf_counter() - global_start} since start"
         )
-        self.update_domains()
+        self.update_hosts()
         self._logger.debug(
             f"get_top_level_domains done at {time.perf_counter() - global_start} since start"
         )
 
     def is_host_predefined(self) -> bool:
-        return self.domain in self.hosts
+        return self._domain in self._hosts
 
     def is_enough_cached_data_present(self, key: str) -> bool:
         feature_values = self.read_cached_feature_values(key)
@@ -76,7 +84,7 @@ class CacheManager:
     @staticmethod
     def is_cached_value_recent(timestamp: float) -> bool:
         return timestamp >= (
-            get_utc_now() - CACHE_RETENTION_TIME_DAYS * SECONDS_PER_DAY
+                get_utc_now() - CACHE_RETENTION_TIME_DAYS * SECONDS_PER_DAY
         )
 
     def convert_cached_data(self, meta_data: list, key: str) -> dict:
@@ -120,8 +128,8 @@ class CacheManager:
         try:
             entry = (
                 database.query(db_models.CacheEntry)
-                .filter_by(top_level_domain=self.domain)
-                .first()
+                    .filter_by(top_level_domain=self._domain)
+                    .first()
             )
         except (ProgrammingError, AttributeError) as e:
             self._logger.exception(f"Reading cache failed: {e.args}")

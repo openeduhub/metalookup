@@ -175,7 +175,7 @@ class MetadataManager:
                 }
 
                 create_cache_entry(
-                    cache_manager.domain,
+                    cache_manager.get_domain(),
                     feature,
                     data_to_be_cached,
                     self._logger,
@@ -205,7 +205,7 @@ class MetadataManager:
             f"WebsiteManager loaded at {time.perf_counter() - global_start} since start"
         )
         cache_manager = CacheManager.get_instance()
-        cache_manager.update_domains()
+        cache_manager.update_hosts()
         cache_manager.domain = website_manager.website_data.domain
         cache_manager.set_bypass(message[MESSAGE_BYPASS_CACHE])
         self._logger.debug(f"Bypass cache: {cache_manager.bypass}")
