@@ -16,15 +16,6 @@ from db.base import database_engine
 from lib.constants import ActionEnum
 from lib.logger import get_logger
 
-
-def get_db():
-    try:
-        db = SessionLocal()
-        yield db
-    finally:
-        db.close()
-
-
 SessionLocal = sessionmaker(
     autocommit=False, autoflush=False, bind=database_engine
 )
@@ -135,15 +126,14 @@ def load_records(session: Session = SessionLocal()) -> [db_models.Record]:
     return records
 
 
-def load_cache(session: Session = SessionLocal()):
-    try:
-        cache = session.query(db_models.CacheEntry).all()
-    except sqlalchemy.exc.SQLAlchemyError as err:
-        session.rollback()
-        print(f"Error while loading cache: {err.args}")
-        cache = []
-    finally:
-        session.close()
+def load_cache():
+    with SessionLocal() as session:
+        try:
+            cache = session.query(db_models.CacheEntry).all()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            session.rollback()
+            print(f"Error while loading cache: {err.args}")
+            cache = []
     return cache
 
 
