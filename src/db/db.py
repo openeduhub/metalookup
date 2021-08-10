@@ -138,15 +138,13 @@ def load_cache():
 
 
 def get_top_level_domains():
-    session = SessionLocal()
-    try:
-        entries = session.query(db_models.CacheEntry.top_level_domain).all()
-    except sqlalchemy.exc.SQLAlchemyError as err:
-        session.rollback()
-        entries = []
-        print(f"Error while loading top level domains: {err.args}, {str(err)}")
-    finally:
-        session.close()
+    with SessionLocal() as session:
+        try:
+            entries = session.query(db_models.CacheEntry.top_level_domain).all()
+        except sqlalchemy.exc.SQLAlchemyError as err:
+            session.rollback()
+            entries = []
+            print(f"Error while loading top level domains: {err.args}, {str(err)}")
     return [entry[0] for entry in entries]
 
 
