@@ -22,7 +22,7 @@ SessionLocal = sessionmaker(
 
 
 def create_request_record(
-        timestamp: float, input_data: Input, allowance: dict
+    timestamp: float, input_data: Input, allowance: dict
 ):
     print("Writing request to db")
     session = SessionLocal()
@@ -54,11 +54,11 @@ def create_request_record(
 
 
 def create_response_record(
-        timestamp: float,
-        end_time: float,
-        input_data: Input,
-        allowance: dict,
-        output: Output,
+    timestamp: float,
+    end_time: float,
+    input_data: Input,
+    allowance: dict,
+    output: Output,
 ):
     json_compatible_meta = jsonable_encoder(output.meta)
     session = SessionLocal()
@@ -112,10 +112,10 @@ def load_records(session: Session = SessionLocal()) -> [db_models.Record]:
     try:
         records = session.query(db_models.Record).all()
     except (
-            OperationalError,
-            ProgrammingError,
-            PendingRollbackError,
-            sqlalchemy.exc.SQLAlchemyError,
+        OperationalError,
+        ProgrammingError,
+        PendingRollbackError,
+        sqlalchemy.exc.SQLAlchemyError,
     ) as err:
         session.rollback()
         dummy_record = create_dummy_record()
@@ -140,16 +140,20 @@ def load_cache():
 def get_top_level_domains():
     with SessionLocal() as session:
         try:
-            entries = session.query(db_models.CacheEntry.top_level_domain).all()
+            entries = session.query(
+                db_models.CacheEntry.top_level_domain
+            ).all()
         except sqlalchemy.exc.SQLAlchemyError as err:
             session.rollback()
             entries = []
-            print(f"Error while loading top level domains: {err.args}, {str(err)}")
+            print(
+                f"Error while loading top level domains: {err.args}, {str(err)}"
+            )
     return [entry[0] for entry in entries]
 
 
 def create_cache_entry(
-        top_level_domain: str, feature: str, values: dict, logger
+    top_level_domain: str, feature: str, values: dict, logger
 ):
     logger.debug("Writing to cache")
 
@@ -157,8 +161,8 @@ def create_cache_entry(
         try:
             entry = (
                 session.query(db_models.CacheEntry)
-                    .filter_by(top_level_domain=top_level_domain)
-                    .first()
+                .filter_by(top_level_domain=top_level_domain)
+                .first()
             )
 
             print(f"entry: {entry}, {type(entry)}")
@@ -200,8 +204,8 @@ def reset_cache(domain: str) -> int:
         else:
             resulting_row_count: int = (
                 session.query(db_models.CacheEntry)
-                    .filter_by(top_level_domain=domain)
-                    .delete()
+                .filter_by(top_level_domain=domain)
+                .delete()
             )
         session.commit()
         session.close()
