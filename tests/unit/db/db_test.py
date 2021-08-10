@@ -4,7 +4,7 @@ import pytest
 import sqlalchemy.exc
 
 from app.schemas import RecordSchema
-from db.db import create_dummy_record, load_cache, get_top_level_domains
+from db.db import create_dummy_record, load_cache, get_top_level_domains, create_cache_entry
 from db.models import CacheEntry
 
 
@@ -101,3 +101,47 @@ def test_get_top_level_domains():
         correct_domain = output[0] == test_domain
 
     assert cache_loaded and correct_domain
+
+
+"""
+--------------------------------------------------------------------------------
+"""
+
+
+def test_create_cache_entry(mocker):
+    empty_cache = []
+
+    domain = "br"
+    feature = "test"
+    values = {}
+    logger = mocker.MagicMock()
+
+    with mock.patch("db.db.SessionLocal") as session_local:
+        entry = mocker.MagicMock()
+        entry.return_value = {feature: empty_cache}
+        session_local().__enter__().query().filter_by().first.return_value = entry
+        session_local().__enter__().query().filter_by().first().__getattribute__ = mocker.MagicMock()
+        session_local().__enter__().query().filter_by().first().__getattribute__.return_value = empty_cache
+        create_cache_entry(domain, feature, values, logger)
+
+        assert session_local.call_count == 4
+
+    with mock.patch("db.db.SessionLocal") as session_local:
+        session_local().__enter__().query().filter_by().first.return_value = None
+        with pytest.raises(TypeError):
+            create_cache_entry(domain, feature, values, logger)
+
+        assert session_local.call_count == 2
+
+    with mock.patch("db.db.SessionLocal") as session_local:
+        session_local().__enter__().query().filter_by().first.return_value = None
+        create_cache_entry(domain, "advertisement", values, logger)
+
+        assert session_local.call_count == 2
+
+    with mock.patch("db.db.SessionLocal") as session_local:
+        session_local.side_effect = sqlalchemy.exc.SQLAlchemyError("Unit test")
+        with pytest.raises(sqlalchemy.exc.SQLAlchemyError):
+            create_cache_entry(domain, feature, values, logger)
+
+        assert session_local.call_count == 1

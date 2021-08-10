@@ -22,7 +22,7 @@ SessionLocal = sessionmaker(
 
 
 def create_request_record(
-    timestamp: float, input_data: Input, allowance: dict
+        timestamp: float, input_data: Input, allowance: dict
 ):
     print("Writing request to db")
     session = SessionLocal()
@@ -54,11 +54,11 @@ def create_request_record(
 
 
 def create_response_record(
-    timestamp: float,
-    end_time: float,
-    input_data: Input,
-    allowance: dict,
-    output: Output,
+        timestamp: float,
+        end_time: float,
+        input_data: Input,
+        allowance: dict,
+        output: Output,
 ):
     json_compatible_meta = jsonable_encoder(output.meta)
     session = SessionLocal()
@@ -112,10 +112,10 @@ def load_records(session: Session = SessionLocal()) -> [db_models.Record]:
     try:
         records = session.query(db_models.Record).all()
     except (
-        OperationalError,
-        ProgrammingError,
-        PendingRollbackError,
-        sqlalchemy.exc.SQLAlchemyError,
+            OperationalError,
+            ProgrammingError,
+            PendingRollbackError,
+            sqlalchemy.exc.SQLAlchemyError,
     ) as err:
         session.rollback()
         dummy_record = create_dummy_record()
@@ -149,41 +149,40 @@ def get_top_level_domains():
 
 
 def create_cache_entry(
-    top_level_domain: str, feature: str, values: dict, logger
+        top_level_domain: str, feature: str, values: dict, logger
 ):
     logger.debug("Writing to cache")
 
-    session = SessionLocal()
-
-    try:
-        entry = (
-            session.query(db_models.CacheEntry)
-            .filter_by(top_level_domain=top_level_domain)
-            .first()
-        )
-
-        if entry is None:
-            entry = db_models.CacheEntry(
-                **{
-                    "top_level_domain": top_level_domain,
-                    feature: [json.dumps(values)],
-                }
+    with SessionLocal() as session:
+        try:
+            entry = (
+                session.query(db_models.CacheEntry)
+                    .filter_by(top_level_domain=top_level_domain)
+                    .first()
             )
-            session.add(entry)
-        else:
-            updated_values = entry.__getattribute__(feature)
-            updated_values.append(json.dumps(values))
-            session.query(db_models.CacheEntry).filter_by(
-                top_level_domain=top_level_domain
-            ).update({feature: updated_values})
 
-        session.commit()
-    except sqlalchemy.exc.SQLAlchemyError as err:
-        session.rollback()
-        logger.error(f"Writing failed with {err.args}, {str(err)}")
-        raise
-    finally:
-        session.close()
+            print(f"entry: {entry}, {type(entry)}")
+            if entry is None:
+                entry = db_models.CacheEntry(
+                    **{
+                        "top_level_domain": top_level_domain,
+                        feature: [json.dumps(values)],
+                    }
+                )
+                session.add(entry)
+            else:
+                updated_values = entry.__getattribute__(feature)
+                updated_values.append(json.dumps(values))
+                session.query(db_models.CacheEntry).filter_by(
+                    top_level_domain=top_level_domain
+                ).update({feature: updated_values})
+
+            session.commit()
+        except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
+            print(f"err: {str(err)} {err.args}")
+            session.rollback()
+            logger.error(f"Writing failed with {err.args}, {str(err)}")
+            raise
 
 
 def reset_cache(domain: str) -> int:
@@ -201,8 +200,8 @@ def reset_cache(domain: str) -> int:
         else:
             resulting_row_count: int = (
                 session.query(db_models.CacheEntry)
-                .filter_by(top_level_domain=domain)
-                .delete()
+                    .filter_by(top_level_domain=domain)
+                    .delete()
             )
         session.commit()
         session.close()
