@@ -122,7 +122,6 @@ class MetadataBase:
 
     def _get_decision(self, probability: float) -> DecisionCase:
         decision = DecisionCase.UNKNOWN
-        print("probability: ", probability, self.decision_threshold)
         if probability > 0 and self.decision_threshold != -1:
             if probability >= self.decision_threshold:
                 decision = DecisionCase.FALSE

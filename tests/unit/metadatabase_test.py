@@ -63,7 +63,9 @@ def test_start(metadatabase: MetadataBase, mocker):
         "features.metadata_base.WebsiteManager"
     ) as mocked_website_manager:
         mocked_website_manager.get_instance().website_data = WebsiteData(
-            html=html_content, raw_header="", headers=header
+            html=html_content,
+            raw_header="",
+            headers=header,
         )
         _ = metadatabase.start()
         assert start_spy.call_args_list[1][1] == {

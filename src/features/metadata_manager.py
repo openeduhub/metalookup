@@ -38,6 +38,7 @@ from lib.constants import (
     IS_HAPPY_CASE,
     MESSAGE_ALLOW_LIST,
     MESSAGE_BYPASS_CACHE,
+    MESSAGE_EXCEPTION,
     MESSAGE_SHARED_MEMORY_NAME,
     MESSAGE_URL,
     PROBABILITY,
@@ -217,7 +218,7 @@ class MetadataManager:
         starting_extraction = get_utc_now()
         if website_manager.website_data.html == "":
             exception = "Empty html. Potentially, splash failed."
-            extracted_meta_data = {"exception": exception}
+            extracted_meta_data = {MESSAGE_EXCEPTION: exception}
         else:
             try:
                 extracted_meta_data = asyncio.run(
@@ -238,7 +239,7 @@ class MetadataManager:
                     exception,
                     exc_info=True,
                 )
-                extracted_meta_data = {"exception": exception}
+                extracted_meta_data = {MESSAGE_EXCEPTION: exception}
             except Exception as e:
                 exception = (
                     f"Unknown exception from extracting metadata: '{e.args}'. "
@@ -248,7 +249,7 @@ class MetadataManager:
                     exception,
                     exc_info=True,
                 )
-                extracted_meta_data = {"exception": exception}
+                extracted_meta_data = {MESSAGE_EXCEPTION: exception}
 
         self._logger.debug(
             f"extracted_meta_data at {time.perf_counter() - global_start} since start"

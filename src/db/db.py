@@ -165,7 +165,6 @@ def create_cache_entry(
                 .first()
             )
 
-            print(f"entry: {entry}, {type(entry)}")
             if entry is None:
                 entry = db_models.CacheEntry(
                     **{
