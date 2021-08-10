@@ -2,11 +2,12 @@ import json
 import logging
 import time
 
-from psycopg2 import ProgrammingError
-
-import db.models as db_models
 from app.models import DecisionCase, Explanation
-from db.db import SessionLocal, get_top_level_domains, reset_cache
+from db.db import (
+    get_top_level_domains,
+    read_cached_values_by_feature,
+    reset_cache,
+)
 from features.website_manager import Singleton
 from lib.constants import (
     ACCESSIBILITY,
@@ -70,7 +71,7 @@ class CacheManager:
         return self._domain in self._hosts
 
     def is_enough_cached_data_present(self, key: str) -> bool:
-        feature_values = self.read_cached_feature_values(key)
+        feature_values = read_cached_values_by_feature(key, self._domain)
 
         suitable_entries = 0
         for entry in feature_values:
@@ -84,71 +85,55 @@ class CacheManager:
     @staticmethod
     def is_cached_value_recent(timestamp: float) -> bool:
         return timestamp >= (
-                get_utc_now() - CACHE_RETENTION_TIME_DAYS * SECONDS_PER_DAY
+            get_utc_now() - CACHE_RETENTION_TIME_DAYS * SECONDS_PER_DAY
         )
 
     def convert_cached_data(self, meta_data: list, key: str) -> dict:
         values = []
         probability = []
         explanation = [Explanation.Cached]
-        decision = []
+        isHappyCase = []
         for entry in meta_data:
             data = json.loads(entry)
             if self.is_cached_value_recent(data[TIMESTAMP]):
                 values.extend(data[VALUES])
                 probability.append(data[PROBABILITY])
                 explanation.extend(data[EXPLANATION])
-                decision.append(data[IS_HAPPY_CASE])
+                isHappyCase.append(data[IS_HAPPY_CASE])
 
         explanation = get_unique_list(explanation)
 
-        decision = get_unique_list(decision)
-        if DecisionCase.FALSE in decision:
-            decision = DecisionCase.FALSE
-        elif DecisionCase.UNKNOWN in decision:
-            decision = DecisionCase.UNKNOWN
-        elif DecisionCase.TRUE in decision:
-            decision = DecisionCase.TRUE
+        isHappyCase = get_unique_list(isHappyCase)
+        if DecisionCase.FALSE in isHappyCase:
+            isHappyCase = DecisionCase.FALSE
+        elif DecisionCase.UNKNOWN in isHappyCase:
+            isHappyCase = DecisionCase.UNKNOWN
+        elif DecisionCase.TRUE in isHappyCase:
+            isHappyCase = DecisionCase.TRUE
         else:
-            decision = DecisionCase.UNKNOWN
+            isHappyCase = DecisionCase.UNKNOWN
 
-        values = []
         if key == ACCESSIBILITY and len(values) > 0:
-            values = [get_mean(values)]
+            values = [round(get_mean(values), 2)]
+        else:
+            values = []
 
+        mean_probability: float = (
+            get_mean(probability) if len(probability) > 0 else 0
+        )
         return {
             VALUES: values,
             EXPLANATION: get_unique_list(explanation),
-            PROBABILITY: get_mean(probability),
-            IS_HAPPY_CASE: decision,
+            PROBABILITY: mean_probability,
+            IS_HAPPY_CASE: isHappyCase,
         }
 
-    def read_cached_feature_values(self, key: str) -> list:
-        database = SessionLocal()
-        try:
-            entry = (
-                database.query(db_models.CacheEntry)
-                    .filter_by(top_level_domain=self._domain)
-                    .first()
-            )
-        except (ProgrammingError, AttributeError) as e:
-            self._logger.exception(f"Reading cache failed: {e.args}")
-            entry = []
-        if entry is None:
-            return []
-        return entry.__getattribute__(key)
-
     def get_predefined_metadata(self, key: str) -> dict:
-        feature_values = self.read_cached_feature_values(key)
+        feature_values = read_cached_values_by_feature(key, self._domain)
         converted_data = self.convert_cached_data(feature_values, key=key)
 
         meta_data = {key: converted_data}
-        meta_data[key].update(
-            {
-                TIME_REQUIRED: 0,
-                EXPLANATION: converted_data[EXPLANATION],
-            }
-        )
+        meta_data[key].update({TIME_REQUIRED: 0})
         return meta_data
 
     @staticmethod

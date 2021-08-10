@@ -217,3 +217,20 @@ def reset_cache(domain: str) -> int:
         session.close()
 
     return resulting_row_count
+
+
+def read_cached_values_by_feature(key: str, domain: str) -> list:
+    logger = get_logger()
+    with SessionLocal() as session:
+        try:
+            entry = (
+                session.query(db_models.CacheEntry)
+                .filter_by(top_level_domain=domain)
+                .first()
+            )
+        except (ProgrammingError, AttributeError) as e:
+            logger.exception(f"Reading cache failed: {e.args}")
+            entry = []
+        if entry is None:
+            return []
+    return entry.__getattribute__(key)
