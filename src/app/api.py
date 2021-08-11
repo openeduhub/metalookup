@@ -1,4 +1,5 @@
 import json
+import traceback
 from multiprocessing import shared_memory
 
 from fastapi import FastAPI, HTTPException
@@ -106,7 +107,11 @@ def extract_meta(input_data: Input):
             starting_extraction, input_data=input_data, allowance=allowance
         )
     except OperationalError as err:
-        database_exception += "\nDatabase exception: " + str(err.args)
+        database_exception += (
+            "\nDatabase exception: "
+            + str(err.args)
+            + "".join(traceback.format_exception(None, err, err.__traceback__))
+        )
 
     uuid = app.communicator.send_message(
         {
@@ -151,7 +156,11 @@ def extract_meta(input_data: Input):
             output=out,
         )
     except OperationalError as err:
-        database_exception += "\nDatabase exception: " + str(err.args)
+        database_exception += (
+            "\nDatabase exception: "
+            + str(err.args)
+            + "".join(traceback.format_exception(None, err, err.__traceback__))
+        )
         out.exception += database_exception
 
     if exception != "":

@@ -14,7 +14,7 @@ from lib.constants import (
     SCORE,
     VALUES,
 )
-from lib.settings import ACCESSIBILITY_URL
+from lib.settings import ACCESSIBILITY_TIMEOUT, ACCESSIBILITY_URL
 
 
 class Accessibility(MetadataBase):
@@ -44,7 +44,7 @@ class Accessibility(MetadataBase):
 
         try:
             process = await session.get(
-                url=container_url, timeout=60, json=params
+                url=container_url, timeout=ACCESSIBILITY_TIMEOUT, json=params
             )
         except (
             asyncio.exceptions.TimeoutError,
