@@ -101,12 +101,15 @@ class ExtractFromFiles(MetadataBase):
         extracted_content = f"{pdf_file.getDocumentInfo()}"
         data = pdf_file.getXmpMetadata()
         for parameter in self.xmp_metadata:
-            try:
-                extracted_content += f"{parameter}, {getattr(data, parameter)}"
-            except AttributeError as err:
-                self._logger.exception(
-                    f"Parameter in pdf content failed to be retrieved: {parameter} with {err.args}"
-                )
+            if parameter:
+                try:
+                    extracted_content += (
+                        f"{parameter}, {getattr(data, parameter)}"
+                    )
+                except AttributeError as err:
+                    self._logger.exception(
+                        f"Parameter in pdf content failed to be retrieved: {parameter} with {err.args}"
+                    )
         extracted_content += extract_text(filename)
         return extracted_content
 

@@ -165,6 +165,9 @@ class GDPR(MetadataBase):
         if "found_no_fonts" in website_data.values:
             probability -= 0.1
 
+        if probability < 0:
+            probability = 0
+
         decision = self._get_inverted_decision(probability)
         if decision == DecisionCase.TRUE:
             decision = DecisionCase.UNKNOWN
