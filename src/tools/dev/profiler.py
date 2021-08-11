@@ -8,9 +8,10 @@ from sqlalchemy.orm import Session, sessionmaker
 import db.models as db_models
 from db.base import create_database_engine, create_metadata
 from features.website_manager import WebsiteManager
-from lib.constants import ACCESSIBILITY, VALUES
+from lib.constants import ACCESSIBILITY, SECONDS_PER_DAY, VALUES
 from lib.settings import PROFILING_HOST_NAME
-from lib.tools import get_mean, get_std_dev
+from lib.timing import get_utc_now
+from lib.tools import get_mean, get_std_dev, get_unique_list
 
 
 def get_profiler_db():
@@ -210,29 +211,61 @@ def print_url_per_domain():
             )
 
 
-def print_exceptions():
+def print_exceptions(maximum_age_in_seconds: int):
     database: Session = ProfilerSession()
 
-    query = database.query(db_models.Record.exception)
+    query = database.query(
+        db_models.Record.exception,
+        db_models.Record.timestamp,
+        db_models.Record.url,
+    )
 
     meta_rows = database.execute(query)
 
+    failure_urls = []
+
     print_data = {}
     for meta_row in meta_rows:
+        timestamp = meta_row[1]
+        if timestamp < (get_utc_now() - maximum_age_in_seconds):
+            continue
         exception = meta_row[0]
+
         if exception == "":
             continue
 
         if exception not in print_data.keys():
             print_data.update({exception: 0})
 
+        if "Empty html. Potentially, splash failed." in exception:
+            print(f"Splash failed for url: '{meta_row[2]}'")
+
+        failure_urls.append(meta_row[2])
+
         print_data[exception] += 1
+
+    print(f"Unique failed urls: {get_unique_list(failure_urls)}")
 
     print(f"Found exceptions: {len(print_data.items())}")
     for exception, value in print_data.items():
         if exception != "":
             print(exception, value)
             print("---------------------------")
+
+
+def print_unique_urls():
+    with ProfilerSession() as session:
+        query = session.query(db_models.Record.url)
+        urls = session.execute(query)
+
+    unique_urls = []
+
+    for url in urls:
+        unique_urls.append(url[0])
+
+    print("---------------------------")
+    output = "\n".join(get_unique_list(unique_urls))
+    print(f"Unique urls: {output}")
 
 
 PROFILER_DEBUG = False
@@ -244,12 +277,19 @@ if __name__ == "__main__":
     if PROFILER_DEBUG:
         print_schemas()
 
-        get_total_time()
+    get_total_time()
 
-        parse_meta()
+    parse_meta()
 
-        print_accessibility_per_domain()
+    print_accessibility_per_domain()
 
     print_url_per_domain()
 
-    print_exceptions()
+    maximum_age_in_seconds = SECONDS_PER_DAY * 2
+    print_exceptions(maximum_age_in_seconds)
+
+    print_unique_urls()
+
+    # TODO: Display required time sorted by longest to shortest with url and which three features took the longest, exception?
+
+    sys.exit(0)

@@ -96,14 +96,29 @@ class Manager:
         signal.signal(signal.SIGINT, self._graceful_shutdown)
         signal.signal(signal.SIGTERM, self._graceful_shutdown)
 
-        while self.run_loop:
-            self._handle_api_request()
-            self._logger.info(f"Current time: {get_utc_now()}")
+        try:
+            while self.run_loop:
+                self._handle_api_request()
+                self._logger.info(f"Current time: {get_utc_now()}")
+        except Exception as err:
+            exception = (
+                f"Unknown global exception broke through the run look: {err}, {err.args}, "
+                f"{''.join(traceback.format_exception(None, err, err.__traceback__))}"
+                f" Stopping service."
+            )
+            self._logger.exception(exception)
+            self._graceful_shutdown()
+
+    def shutdown(self):
+        self._graceful_shutdown()
 
     def _graceful_shutdown(self, signum=None, frame=None) -> None:
+        self._logger.info("Manager is being shut down.")
+        print("Manager is being shut down.")
         self.run_loop = False
         self.api_process.terminate()
         self.api_process.join()
+        sys.exit(0)
 
 
 def launch_api_server(
@@ -119,6 +134,4 @@ if __name__ == "__main__":
         profiler.enable()
 
     manager = Manager()
-
-    print("Manager exited")
-    sys.exit(0)
+    manager.shutdown()
