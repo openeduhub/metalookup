@@ -3,11 +3,12 @@ import sys
 
 import requests
 
-from lib.constants import MESSAGE_EXCEPTION, MESSAGE_URL
+from lib.constants import MESSAGE_EXCEPTION, MESSAGE_URL, SECONDS_PER_DAY
+from lib.timing import get_utc_now
 from lib.tools import get_unique_list
 
 
-def main():
+def main(maximum_age_in_seconds: int = SECONDS_PER_DAY):
     metalookup_url = "https://metalookup.openeduhub.net/records"
     metalookup_extract_url = "https://metalookup.openeduhub.net/extract_meta"
 
@@ -35,12 +36,13 @@ def main():
         if (
             record[MESSAGE_EXCEPTION] != ""
             and "splash" in record[MESSAGE_EXCEPTION]
+            and record["timestamp"] < (get_utc_now() - maximum_age_in_seconds)
         ):
             unique_urls.append(record[MESSAGE_URL])
 
     output = "\n".join(get_unique_list(unique_urls))
     print(
-        f"----------------- Unique evaluated urls with splash error: {output}"
+        f"----------------- Unique evaluated urls with splash error:\n{output}"
     )
 
     headers = {"Content-Type": "application/json"}
