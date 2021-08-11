@@ -39,7 +39,7 @@ services:
         - traefik.frontend.redirect.entryPoint=https
   splash:
     dns: 8.8.8.8
-    image: scrapinghub/splash:master
+    image: scrapinghub/splash:latest
     command: --maxrss 4000
     restart: always
     expose:
