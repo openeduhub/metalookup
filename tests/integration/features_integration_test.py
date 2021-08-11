@@ -35,7 +35,6 @@ def _test_feature(feature_class, html, expectation) -> tuple[bool, bool]:
 
     feature = feature_class(_logger)
 
-    before = time.perf_counter()
     feature.setup()
 
     website_manager: WebsiteManager = WebsiteManager.get_instance()

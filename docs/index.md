@@ -30,3 +30,28 @@ To merge `dev` into `main` branch for release `dev` must:
 - have running pre-commit hooks
 
 All these must - currently, be executed manually, except for pre-commit hooks
+
+# Exception handling
+
+The service is split in two major pieces:
+1. The API
+2. The Manager
+
+## The API
+
+The API can be tested through docker healthchecks to `_ping`. If the API has failed, this endpoint will not react and
+thus MetaLookup will be restarted
+
+## The Manager
+
+The manager logs exceptions partially to `docker logs` as well as `lib/logs/manager.log` due to the way `stdout` is used.
+Exceptions can be grepped through the `ERROR` keyword.
+
+Normally, each evaluation is handled separately, i.e., if evaluation fails, then exceptions are caught and at least a
+reply with the exception traceback is given back to the API. Thus, even if the evaluation fails it only means an issue
+for the respective evaluation, future evaluations are not impeded.
+
+In the extreme case that an unhandled exception breaks the whole service, a global exception causes the service to
+gracefully shutdown, logging the message `Unknown global exception`.
+In that case, docker is configured to restart the service automatically. Currently running evaluations are aborted without
+feedback, for now.
