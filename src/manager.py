@@ -102,7 +102,7 @@ class Manager:
                 self._logger.info(f"Current time: {get_utc_now()}")
         except Exception as err:
             exception = (
-                f"Unknown global exception broke through the run look: {err}, {err.args}, "
+                f"Unknown global exception broke through the run loop: {err}, {err.args}, "
                 f"{''.join(traceback.format_exception(None, err, err.__traceback__))}"
                 f" Stopping service."
             )
