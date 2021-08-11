@@ -13,7 +13,7 @@ RUN apk update && \
     apk add postgresql-dev
 
 COPY requirements.txt requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 RUN apk del .build-deps
 
 # First copy the data, then give ownership to it, then switch to correct user

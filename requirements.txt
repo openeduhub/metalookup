@@ -18,9 +18,11 @@ idna==3.2; python_version >= "3.5"
 lxml==4.6.3; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.5.0")
 multidict==5.1.0; python_version >= "3.6"
 pdfminer.six==20201018; python_version >= "3.4"
+playwright==1.13.1; python_version >= "3.7"
 psycopg2==2.9.1; python_version >= "3.6"
 pycparser==2.20; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.4.0"
 pydantic==1.8.2; python_full_version >= "3.6.1"
+pyee==8.1.0
 pypdf2==1.26.0
 requests-file==1.5.1
 requests==2.26.0; (python_version >= "2.7" and python_full_version < "3.0.0") or (python_full_version >= "3.6.0")
@@ -33,4 +35,5 @@ tldextract==3.1.0; python_version >= "3.5"
 typing-extensions==3.10.0.0
 urllib3==1.26.6; python_version >= "2.7" and python_full_version < "3.0.0" or python_full_version >= "3.5.0" and python_version < "4"
 uvicorn==0.13.4
+websockets==9.1; python_full_version >= "3.6.1"
 yarl==1.6.3; python_version >= "3.6"

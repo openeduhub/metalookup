@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 
 import requests
 from bs4 import BeautifulSoup
+from playwright.sync_api import sync_playwright
 from tldextract.suffix_list import SuffixListNotFound
 from tldextract.tldextract import TLDExtract
 
@@ -83,6 +84,25 @@ class WebsiteManager:
 
         self.reset()
 
+        before = time.perf_counter()
+        self._logger.debug(f"Starting setting up playwright.")
+        self.playwright_instance = sync_playwright().start()
+        self.browser_permanent = self.playwright_instance.chromium.launch()
+        self._logger.debug(f"Finished setting up playwright after {time.perf_counter() - before}s-")
+
+    def get_json_ld(self, url_to_crawl) -> dict:
+        # using a Playwright BrowserContext allows us to save time/resources, each get_ld_json call spawns a page (=
+        # headless browser tab) within our BrowserContext (~ browser session),
+        # see: https://playwright.dev/python/docs/core-concepts/
+        context = self.browser_permanent.new_context()
+        page = context.new_page()
+        page.goto(url_to_crawl)
+        json_ld_string: str = page.text_content('//*[@id="ld"]')
+        self._logger.debug(f"Playwright output: {json_ld_string}")
+        json_ld = json.loads(json_ld_string)
+        context.close()
+        return json_ld
+
     def load_website_data(self, message: dict = None) -> None:
         if message is None:
             return
@@ -136,11 +156,11 @@ class WebsiteManager:
         if idx >= 0:
             header = (
                 header.replace("b'", '"')
-                .replace('b"', '"')
-                .replace("/'", '"')
-                .replace("'", '"')
-                .replace('""', '"')
-                .replace('/"', "/")
+                    .replace('b"', '"')
+                    .replace("/'", '"')
+                    .replace("'", '"')
+                    .replace('""', '"')
+                    .replace('/"', "/")
             )
 
         if len(header) > 0:
@@ -173,6 +193,19 @@ class WebsiteManager:
             raise ConnectionError from e
 
         try:
+            output = self.get_json_ld(url_to_crawl=splash_url)
+            self._logger.debug(f"Got playwright output: {output}")
+        except Exception as err:
+            exception = (
+                f"Playwright exception. "
+                "".join(traceback.format_exception(None, err, err.__traceback__))
+            )
+            self._logger.exception(
+                exception,
+                exc_info=True,
+            )
+
+        try:
             raw_headers = data["har"]["log"]["entries"][0]["response"][
                 "headers"
             ]
@@ -185,12 +218,12 @@ class WebsiteManager:
             headers = str(json.dumps(self._transform_raw_header(raw_headers)))
         except KeyError as e:
             exception = (
-                f"Key error caught from splash container data: '{e.args}'. "
-                "".join(traceback.format_exception(None, e, e.__traceback__))
-                + f"\n Continuing with empty html. Data keys: {data.keys()}"
-                + f"\nerror: {data['error'] if 'error' in data.keys() else ''}"
-                + f"\ndescription: {data['description'] if 'description' in data.keys() else ''}"
-                + f"\ninfo: {data['info'] if 'info' in data.keys() else ''}"
+                    f"Key error caught from splash container data: '{e.args}'. "
+                    "".join(traceback.format_exception(None, e, e.__traceback__))
+                    + f"\n Continuing with empty html. Data keys: {data.keys()}"
+                    + f"\nerror: {data['error'] if 'error' in data.keys() else ''}"
+                    + f"\ndescription: {data['description'] if 'description' in data.keys() else ''}"
+                    + f"\ninfo: {data['info'] if 'info' in data.keys() else ''}"
             )
             self._logger.exception(
                 exception,
