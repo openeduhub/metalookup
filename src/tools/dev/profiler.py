@@ -45,7 +45,10 @@ def download_remote_records():
             f"Exception when loading records with {err.args}.\nPotentially due to outdated record schema. "
         )
         sys.exit(1)
-    print("Number of records loaded: ", len(records))
+
+    print(
+        f"----------------- Total number of evaluated records so far: {len(records)}"
+    )
 
     session = ProfilerSession()
     for record in records:
@@ -82,6 +85,7 @@ def print_schemas():
     inspector = inspect(profiling_engine)
     schemas = inspector.get_schema_names()
 
+    print("----------------- Schemas of database.")
     for schema in schemas:
         print("schema: %s" % schema)
         for table_name in inspector.get_table_names(schema=schema):
@@ -100,7 +104,9 @@ def get_total_time():
     total_time = 0
     for time_value in time_until_complete:
         total_time += time_value[0]
-    print("total_time: ", total_time)
+    print(
+        f"----------------- Total time used to evaluate all records so far: {round(total_time)}s."
+    )
 
 
 def convert_meta_string_to_dict(meta: str) -> dict:
@@ -131,8 +137,9 @@ def parse_meta():
                     float(value["time_for_completion"])
                 )
 
+    print("----------------- Total evaluation time per feature:")
     for key, value in time_per_feature.items():
-        print(f"total time per feature {key}: {sum(value)}")
+        print(f"{key}: {sum(value)}")
 
 
 def print_accessibility_per_domain():
@@ -143,9 +150,9 @@ def print_accessibility_per_domain():
     website_manager = WebsiteManager.get_instance()
 
     meta_rows = database.execute(query)
-    url = "https://www.4teachers.de/?action=show&id=668772"
 
     print_data = {}
+    print("----------------- Average accessibility scores per domain:")
     for meta_row in meta_rows:
         url = meta_row[0]
         if url == "":
@@ -169,7 +176,6 @@ def print_accessibility_per_domain():
 
     for domain in print_data.keys():
         if domain != "" and len(print_data[domain]) > 0:
-            continue
             print(
                 domain,
                 get_mean(print_data[domain]),
@@ -203,12 +209,10 @@ def print_url_per_domain():
 
         print_data[top_level_domain].append(url)
 
-    print("Evaluated top level domains:")
+    print("----------------- Evaluated top level domains:")
     for domain in print_data.keys():
         if domain != "":
-            print(
-                domain,
-            )
+            print(domain)
 
 
 def print_exceptions(maximum_age_in_seconds: int):
@@ -244,13 +248,15 @@ def print_exceptions(maximum_age_in_seconds: int):
 
         print_data[exception] += 1
 
-    print(f"Unique failed urls: {get_unique_list(failure_urls)}")
-
-    print(f"Found exceptions: {len(print_data.items())}")
+    print(
+        f"----------------- Found exceptions of the last {round(maximum_age_in_seconds / SECONDS_PER_DAY, 2)} days."
+    )
+    print(f"All urls which caused exceptions: {get_unique_list(failure_urls)}")
+    print(f"Total number of found exceptions: {len(print_data.items())}")
     for exception, value in print_data.items():
         if exception != "":
             print(exception, value)
-            print("---------------------------")
+            print("-------")
 
 
 def print_unique_urls():
@@ -263,9 +269,8 @@ def print_unique_urls():
     for url in urls:
         unique_urls.append(url[0])
 
-    print("---------------------------")
     output = "\n".join(get_unique_list(unique_urls))
-    print(f"Unique urls: {output}")
+    print(f"----------------- Unique evaluated urls: {output}")
 
 
 PROFILER_DEBUG = False
