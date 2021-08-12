@@ -30,21 +30,24 @@ def _start_api(send_message, get_message):
 def test_ping_container():
     api_to_manager_queue = multiprocessing.Queue()
     manager_to_api_queue = multiprocessing.Queue()
-    api_process = multiprocessing.Process(
-        target=_start_api,
-        args=(api_to_manager_queue, manager_to_api_queue),
-    )
-    api_process.start()
-    time.sleep(0.1)
 
-    response = requests.request(
-        "GET",
-        DOCKER_TEST_URL + "_ping",
-        headers=DOCKER_TEST_HEADERS,
-        timeout=1,
-    )
-    api_process.terminate()
-    api_process.join()
+    with mock.patch("app.api.create_request_record"):
+        with mock.patch("app.api.create_response_record"):
+            api_process = multiprocessing.Process(
+                target=_start_api,
+                args=(api_to_manager_queue, manager_to_api_queue),
+            )
+            api_process.start()
+            time.sleep(0.1)
+
+            response = requests.request(
+                "GET",
+                DOCKER_TEST_URL + "_ping",
+                headers=DOCKER_TEST_HEADERS,
+                timeout=1,
+            )
+            api_process.terminate()
+            api_process.join()
 
     data = json.loads(response.text)
     is_ok = data["status"] == "ok"
@@ -61,26 +64,30 @@ def test_extract_meta_container(mocker):
     send_message.return_value = 3
     get_message = mocker.MagicMock()
     get_message.return_value = {"meta": "empty"}
-    api_process = multiprocessing.Process(
-        target=_start_api,
-        args=(send_message, get_message),
-    )
-    api_process.start()
-    time.sleep(0.1)
 
-    url = "useless_url"
-    input_data = Input(url=url).__dict__
-    input_data["allow_list"] = input_data["allow_list"].__dict__
+    with mock.patch("app.api.create_request_record"):
+        with mock.patch("app.api.create_response_record"):
 
-    response = requests.request(
-        "POST",
-        DOCKER_TEST_URL + "extract_meta",
-        data=json.dumps(input_data),
-        headers=DOCKER_TEST_HEADERS,
-        timeout=3,
-    )
-    api_process.terminate()
-    api_process.join()
+            api_process = multiprocessing.Process(
+                target=_start_api,
+                args=(send_message, get_message),
+            )
+            api_process.start()
+            time.sleep(0.1)
+
+            url = "useless_url"
+            input_data = Input(url=url).__dict__
+            input_data["allow_list"] = input_data["allow_list"].__dict__
+
+            response = requests.request(
+                "POST",
+                DOCKER_TEST_URL + "extract_meta",
+                data=json.dumps(input_data),
+                headers=DOCKER_TEST_HEADERS,
+                timeout=3,
+            )
+            api_process.terminate()
+            api_process.join()
 
     data = json.loads(response.text)
 

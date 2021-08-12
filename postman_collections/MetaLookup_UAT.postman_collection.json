@@ -1,0 +1,690 @@
+{
+	"info": {
+		"_postman_id": "7213beb7-0344-4e22-a4a4-ff6a7abe2d37",
+		"name": "MetaLookup_UAT",
+		"description": "These commands must work",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "BR url",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "User-Agent",
+						"value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"url\": \"https://www.br.de/mediathek/podcast/hoerspiel-pool/das-roecheln-der-mona-lisa-ein-sprachspiel-von-ernst-jandl-1970/31258\",\n    \"allow_list\":  {\n        \"malicious_extensions\": true,\n        \"advertisement\": true,\n        \"easy_privacy\": true,\n        \"extract_from_files\": true,\n        \"internet_explorer_tracker\": true,\n        \"cookies_in_html\": true,\n        \"cookies\": true,\n        \"fanboy_annoyance\": true,\n        \"fanboy_notification\": true,\n        \"fanboy_social_media\": true,\n        \"anti_adblock\": true,\n        \"easylist_germany\": true,\n        \"easylist_adult\": true,\n        \"paywall\": true,\n        \"security\": true,\n        \"iframe_embeddable\": true,\n        \"pop_up\": true,\n        \"reg_wall\": true,\n        \"log_in_out\": true,\n        \"accessibility\": true,\n        \"g_d_p_r\": true,\n        \"javascript\": true,\n        \"rdf\": true,\n        \"metatag_explorer\": true\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}:{{port}}/extract_meta",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"extract_meta"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Anton App url",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "User-Agent",
+						"type": "text",
+						"value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"url\": \"https://anton.app/de/\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}:{{port}}/extract_meta",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"extract_meta"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Leifi url",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "User-Agent",
+						"type": "text",
+						"value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"url\": \"https://www.leifiphysik.de/optik/lichtreflexion/versuche/3d-hologramm-durch-reflexion\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}:{{port}}/extract_meta",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"extract_meta"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Grundschulkoenig url",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "User-Agent",
+						"type": "text",
+						"value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"url\": \"https://www.grundschulkoenig.de/\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}:{{port}}/extract_meta",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"extract_meta"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Youtube url",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "User-Agent",
+						"type": "text",
+						"value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"url\": \"https://www.youtube.com/watch?v=xV7E8v8sJWU\",\n    \"allow_list\": {\n        \"malicious_extensions\": true,\n        \"advertisement\": true,\n        \"easy_privacy\": true,\n        \"extract_from_files\": true,\n        \"internet_explorer_tracker\": true,\n        \"cookies_in_html\": true,\n        \"cookies\": true,\n        \"fanboy_annoyance\": true,\n        \"fanboy_notification\": true,\n        \"fanboy_social_media\": true,\n        \"anti_adblock\": true,\n        \"easylist_germany\": true,\n        \"easylist_adult\": true,\n        \"paywall\": true,\n        \"security\": true,\n        \"iframe_embeddable\": true,\n        \"pop_up\": true,\n        \"reg_wall\": true,\n        \"log_in_out\": true,\n        \"accessibility\": true,\n        \"g_d_p_r\": true,\n        \"javascript\": true,\n        \"rdf\": true,\n        \"metatag_explorer\": true\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}:{{port}}/extract_meta",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"extract_meta"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "new youtube video",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "User-Agent",
+						"type": "text",
+						"value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"url\": \"https://www.youtube.com/watch?app=desktop&fbclid=IwAR3-ogiSfTlcxwvhTnTaKZZR0RylBPTtj7yDcFKDg7KL1ddjH5wPRSSyP8o&v=x9ylgIoxdCk&feature=youtu.be#menu\",\n    \"allow_list\": {\n        \"malicious_extensions\": true,\n        \"advertisement\": true,\n        \"easy_privacy\": true,\n        \"extract_from_files\": true,\n        \"internet_explorer_tracker\": true,\n        \"cookies_in_html\": true,\n        \"cookies\": true,\n        \"fanboy_annoyance\": true,\n        \"fanboy_notification\": true,\n        \"fanboy_social_media\": true,\n        \"anti_adblock\": true,\n        \"easylist_germany\": true,\n        \"easylist_adult\": true,\n        \"paywall\": true,\n        \"security\": true,\n        \"iframe_embeddable\": true,\n        \"pop_up\": true,\n        \"reg_wall\": true,\n        \"log_in_out\": true,\n        \"accessibility\": true,\n        \"g_d_p_r\": true,\n        \"javascript\": true,\n        \"rdf\": true,\n        \"metatag_explorer\": true\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}:{{port}}/extract_meta",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"extract_meta"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Podcasta",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "User-Agent",
+						"type": "text",
+						"value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"url\": \"https://podcasta6ad53.podigee.io/#latest-episode-player\",\n    \"allow_list\": {\n        \"malicious_extensions\": true,\n        \"advertisement\": true,\n        \"easy_privacy\": true,\n        \"extract_from_files\": true,\n        \"internet_explorer_tracker\": true,\n        \"cookies_in_html\": true,\n        \"cookies\": true,\n        \"fanboy_annoyance\": true,\n        \"fanboy_notification\": true,\n        \"fanboy_social_media\": true,\n        \"anti_adblock\": true,\n        \"easylist_germany\": true,\n        \"easylist_adult\": true,\n        \"paywall\": true,\n        \"security\": true,\n        \"iframe_embeddable\": true,\n        \"pop_up\": true,\n        \"reg_wall\": true,\n        \"log_in_out\": true,\n        \"accessibility\": true,\n        \"g_d_p_r\": true,\n        \"javascript\": true,\n        \"rdf\": true,\n        \"metatag_explorer\": true\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}:{{port}}/extract_meta",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"extract_meta"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "RPI Virtuell",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "User-Agent",
+						"type": "text",
+						"value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"url\": \"https://material.rpi-virtuell.de/material/%e0%a4%ae%e0%a5%81%e0%a4%9d%e0%a5%87-%e0%a4%b0%e0%a4%82%e0%a4%97-%e0%a4%a6%e0%a5%87-gib-mir-farbe/\",\n    \"allow_list\": {\n        \"malicious_extensions\": true,\n        \"advertisement\": true,\n        \"easy_privacy\": true,\n        \"extract_from_files\": true,\n        \"internet_explorer_tracker\": true,\n        \"cookies_in_html\": true,\n        \"cookies\": true,\n        \"fanboy_annoyance\": true,\n        \"fanboy_notification\": true,\n        \"fanboy_social_media\": true,\n        \"anti_adblock\": true,\n        \"easylist_germany\": true,\n        \"easylist_adult\": true,\n        \"paywall\": true,\n        \"security\": true,\n        \"iframe_embeddable\": true,\n        \"pop_up\": true,\n        \"reg_wall\": true,\n        \"log_in_out\": true,\n        \"accessibility\": true,\n        \"g_d_p_r\": true,\n        \"javascript\": true,\n        \"rdf\": true,\n        \"metatag_explorer\": true\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}:{{port}}/extract_meta",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"extract_meta"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Direkt PDF loading",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "User-Agent",
+						"type": "text",
+						"value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"url\": \"https://biologie-lernprogramme.de/daten/ueb/ueb_replikation_von_a_bis_z.pdf\",\n    \"allow_list\": {\n        \"malicious_extensions\": true,\n        \"advertisement\": true,\n        \"easy_privacy\": true,\n        \"extract_from_files\": true,\n        \"internet_explorer_tracker\": true,\n        \"cookies_in_html\": true,\n        \"cookies\": true,\n        \"fanboy_annoyance\": true,\n        \"fanboy_notification\": true,\n        \"fanboy_social_media\": true,\n        \"anti_adblock\": true,\n        \"easylist_germany\": true,\n        \"easylist_adult\": true,\n        \"paywall\": true,\n        \"security\": true,\n        \"iframe_embeddable\": true,\n        \"pop_up\": true,\n        \"reg_wall\": true,\n        \"log_in_out\": true,\n        \"accessibility\": true,\n        \"g_d_p_r\": true,\n        \"javascript\": true,\n        \"rdf\": true,\n        \"metatag_explorer\": true\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}:{{port}}/extract_meta",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"extract_meta"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "123 Chemie",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "User-Agent",
+						"type": "text",
+						"value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"url\": \"https://www.123chemie.de/\",\n    \"allow_list\": {\n        \"malicious_extensions\": true,\n        \"advertisement\": true,\n        \"easy_privacy\": true,\n        \"extract_from_files\": true,\n        \"internet_explorer_tracker\": true,\n        \"cookies_in_html\": true,\n        \"cookies\": true,\n        \"fanboy_annoyance\": true,\n        \"fanboy_notification\": true,\n        \"fanboy_social_media\": true,\n        \"anti_adblock\": true,\n        \"easylist_germany\": true,\n        \"easylist_adult\": true,\n        \"paywall\": true,\n        \"security\": true,\n        \"iframe_embeddable\": true,\n        \"pop_up\": true,\n        \"reg_wall\": true,\n        \"log_in_out\": true,\n        \"accessibility\": true,\n        \"g_d_p_r\": true,\n        \"javascript\": true,\n        \"rdf\": true,\n        \"metatag_explorer\": true\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}:{{port}}/extract_meta",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"extract_meta"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "kindoergarten",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "User-Agent",
+						"type": "text",
+						"value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"url\": \"https://kindoergarten.wordpress.com/2018/07/23/legespiel-mit-farben-und-wuerfelaugen-bis-6-0094/\",\n    \"allow_list\": {\n        \"malicious_extensions\": true,\n        \"advertisement\": true,\n        \"easy_privacy\": true,\n        \"extract_from_files\": true,\n        \"internet_explorer_tracker\": true,\n        \"cookies_in_html\": true,\n        \"cookies\": true,\n        \"fanboy_annoyance\": true,\n        \"fanboy_notification\": true,\n        \"fanboy_social_media\": true,\n        \"anti_adblock\": true,\n        \"easylist_germany\": true,\n        \"easylist_adult\": true,\n        \"paywall\": true,\n        \"security\": true,\n        \"iframe_embeddable\": true,\n        \"pop_up\": true,\n        \"reg_wall\": true,\n        \"log_in_out\": true,\n        \"accessibility\": true,\n        \"g_d_p_r\": true,\n        \"javascript\": true,\n        \"rdf\": true,\n        \"metatag_explorer\": true\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}:{{port}}/extract_meta",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"extract_meta"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "eye image",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "User-Agent",
+						"type": "text",
+						"value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"url\": \"https://media.sodis.de/open/lp_plus/Eye_Central_Heterochromia.jpg/\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}:{{port}}/extract_meta",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"extract_meta"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Imoox",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "User-Agent",
+						"type": "text",
+						"value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"url\": \"https://imoox.at/mooc/\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}:{{port}}/extract_meta",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"extract_meta"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "FragFINN",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "User-Agent",
+						"type": "text",
+						"value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"url\": \"https://www.fragfinn.de/\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}:{{port}}/extract_meta",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"extract_meta"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "FoBizz",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "User-Agent",
+						"type": "text",
+						"value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"url\": \"https://plattform.fobizz.com/unterrichtsmaterialien/786-cybermobbing\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}:{{port}}/extract_meta",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"extract_meta"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "ZUM DWU",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "User-Agent",
+						"type": "text",
+						"value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"url\": \"https://www.zum.de/dwu/\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}:{{port}}/extract_meta",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"extract_meta"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Robot Carol",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "User-Agent",
+						"type": "text",
+						"value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"url\": \"https://schuelerlabor.informatik.rwth-aachen.de/modulmaterialien/robot-karol\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{host}}:{{port}}/extract_meta",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"extract_meta"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
