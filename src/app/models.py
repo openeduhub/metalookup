@@ -291,14 +291,14 @@ class ProgressInput(BaseModel):
     url: str = Field(..., description="The base url of the scraped website.")
 
 
-class ResetCacheOutput(BaseModel):
+class DeleteCacheOutput(BaseModel):
     deleted_rows: int = Field(
         default=-1,
         description="Number of deleted rows from cache. Each row represents one top-level-domain.",
     )
 
 
-class ResetCacheInput(BaseModel):
+class DeleteCacheInput(BaseModel):
     domain: Optional[str] = Field(
         default="", description="The host domain to be reset."
     )

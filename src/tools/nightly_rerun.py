@@ -4,19 +4,18 @@ import sys
 import requests
 
 from lib.constants import MESSAGE_EXCEPTION, MESSAGE_URL, SECONDS_PER_DAY
+from lib.settings import METALOOKUP_EXTRACT_META, METALOOKUP_RECORDS
 from lib.timing import get_utc_now
 from lib.tools import get_unique_list
 
 
 def main(maximum_age_in_seconds: int = SECONDS_PER_DAY):
-    metalookup_url = "https://metalookup.openeduhub.net/records"
-    metalookup_extract_url = "https://metalookup.openeduhub.net/extract_meta"
 
     payload = {}
     headers = {}
 
     response = requests.request(
-        "GET", metalookup_url, headers=headers, data=payload
+        "GET", METALOOKUP_RECORDS, headers=headers, data=payload
     )
 
     try:
@@ -55,7 +54,7 @@ def main(maximum_age_in_seconds: int = SECONDS_PER_DAY):
         }
         requests.request(
             "POST",
-            metalookup_extract_url,
+            METALOOKUP_EXTRACT_META,
             headers=headers,
             data=json.dumps(payload),
         )
