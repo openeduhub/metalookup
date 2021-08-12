@@ -9,7 +9,7 @@ import db.models as db_models
 from db.base import create_database_engine, create_metadata
 from features.website_manager import WebsiteManager
 from lib.constants import ACCESSIBILITY, SECONDS_PER_DAY, VALUES
-from lib.settings import PROFILING_HOST_NAME
+from lib.settings import METALOOKUP_RECORDS, PROFILING_HOST_NAME
 from lib.timing import get_utc_now
 from lib.tools import get_mean, get_std_dev, get_unique_list
 
@@ -31,12 +31,13 @@ ProfilerSession = sessionmaker(
 
 
 def download_remote_records():
-    url = "https://metalookup.openeduhub.net/records"
 
     payload = {}
     headers = {}
 
-    response = requests.request("GET", url, headers=headers, data=payload)
+    response = requests.request(
+        "GET", METALOOKUP_RECORDS, headers=headers, data=payload
+    )
 
     try:
         records = json.loads(response.text)["records"]
