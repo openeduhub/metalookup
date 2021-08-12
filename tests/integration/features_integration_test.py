@@ -223,8 +223,7 @@ src='https://cdn.fluidplayer.com/v2/current/fluidplayer.min.js?ver=5.6' id='flui
         feature.key: {
             "values": [
                 "//www.googletagmanager.com",
-                "https://steadfastsystem.com/v2/0/mhduybjmgxdp_sqetgngiancnmp1jikdmyyxs_jpndk2hcg_pe_-"
-                "evqw61zu8yejn6n_tszbosci6fkr2dxbj4t-nh35nghifu1tglutsrud8vfduwh1nktjgf3-jvzwhd2mageuq",
+                "https://steadfastsystem.com/v2/0/mhdUYBjmgxDP_SQetgnGiancNmP1JIkDmyyXS_JPnDK2hCg_pE_-EVQw61Zu8YEjN6n_TSzbOSci6fkr2DxbJ4T-NH35ngHIfU1tGluTSrud8VFduwH1nKtjGf3-jvZWHD2MaGeUQ",
             ],
             "excluded_values": [
                 "https://cdn.fluidplayer.com/v2/current/fluidplayer.min.js?ver=5.6"
@@ -566,7 +565,7 @@ def test_anti_adblock():
             "values": [
                 "cmath.fr/images/fond2.gif",
                 "/adb_script/",
-                "/adbdetect.",
+                "/adbDetect.",
             ],
             "excluded_values": [],
             "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}
@@ -821,13 +820,13 @@ def test_metatag_explorer():
         feature.key: {
             "values": [
                 "description",
-                "organmething is in a process.",
+                "Organmething is in a process.",
                 "viewport",
                 "maximum-scale=1,width=device-width,initial-scale=1,user-scalable=0",
                 "apple-itunes-app",
                 "app-id=461504587",
                 "slack-app-id",
-                "a074yh40z",
+                "A074YH40Z",
                 "robots",
                 "noarchive",
                 "referrer",

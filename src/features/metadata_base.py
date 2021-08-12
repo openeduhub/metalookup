@@ -302,7 +302,7 @@ class MetadataBase:
         )
         if self.tag_list:
             if self.extraction_method == ExtractionMethod.MATCH_DIRECTLY:
-                html = "".join(website_data.html)
+                html = "".join(website_data.html.lower())
                 values = [ele for ele in self.tag_list if ele in html]
             elif self.extraction_method == ExtractionMethod.USE_ADBLOCK_PARSER:
                 values = self._parse_adblock_rules(website_data=website_data)
@@ -351,7 +351,7 @@ class MetadataBase:
                     with open(taglist_path + filename, "w+") as file:
                         file.write(text)
             else:
-                self._logger.warning(
+                self._logger.exception(
                     f"Downloading tag list from '{url}' yielded status code '{result.status}'."
                 )
                 tag_list = []
