@@ -10,6 +10,7 @@ The pipeline is a bit rough and is going to change in the future.
 You will need poetry and python3.9.1:
 
 `sudo apt-get install python3.9`
+
 `python3.9 -m pip3 install poetry`
 
 ## Launching the container
@@ -49,6 +50,7 @@ To see tracebacks of why the pre commit hook fails run in terminal:
 pre-commit run --all-files
 ```
 
+Coverage calculation may take very long. Pre-commit hooks can be disabled in commits.
 
 # Tests
 
@@ -62,9 +64,9 @@ The E2E test comprises a test with minimum input but maximum coverage.
 Basically, every part of the program and any connected containers are used.
 Due to its time requirements, it is currently skipped, but could be included, e.g., in Github Actions
 
-Currently not covered by tests yet
+Currently, not covered by tests yet
 
 - rester.py
 - evaluator.py
 
-since these scripts are used by DevOps only and not needed for production.
+Since these scripts are used by DevOps only and not needed for production.

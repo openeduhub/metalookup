@@ -852,6 +852,7 @@ Online-Zeitungen.
 ### Weitere Merkmale
 
 TODO:
+
 - Verlustfreie und verlustbehaftete Bilder: wird ein verlustfreies Bild gefunden, welches einem verlustbehafteten entspricht, sodass ersteres bevorzugt werden kann?
 - PG18/FSK18
 - FAIR data
@@ -868,6 +869,7 @@ Diese Merkmale geben lediglich `false` (Knockout) oder `unknown` zurück.
 Somit haben die Nutzer*Innen lediglich einen Einblick, ob Mindestanforderungen erfüllt sind.
 
 Beispiele:
+
 - DSGVO
 - Sicherheit
 
@@ -887,5 +889,6 @@ Wie besprochen, benötigen viele der Merkmale Daten aus der Produktion, um weite
 Idealerweise werden die `values` der Merkmale, die neben `isHappyCase` und `probability` zurückgegeben,
 hinterlegt und nachträglich ausgewertet.
 
-Weitere Listen:
+### Weitere Listen:
+
 - https://github.com/hectorm/hblock

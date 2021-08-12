@@ -28,8 +28,8 @@ for each evaluated feature.
     - either the metadata has not been found in the website (e.g., ads)
       or the website is not conforming to the requirements (e.g., is not iframe embeddable)
 - `Unknown`:
-  - it is unclear, whether this metadata leads to knock-out or not.
-  - A human should double check this metadata prior to final decision
+    - it is unclear, whether this metadata leads to knock-out or not.
+    - A human should double-check this metadata prior to final decision
 
 The `probability` scales from `0` to `1`.
 

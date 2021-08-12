@@ -6,6 +6,7 @@ Topics:
 - [Features](features.md)
 - [Acceptance](acceptance.md)
 - [Cache](cache.md)
+- [Profiler](profiler.md)
 
 # General
 
@@ -34,6 +35,7 @@ All these must - currently, be executed manually, except for pre-commit hooks
 # Exception handling
 
 The service is split in two major pieces:
+
 1. The API
 2. The Manager
 
