@@ -1,4 +1,5 @@
 import json
+import traceback
 from multiprocessing import shared_memory
 
 from fastapi import FastAPI, HTTPException
@@ -8,6 +9,8 @@ from sqlalchemy.exc import OperationalError
 import db.base
 from app.communication import QueueCommunicator
 from app.models import (
+    DeleteCacheInput,
+    DeleteCacheOutput,
     ExtractorTags,
     Input,
     ListTags,
@@ -16,8 +19,6 @@ from app.models import (
     Ping,
     ProgressInput,
     ProgressOutput,
-    ResetCacheInput,
-    ResetCacheOutput,
 )
 from app.schemas import CacheOutput, RecordSchema, RecordsOutput
 from cache.cache_manager import CacheManager
@@ -106,7 +107,11 @@ def extract_meta(input_data: Input):
             starting_extraction, input_data=input_data, allowance=allowance
         )
     except OperationalError as err:
-        database_exception += "\nDatabase exception: " + str(err.args)
+        database_exception += (
+            "\nDatabase exception: "
+            + str(err.args)
+            + "".join(traceback.format_exception(None, err, err.__traceback__))
+        )
 
     uuid = app.communicator.send_message(
         {
@@ -151,7 +156,11 @@ def extract_meta(input_data: Input):
             output=out,
         )
     except OperationalError as err:
-        database_exception += "\nDatabase exception: " + str(err.args)
+        database_exception += (
+            "\nDatabase exception: "
+            + str(err.args)
+            + "".join(traceback.format_exception(None, err, err.__traceback__))
+        )
         out.exception += database_exception
 
     if exception != "":
@@ -174,6 +183,7 @@ def extract_meta(input_data: Input):
     response_model=Ping,
 )
 def ping():
+    # TODO: Have this check manager health, too
     return {"status": "ok"}
 
 
@@ -200,7 +210,7 @@ def get_progress(progress_input: ProgressInput):
 if not is_production_environment():
 
     @app.get(
-        "/records/",
+        "/records",
         response_model=RecordsOutput,
         description="Get all urls and their processed metadata.",
     )
@@ -228,19 +238,19 @@ if not is_production_environment():
         return {"records": out}
 
     @app.get(
-        "/cache/",
+        "/cache",
         response_model=CacheOutput,
         description="Developer endpoint to receive cache content.",
     )
     def get_cache():
         return {"cache": load_cache()}
 
-    @app.post(
-        "/cache/reset",
-        description="Endpoint to reset cache",
-        response_model=ResetCacheOutput,
+    @app.delete(
+        "/cache",
+        description="Endpoint to delete the cache",
+        response_model=DeleteCacheOutput,
     )
-    def reset_cache_post(reset_input: ResetCacheInput):
+    def delete_cache(reset_input: DeleteCacheInput):
         cache_manager = CacheManager.get_instance()
         row_count = cache_manager.reset_cache(reset_input.domain)
         return {"deleted_rows": row_count}

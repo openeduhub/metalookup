@@ -63,7 +63,9 @@ def test_start(metadatabase: MetadataBase, mocker):
         "features.metadata_base.WebsiteManager"
     ) as mocked_website_manager:
         mocked_website_manager.get_instance().website_data = WebsiteData(
-            html=html_content, raw_header="", headers=header
+            html=html_content,
+            raw_header="",
+            headers=header,
         )
         _ = metadatabase.start()
         assert start_spy.call_args_list[1][1] == {
@@ -297,101 +299,6 @@ def test_decide_number_of_elements(
     metadatabase.decision_threshold = decision_threshold
     metadatabase.probability_determination_method = (
         ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
-    )
-    decision, probability, explanation = metadatabase._decide(
-        website_data=website_data
-    )
-
-    assert decision == expected_decision
-    assert probability == expected_probability
-    assert explanation == expected_explanation
-
-
-"""
---------------------------------------------------------------------------------
-"""
-
-
-@pytest.mark.parametrize(
-    "values, decision_threshold, expected_decision, expected_probability, expected_explanation",
-    [
-        ([0.5], 0, DecisionCase.FALSE, 0.5, [Explanation.none]),
-        ([0.5], 0.5, DecisionCase.FALSE, 0, [Explanation.none]),
-        ([0.75, 0.1], 0.5, DecisionCase.FALSE, 0.5, [Explanation.none]),
-        ([], 0.5, DecisionCase.UNKNOWN, 0, [Explanation.none]),
-        ([0.25], 0.5, DecisionCase.TRUE, 0.5, [Explanation.none]),
-    ],
-)
-def test_first_value(
-    metadatabase: MetadataBase,
-    values,
-    decision_threshold,
-    expected_decision,
-    expected_probability,
-    expected_explanation,
-):
-    website_data = WebsiteData()
-
-    website_data.values = values
-    metadatabase.decision_threshold = decision_threshold
-    metadatabase.probability_determination_method = (
-        ProbabilityDeterminationMethod.FIRST_VALUE
-    )
-    decision, probability, explanation = metadatabase._decide(
-        website_data=website_data
-    )
-
-    assert decision == expected_decision
-    assert probability == expected_probability
-    assert explanation == expected_explanation
-
-
-"""
---------------------------------------------------------------------------------
-"""
-
-
-@pytest.mark.parametrize(
-    "values, decision_threshold, expected_decision, expected_probability, expected_explanation",
-    [
-        (
-            [0.5],
-            0,
-            DecisionCase.TRUE,
-            0.5,
-            [Explanation.AccessibilitySuitable],
-        ),
-        ([0.5], 0.5, DecisionCase.FALSE, 0, [Explanation.AccessibilityTooLow]),
-        (
-            [0.75, 0.25],
-            0.5,
-            DecisionCase.FALSE,
-            0,
-            [Explanation.AccessibilityTooLow],
-        ),
-        (
-            [0.6, 0.8],
-            0.5,
-            DecisionCase.TRUE,
-            0.4,
-            [Explanation.AccessibilitySuitable],
-        ),
-    ],
-)
-def test_mean_value(
-    metadatabase: MetadataBase,
-    values,
-    decision_threshold,
-    expected_decision,
-    expected_probability,
-    expected_explanation,
-):
-    website_data = WebsiteData()
-
-    website_data.values = values
-    metadatabase.decision_threshold = decision_threshold
-    metadatabase.probability_determination_method = (
-        ProbabilityDeterminationMethod.ACCESSIBILITY
     )
     decision, probability, explanation = metadatabase._decide(
         website_data=website_data

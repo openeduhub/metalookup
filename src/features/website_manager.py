@@ -21,7 +21,7 @@ from lib.constants import (
     SCRIPT,
 )
 from lib.logger import get_logger
-from lib.settings import SPLASH_HEADERS, SPLASH_URL
+from lib.settings import SPLASH_HEADERS, SPLASH_TIMEOUT, SPLASH_URL
 from lib.timing import global_start
 from lib.tools import get_unique_list
 
@@ -102,7 +102,7 @@ class WebsiteManager:
             self._preprocess_header()
 
         if message[MESSAGE_HTML] != "":
-            self.website_data.html = message[MESSAGE_HTML].lower()
+            self.website_data.html = message[MESSAGE_HTML]
             self._create_html_soup()
             self._extract_images()
             self._extract_raw_links()
@@ -157,7 +157,7 @@ class WebsiteManager:
     def _get_html_and_har(self, url: str) -> dict:
         splash_url = (
             f"{SPLASH_URL}/render.json?url={url}&html={1}&iframes={1}"
-            f"&har={1}&response_body={1}&wait={10}&render_all={1}"
+            f"&har={1}&response_body={1}&wait={10}&render_all={1}&script={1}&timeout={SPLASH_TIMEOUT}"
         )
         try:
             response = requests.get(
@@ -166,11 +166,18 @@ class WebsiteManager:
                 params={},
             )
             data = json.loads(response.content.decode("UTF-8"))
-        except (JSONDecodeError, OSError) as e:
-            self._logger.error(f"Error extracting data from splash: {e.args}")
+        except (JSONDecodeError, OSError) as err:
+            exception = (
+                "Error extracting data from splash: "
+                + str(err.args)
+                + "".join(
+                    traceback.format_exception(None, err, err.__traceback__)
+                )
+            )
+            self._logger.error(exception)
             data = {}
-        except Exception as e:
-            raise ConnectionError from e
+        except Exception as err:
+            raise ConnectionError from err
 
         try:
             raw_headers = data["har"]["log"]["entries"][0]["response"][
@@ -189,6 +196,9 @@ class WebsiteManager:
                 f"Key error caught from splash container data: '{e.args}'. "
                 "".join(traceback.format_exception(None, e, e.__traceback__))
                 + f"\n Continuing with empty html. Data keys: {data.keys()}"
+                + f"\nerror: {data['error'] if 'error' in data.keys() else ''}"
+                + f"\ndescription: {data['description'] if 'description' in data.keys() else ''}"
+                + f"\ninfo: {data['info'] if 'info' in data.keys() else ''}"
             )
             self._logger.exception(
                 exception,
@@ -214,7 +224,7 @@ class WebsiteManager:
         unique_tags = get_unique_list(
             [tag.name for tag in self.website_data.soup.find_all()]
         )
-        self._logger.debug((f"unique_tags: {unique_tags}"))
+        self._logger.debug(f"unique_tags: {unique_tags}")
         if SCRIPT in unique_tags:
             unique_tags.remove(SCRIPT)
             source_regex = self.source_regex.findall

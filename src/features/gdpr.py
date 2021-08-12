@@ -60,7 +60,7 @@ class GDPR(MetadataBase):
             values = [f"no_{referrer_policy}"]
 
         regex = re.compile(r"<link rel=(.*?)href")
-        matches = re.findall(regex, website_data.html)
+        matches = re.findall(regex, website_data.html.lower())
         if matches:
             values += [
                 match.replace('"', "").replace(" ", "") for match in matches
@@ -73,7 +73,7 @@ class GDPR(MetadataBase):
     @staticmethod
     def _find_fonts(website_data: WebsiteData) -> list[str]:
         regex = re.compile(r"@font-face\s*{[\s\w\d\D\n]*?}")
-        matches = re.findall(regex, website_data.html)
+        matches = re.findall(regex, website_data.html.lower())
         url_regex = re.compile(r"url\((.*?)\)")
 
         found_fonts = []
@@ -164,6 +164,9 @@ class GDPR(MetadataBase):
             probability -= 0.1
         if "found_no_fonts" in website_data.values:
             probability -= 0.1
+
+        if probability < 0:
+            probability = 0
 
         decision = self._get_inverted_decision(probability)
         if decision == DecisionCase.TRUE:

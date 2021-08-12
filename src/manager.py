@@ -1,7 +1,9 @@
 import cProfile
 import multiprocessing
 import signal
+import sys
 import time
+import traceback
 from queue import Empty
 
 import uvicorn
@@ -9,6 +11,7 @@ import uvicorn
 from app.api import app
 from app.communication import QueueCommunicator
 from features.metadata_manager import MetadataManager
+from lib.constants import MESSAGE_EXCEPTION
 from lib.logger import create_logger
 from lib.settings import API_PORT, WANT_PROFILING
 from lib.timing import get_utc_now, global_start
@@ -54,7 +57,15 @@ class Manager:
         for uuid, message in request.items():
             self._logger.debug(f"message: {message}")
 
-            response = self.metadata_manager.start(message=message)
+            try:
+                response = self.metadata_manager.start(message=message)
+            except Exception as err:
+                exception = (
+                    f"Unknown global exception: {err}, {err.args}, "
+                    f"{''.join(traceback.format_exception(None, err, err.__traceback__))}"
+                )
+                self._logger.exception(exception)
+                response = {MESSAGE_EXCEPTION: exception}
 
             self._logger.debug(
                 f"got response at {time.perf_counter() - global_start} since start"
@@ -89,14 +100,29 @@ class Manager:
         signal.signal(signal.SIGINT, self._graceful_shutdown)
         signal.signal(signal.SIGTERM, self._graceful_shutdown)
 
-        while self.run_loop:
-            self._handle_api_request()
-            self._logger.info(f"Current time: {get_utc_now()}")
+        try:
+            while self.run_loop:
+                self._handle_api_request()
+                self._logger.info(f"Current time: {get_utc_now()}")
+        except Exception as err:
+            exception = (
+                f"Unknown global exception broke through the run loop: {err}, {err.args}, "
+                f"{''.join(traceback.format_exception(None, err, err.__traceback__))}"
+                f" Stopping service."
+            )
+            self._logger.exception(exception)
+            self._graceful_shutdown()
+
+    def shutdown(self):
+        self._graceful_shutdown()
 
     def _graceful_shutdown(self, signum=None, frame=None) -> None:
+        self._logger.info("Manager is being shut down.")
+        print("Manager is being shut down.")
         self.run_loop = False
         self.api_process.terminate()
         self.api_process.join()
+        sys.exit(0)
 
 
 def launch_api_server(
@@ -112,3 +138,4 @@ if __name__ == "__main__":
         profiler.enable()
 
     manager = Manager()
+    manager.shutdown()

@@ -13,7 +13,7 @@ from lib.constants import (
     MOBILE,
     SCORE,
 )
-from lib.settings import LIGHTHOUSE_API_PORT, VERSION
+from lib.settings import ACCESSIBILITY_TIMEOUT, LIGHTHOUSE_API_PORT, VERSION
 
 app = FastAPI(title=LIGHTHOUSE_EXTRACTOR, version=str(VERSION))
 
@@ -45,6 +45,7 @@ def accessibility(input_data: Input):
         "--enable-error-reporting",
         "--chrome-flags='--headless --no-sandbox --disable-gpu'",
         f"--formFactor={input_data.strategy}",
+        f"--max-wait-for-load={ACCESSIBILITY_TIMEOUT*1000}",
         f"--only-categories={input_data.category}",
         "--output=json",
         "--quiet",

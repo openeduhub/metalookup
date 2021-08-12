@@ -1,10 +1,7 @@
 import asyncio
-import multiprocessing
 import time
 import traceback
 from collections import ChainMap
-from itertools import repeat
-from logging import Logger
 from multiprocessing import shared_memory
 
 from adblockparser.parser import _is_re2_supported
@@ -43,6 +40,7 @@ from lib.constants import (
     IS_HAPPY_CASE,
     MESSAGE_ALLOW_LIST,
     MESSAGE_BYPASS_CACHE,
+    MESSAGE_EXCEPTION,
     MESSAGE_SHARED_MEMORY_NAME,
     MESSAGE_URL,
     PROBABILITY,
@@ -77,6 +75,19 @@ class MetadataManager:
     def __init__(self) -> None:
         self._logger = get_logger()
         self._setup_extractors()
+
+    def _setup_extractor(
+        self, extractor_class: type(MetadataBase)
+    ) -> MetadataBase:
+        self._logger.debug(
+            f"Starting setup for {extractor_class} {get_utc_now()}"
+        )
+        extractor = extractor_class(self._logger)
+        extractor.setup()
+        self._logger.debug(
+            f"Finished setup for {extractor_class} {get_utc_now()}"
+        )
+        return extractor
 
     def _setup_extractors(self) -> None:
 
@@ -131,6 +142,9 @@ class MetadataManager:
         after = get_utc_now()
         self._logger.debug(f"Finished pool setup {after}, took {after - before}s.")
         """
+        self.metadata_extractors: list[type(MetadataBase)] = [
+            self._setup_extractor(extractor) for extractor in extractors
+        ]
 
     def is_feature_whitelisted_for_cache(
         self, extractor: type(MetadataBase)
@@ -240,7 +254,7 @@ class MetadataManager:
                 }
 
                 create_cache_entry(
-                    cache_manager.domain,
+                    cache_manager.get_domain(),
                     feature,
                     data_to_be_cached,
                     self._logger,
@@ -270,10 +284,10 @@ class MetadataManager:
             f"WebsiteManager loaded at {time.perf_counter() - global_start} since start"
         )
         cache_manager = CacheManager.get_instance()
-        cache_manager.update_domains()
-        cache_manager.domain = website_manager.website_data.domain
-        cache_manager.set_bypass(message[MESSAGE_BYPASS_CACHE])
-        self._logger.debug(f"Bypass cache: {cache_manager.bypass}")
+        cache_manager.update_to_current_domain(
+            website_manager.website_data.domain,
+            bypass=message[MESSAGE_BYPASS_CACHE],
+        )
 
         now = time.perf_counter()
         self._logger.debug(
@@ -282,7 +296,7 @@ class MetadataManager:
         starting_extraction = get_utc_now()
         if website_manager.website_data.html == "":
             exception = "Empty html. Potentially, splash failed."
-            extracted_meta_data = {"exception": exception}
+            extracted_meta_data = {MESSAGE_EXCEPTION: exception}
         else:
             try:
                 extracted_meta_data = asyncio.run(
@@ -303,7 +317,7 @@ class MetadataManager:
                     exception,
                     exc_info=True,
                 )
-                extracted_meta_data = {"exception": exception}
+                extracted_meta_data = {MESSAGE_EXCEPTION: exception}
             except Exception as e:
                 exception = (
                     f"Unknown exception from extracting metadata: '{e.args}'. "
@@ -313,7 +327,7 @@ class MetadataManager:
                     exception,
                     exc_info=True,
                 )
-                extracted_meta_data = {"exception": exception}
+                extracted_meta_data = {MESSAGE_EXCEPTION: exception}
 
         self._logger.debug(
             f"extracted_meta_data at {time.perf_counter() - global_start} since start"
@@ -326,6 +340,7 @@ class MetadataManager:
         )
 
         website_manager.reset()
+        cache_manager.reset()
         shared_status[1] = ""
 
         self._logger.debug(

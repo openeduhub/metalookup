@@ -26,9 +26,7 @@ from lib.timing import get_utc_now
 class ProbabilityDeterminationMethod(Enum):
     NUMBER_OF_ELEMENTS = 1
     SINGLE_OCCURRENCE = 2
-    FIRST_VALUE = 3
-    FALSE_LIST = 4
-    ACCESSIBILITY = 5
+    FALSE_LIST = 3
 
 
 class ExtractionMethod(Enum):
@@ -124,7 +122,6 @@ class MetadataBase:
 
     def _get_decision(self, probability: float) -> DecisionCase:
         decision = DecisionCase.UNKNOWN
-        print("probability: ", probability, self.decision_threshold)
         if probability > 0 and self.decision_threshold != -1:
             if probability >= self.decision_threshold:
                 decision = DecisionCase.FALSE
@@ -166,21 +163,6 @@ class MetadataBase:
             ) = self._decide_single_occurrence(website_data)
         elif (
             self.probability_determination_method
-            == ProbabilityDeterminationMethod.FIRST_VALUE
-        ):
-            # TODO: Case unused, remove if possible
-            decision, probability, explanation = self._decide_first_value(
-                website_data
-            )
-        elif (
-            self.probability_determination_method
-            == ProbabilityDeterminationMethod.ACCESSIBILITY
-        ):
-            decision, probability, explanation = self._decide_accessibility(
-                website_data
-            )
-        elif (
-            self.probability_determination_method
             == ProbabilityDeterminationMethod.FALSE_LIST
         ):
             decision, probability, explanation = self._decide_false_list(
@@ -209,37 +191,6 @@ class MetadataBase:
             if an_occurence_has_been_found
             else DecisionCase.TRUE
         )
-        return decision, probability, explanation
-
-    def _decide_first_value(
-        self, website_data: WebsiteData
-    ) -> tuple[DecisionCase, float, list[Explanation]]:
-        if website_data.values:
-            probability = self._calculate_probability_from_ratio(
-                website_data.values[0]
-            )
-            decision = self._get_decision(website_data.values[0])
-            explanation = [Explanation.none]
-        else:
-            decision, probability, explanation = self._get_default_decision()
-        return decision, probability, explanation
-
-    def _decide_accessibility(
-        self, website_data: WebsiteData
-    ) -> tuple[DecisionCase, float, list[Explanation]]:
-        decision, probability, explanation = self._get_default_decision()
-        if website_data.values:
-            mean = round(
-                sum(website_data.values) / (len(website_data.values)), 2
-            )
-            probability = self._calculate_probability_from_ratio(mean)
-            decision = self._get_inverted_decision(mean)
-            if decision == DecisionCase.FALSE:
-                explanation = [Explanation.AccessibilityTooLow]
-            elif decision == DecisionCase.UNKNOWN:
-                explanation = [Explanation.AccessibilityServiceReturnedFailure]
-            else:
-                explanation = [Explanation.AccessibilitySuitable]
         return decision, probability, explanation
 
     def _decide_false_list(
@@ -359,7 +310,7 @@ class MetadataBase:
         )
         if self.tag_list:
             if self.extraction_method == ExtractionMethod.MATCH_DIRECTLY:
-                html = "".join(website_data.html)
+                html = "".join(website_data.html.lower())
                 values = [ele for ele in self.tag_list if ele in html]
             elif self.extraction_method == ExtractionMethod.USE_ADBLOCK_PARSER:
                 values = self._parse_adblock_rules(website_data=website_data)
@@ -412,7 +363,7 @@ class MetadataBase:
                     with open(taglist_path + filename, "w+") as file:
                         file.write(text)
             else:
-                self._logger.warning(
+                self._logger.exception(
                     f"Downloading tag list from '{url}' yielded status code '{result.status}'."
                 )
                 tag_list = []
