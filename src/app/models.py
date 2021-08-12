@@ -6,7 +6,6 @@ from pydantic import BaseModel, Field
 
 class Explanation(str, Enum):
     none = "NoExplanation"
-    NoHTTPS = "NoHTTPS"
     AccessibilityTooLow = "AccessibilityTooLow"
     AccessibilitySuitable = "AccessibilitySuitable"
     AccessibilityServiceReturnedFailure = "AccessibilityServiceReturnedFailure"

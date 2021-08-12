@@ -193,19 +193,6 @@ class MetadataBase:
         )
         return decision, probability, explanation
 
-    def _decide_first_value(
-        self, website_data: WebsiteData
-    ) -> tuple[DecisionCase, float, list[Explanation]]:
-        if website_data.values:
-            probability = self._calculate_probability_from_ratio(
-                website_data.values[0]
-            )
-            decision = self._get_decision(website_data.values[0])
-            explanation = [Explanation.none]
-        else:
-            decision, probability, explanation = self._get_default_decision()
-        return decision, probability, explanation
-
     def _decide_false_list(
         self, website_data: WebsiteData
     ) -> tuple[DecisionCase, float, list[Explanation]]:

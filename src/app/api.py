@@ -183,6 +183,7 @@ def extract_meta(input_data: Input):
     response_model=Ping,
 )
 def ping():
+    # TODO: Have this check manager health, too
     return {"status": "ok"}
 
 
