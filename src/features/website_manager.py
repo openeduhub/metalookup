@@ -102,7 +102,7 @@ class WebsiteManager:
             self._preprocess_header()
 
         if message[MESSAGE_HTML] != "":
-            self.website_data.html = message[MESSAGE_HTML].lower()
+            self.website_data.html = message[MESSAGE_HTML]
             self._create_html_soup()
             self._extract_images()
             self._extract_raw_links()

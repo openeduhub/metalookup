@@ -13,15 +13,6 @@ from lib.settings import METALOOKUP_RECORDS, PROFILING_HOST_NAME
 from lib.timing import get_utc_now
 from lib.tools import get_mean, get_std_dev, get_unique_list
 
-
-def get_profiler_db():
-    try:
-        db = ProfilerSession()
-        yield db
-    finally:
-        db.close()
-
-
 profiling_engine = create_database_engine(
     PROFILING_HOST_NAME, "postgres", "postgres"
 )
@@ -31,7 +22,6 @@ ProfilerSession = sessionmaker(
 
 
 def download_remote_records():
-
     payload = {}
     headers = {}
 
