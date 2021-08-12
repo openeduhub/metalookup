@@ -1,0 +1,9 @@
+setup.cfg
+.github
+.git
+.pytest_cache
+htmlcov
+.idea
+tests
+src/lib/logs
+tag_lists
