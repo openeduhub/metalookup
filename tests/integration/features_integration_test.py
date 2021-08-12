@@ -841,3 +841,37 @@ def test_metatag_explorer():
         feature_class=feature, html=html, expectation=expected
     )
     assert are_values_correct and runs_fast_enough
+
+
+"""
+--------------------------------------------------------------------------------
+"""
+
+
+def test_empty_html():
+    feature = MetatagExplorer
+    feature._create_key(feature)
+
+    html = {
+        "html": "",
+        "har": "",
+        "url": "",
+        "headers": "",
+    }
+    expected = {
+        feature.key: {
+            "values": [],
+            "excluded_values": [],
+            "runs_within": 2,  # time the evaluation may take AT MAX -> acceptance test}
+        }
+    }
+
+    are_values_correct, runs_fast_enough = _test_feature(
+        feature_class=feature, html=html, expectation=expected
+    )
+    assert are_values_correct and runs_fast_enough
+
+    are_values_correct, runs_fast_enough = _test_feature(
+        feature_class=feature, html=None, expectation=expected
+    )
+    assert are_values_correct and runs_fast_enough
