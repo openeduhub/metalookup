@@ -206,10 +206,10 @@ class MetadataManager:
             f"WebsiteManager loaded at {time.perf_counter() - global_start} since start"
         )
         cache_manager = CacheManager.get_instance()
-        cache_manager.update_hosts()
-        cache_manager.domain = website_manager.website_data.domain
-        cache_manager.set_bypass(message[MESSAGE_BYPASS_CACHE])
-        self._logger.debug(f"Bypass cache: {cache_manager.bypass}")
+        cache_manager.update_to_current_domain(
+            website_manager.website_data.domain,
+            bypass=message[MESSAGE_BYPASS_CACHE],
+        )
 
         now = time.perf_counter()
         self._logger.debug(
@@ -262,6 +262,7 @@ class MetadataManager:
         )
 
         website_manager.reset()
+        cache_manager.reset()
         shared_status[1] = ""
 
         self._logger.debug(
