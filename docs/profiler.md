@@ -6,6 +6,7 @@ certain parts of the evaluation took.
 ## Usage
 
 Run `start_profiler.sh`.
+
 - remote `records` endpoint of MetaLookup must be open to download the data
 
 ## Output

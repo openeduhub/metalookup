@@ -29,6 +29,9 @@ def main(maximum_age_in_seconds: int = SECONDS_PER_DAY):
     print(
         f"----------------- Total number of evaluated records so far: {len(records)}"
     )
+    if len(records) == 1:
+        print(records)
+        return
 
     unique_urls = []
     for record in records:
