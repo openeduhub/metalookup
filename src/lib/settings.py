@@ -6,8 +6,6 @@ API_PORT = 5057
 LIGHTHOUSE_API_PORT = 5058
 SPLASH_PORT = 8050
 
-LOCALHOST_URL = "0.0.0.0"
-
 SPLASH_URL = f"http://{SPLASH}:{SPLASH_PORT}"
 ACCESSIBILITY_URL = f"http://{ACCESSIBILITY}:{LIGHTHOUSE_API_PORT}"
 
@@ -45,3 +43,6 @@ PROFILING_HOST_NAME = "local_record"
 CACHE_RETENTION_TIME_DAYS = 4 * 7
 MINIMUM_REQUIRED_ENTRIES = 5
 BYPASS_CACHE = False
+
+METALOOKUP_RECORDS = "https://metalookup.openeduhub.net/records"
+METALOOKUP_EXTRACT_META = "https://metalookup.openeduhub.net/extract_meta"

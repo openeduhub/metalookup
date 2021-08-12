@@ -148,8 +148,8 @@ class ExtractFromFiles(MetadataBase):
     ) -> None:
         result = await session.get(url=file_url)
         if result.status != 200:
-            self._logger.warning(
-                f"Downloading tag list from '{file_url}' yielded status code '{result.status}'."
+            self._logger.exception(
+                f"Downloading file '{file_url}' yielded status code '{result.status}'."
             )
         open(filename, "wb").write(await result.read())
 

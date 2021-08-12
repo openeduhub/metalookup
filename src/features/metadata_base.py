@@ -193,19 +193,6 @@ class MetadataBase:
         )
         return decision, probability, explanation
 
-    def _decide_first_value(
-        self, website_data: WebsiteData
-    ) -> tuple[DecisionCase, float, list[Explanation]]:
-        if website_data.values:
-            probability = self._calculate_probability_from_ratio(
-                website_data.values[0]
-            )
-            decision = self._get_decision(website_data.values[0])
-            explanation = [Explanation.none]
-        else:
-            decision, probability, explanation = self._get_default_decision()
-        return decision, probability, explanation
-
     def _decide_false_list(
         self, website_data: WebsiteData
     ) -> tuple[DecisionCase, float, list[Explanation]]:
@@ -315,7 +302,7 @@ class MetadataBase:
         )
         if self.tag_list:
             if self.extraction_method == ExtractionMethod.MATCH_DIRECTLY:
-                html = "".join(website_data.html)
+                html = "".join(website_data.html.lower())
                 values = [ele for ele in self.tag_list if ele in html]
             elif self.extraction_method == ExtractionMethod.USE_ADBLOCK_PARSER:
                 values = self._parse_adblock_rules(website_data=website_data)
@@ -364,7 +351,7 @@ class MetadataBase:
                     with open(taglist_path + filename, "w+") as file:
                         file.write(text)
             else:
-                self._logger.warning(
+                self._logger.exception(
                     f"Downloading tag list from '{url}' yielded status code '{result.status}'."
                 )
                 tag_list = []

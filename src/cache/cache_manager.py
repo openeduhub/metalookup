@@ -32,20 +32,22 @@ from lib.tools import get_mean, get_unique_list
 @Singleton
 class CacheManager:
     _logger: logging.Logger
+    _domain: str
+    _hosts: dict
+    bypass: bool
 
     def __init__(self):
         super().__init__()
-        self.domain: str = ""
-        self._hosts = {}
         self._logger = get_logger()
         self._logger.debug(
             f"CacheManager loaded at {time.perf_counter() - global_start} since start"
         )
-        self.bypass = BYPASS_CACHE
+        self.reset()
         self._prepare_cache_manager()
 
     def set_bypass(self, bypass: bool):
         self.bypass = bypass
+        self._logger.debug(f"Bypass cache: {self.bypass}")
 
     def get_domain(self):
         return self._domain
@@ -54,6 +56,11 @@ class CacheManager:
         self._domain = value
 
     domain = property(get_domain, set_domain)
+
+    def update_to_current_domain(self, current_domain: str, bypass: bool):
+        self.update_hosts()
+        self._domain = current_domain
+        self.set_bypass(bypass)
 
     def update_hosts(self):
         self._hosts = get_top_level_domains()
@@ -139,3 +146,8 @@ class CacheManager:
     @staticmethod
     def reset_cache(domain: str):
         return reset_cache(domain)
+
+    def reset(self):
+        self._domain = ""
+        self.bypass = BYPASS_CACHE
+        self._hosts = {}

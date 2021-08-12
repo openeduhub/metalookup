@@ -203,7 +203,7 @@ def test_start(mocker, metadata_manager: MetadataManager):
             "features.metadata_manager.WebsiteManager"
         ) as website_manager:
             with mock.patch(
-                "cache.cache_manager.CacheManager._class.update_hosts"
+                "cache.cache_manager.CacheManager._class.update_to_current_domain"
             ):
                 async_mock = AsyncMock(return_value={})
                 with mock.patch(
@@ -224,7 +224,7 @@ def test_start(mocker, metadata_manager: MetadataManager):
 
                             assert MESSAGE_EXCEPTION not in output.keys()
                             assert "time_for_extraction" in output.keys()
-                            assert log_spy.debug.call_count == 7
+                            assert log_spy.debug.call_count == 6
                             assert log_spy.exception.call_count == 0
 
                             extract_meta_data.side_effect = ConnectionError
