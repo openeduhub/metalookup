@@ -13,6 +13,14 @@ You will need poetry and python3.9.1:
 
 `python3.9 -m pip3 install poetry`
 
+Install docker and docker-compose. Make docker run as root.
+
+To install the poetry environment:
+
+```shell
+sudo apt-get install libpq-dev python3-dev -y
+```
+
 ## Launching the container
 
 1. Start the containers by executing `run.sh` from the main folder, not from `src`

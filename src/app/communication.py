@@ -37,7 +37,7 @@ class QueueCommunicator:
         tries = 1
         self._receive_message()
         while uuid not in self._request_queue.keys() and tries <= API_RETRIES:
-            print(f"waited {tries} times for {uuid}")
+            print(f"Waited {tries} times messages from request queue.")
             self._receive_message()
             tries += 1
 
