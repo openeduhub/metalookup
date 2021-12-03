@@ -132,15 +132,15 @@ class WebsiteManager:
     def _preprocess_header(self) -> None:
         header: str = self.website_data.raw_header.lower()
 
-        idx = header.find('b"')
+        idx = max(header.find('b"'), header.find("b'"))
         if idx >= 0:
             header = (
                 header.replace("b'", '"')
-                .replace('b"', '"')
-                .replace("/'", '"')
-                .replace("'", '"')
-                .replace('""', '"')
-                .replace('/"', "/")
+                    .replace('b"', '"')
+                    .replace("/'", '"')
+                    .replace("'", '"')
+                    .replace('""', '"')
+                    .replace('/"', "/")
             )
 
         if len(header) > 0:
@@ -168,11 +168,11 @@ class WebsiteManager:
             data = json.loads(response.content.decode("UTF-8"))
         except (JSONDecodeError, OSError) as err:
             exception = (
-                "Error extracting data from splash: "
-                + str(err.args)
-                + "".join(
-                    traceback.format_exception(None, err, err.__traceback__)
-                )
+                    "Error extracting data from splash: "
+                    + str(err.args)
+                    + "".join(
+                traceback.format_exception(None, err, err.__traceback__)
+            )
             )
             self._logger.error(exception)
             data = {}
@@ -192,12 +192,12 @@ class WebsiteManager:
             headers = str(json.dumps(self._transform_raw_header(raw_headers)))
         except KeyError as e:
             exception = (
-                f"Key error caught from splash container data: '{e.args}'. "
-                "".join(traceback.format_exception(None, e, e.__traceback__))
-                + f"\n Continuing with empty html. Data keys: {data.keys()}"
-                + f"\nerror: {data['error'] if 'error' in data.keys() else ''}"
-                + f"\ndescription: {data['description'] if 'description' in data.keys() else ''}"
-                + f"\ninfo: {data['info'] if 'info' in data.keys() else ''}"
+                    f"Key error caught from splash container data: '{e.args}'. "
+                    "".join(traceback.format_exception(None, e, e.__traceback__))
+                    + f"\n Continuing with empty html. Data keys: {data.keys()}"
+                    + f"\nerror: {data['error'] if 'error' in data.keys() else ''}"
+                    + f"\ndescription: {data['description'] if 'description' in data.keys() else ''}"
+                    + f"\ninfo: {data['info'] if 'info' in data.keys() else ''}"
             )
             self._logger.exception(
                 exception,
