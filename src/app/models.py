@@ -24,6 +24,8 @@ class Explanation(str, Enum):
         "IndicatorsForInsufficientSecurityFound"
     )
     MinimumSecurityRequirementsCovered = "MinimumSecurityRequirementsCovered"
+    PotentiallyMaliciousExtensionFound = "PotentiallyMaliciousExtensionFound"
+    SlightlyMaliciousExtensionFound = "SlightlyMaliciousExtensionFound"
 
     def __repr__(self):
         return str(self.value)
