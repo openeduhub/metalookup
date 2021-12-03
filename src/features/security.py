@@ -1,4 +1,4 @@
-from app.models import StarCase, Explanation
+from app.models import Explanation, StarCase
 from features.metadata_base import MetadataBase
 from features.website_manager import WebsiteData
 from lib.constants import STRICT_TRANSPORT_SECURITY, VALUES
@@ -96,7 +96,7 @@ class Security(MetadataBase):
 
     def _decide(
         self, website_data: WebsiteData
-    ) -> tuple[StarCase,  list[Explanation]]:
+    ) -> tuple[StarCase, list[Explanation]]:
         probability = len(website_data.values) / len(
             self.expected_headers.keys()
         )

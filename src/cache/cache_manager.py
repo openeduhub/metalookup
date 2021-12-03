@@ -2,7 +2,7 @@ import json
 import logging
 import time
 
-from app.models import StarCase, Explanation
+from app.models import Explanation, StarCase
 from db.db import (
     get_top_level_domains,
     read_cached_values_by_feature,
@@ -12,8 +12,8 @@ from features.website_manager import Singleton
 from lib.constants import (
     ACCESSIBILITY,
     EXPLANATION,
-    STAR_CASE,
     SECONDS_PER_DAY,
+    STAR_CASE,
     TIME_REQUIRED,
     TIMESTAMP,
     VALUES,

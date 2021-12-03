@@ -1,6 +1,6 @@
 import re
 
-from app.models import StarCase, Explanation
+from app.models import Explanation, StarCase
 from features.metadata_base import MetadataBase
 from features.website_manager import WebsiteData
 from lib.constants import STRICT_TRANSPORT_SECURITY, VALUES
@@ -148,14 +148,14 @@ class GDPR(MetadataBase):
         return {VALUES: list(set(flat_values))}
 
     def _decide(
-            self, website_data: WebsiteData
+        self, website_data: WebsiteData
     ) -> tuple[StarCase, list[Explanation]]:
         probability = 0.5
 
         if (
-                "https_in_url" not in website_data.values
-                or "hsts" not in website_data.values
-                or "impressum" not in website_data.values
+            "https_in_url" not in website_data.values
+            or "hsts" not in website_data.values
+            or "impressum" not in website_data.values
         ):
             probability = 0
 

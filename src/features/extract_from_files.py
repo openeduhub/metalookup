@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 from pdfminer.high_level import extract_text
 from PyPDF2.utils import PdfReadError
 
-from app.models import StarCase, Explanation
+from app.models import Explanation, StarCase
 from features.metadata_base import MetadataBase
 from features.website_manager import WebsiteData
 from lib.constants import VALUES

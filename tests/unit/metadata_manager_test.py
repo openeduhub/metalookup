@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from app.models import StarCase, Explanation
+from app.models import Explanation, StarCase
 from cache.cache_manager import CacheManager
 from features.html_based import Advertisement
 from features.javascript import Javascript
@@ -13,7 +13,6 @@ from features.metadata_manager import MetadataManager
 from lib.constants import (
     ACCESSIBILITY,
     EXPLANATION,
-    STAR_CASE,
     MESSAGE_ALLOW_LIST,
     MESSAGE_BYPASS_CACHE,
     MESSAGE_EXCEPTION,
@@ -21,6 +20,7 @@ from lib.constants import (
     MESSAGE_HTML,
     MESSAGE_SHARED_MEMORY_NAME,
     MESSAGE_URL,
+    STAR_CASE,
     VALUES,
 )
 from lib.settings import NUMBER_OF_EXTRACTORS

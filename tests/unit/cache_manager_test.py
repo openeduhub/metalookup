@@ -3,7 +3,7 @@ from unittest import mock
 
 import pytest
 
-from app.models import StarCase, Explanation
+from app.models import Explanation, StarCase
 from cache.cache_manager import CacheManager
 from lib.constants import (
     ACCESSIBILITY,

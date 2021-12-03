@@ -1,4 +1,4 @@
-from app.models import StarCase, Explanation
+from app.models import Explanation, StarCase
 from features.metadata_base import ExtractionMethod, MetadataBase
 from features.website_manager import WebsiteData
 from lib.constants import VALUES
@@ -36,7 +36,7 @@ class Cookies(MetadataBase):
         return {VALUES: raw_cookies + values}
 
     def _decide(
-            self, website_data: WebsiteData
+        self, website_data: WebsiteData
     ) -> tuple[StarCase, list[Explanation]]:
         cookies_in_html = [
             cookie for cookie in website_data.values if isinstance(cookie, str)
@@ -46,7 +46,7 @@ class Cookies(MetadataBase):
             cookie
             for cookie in website_data.values
             if not isinstance(cookie, str)
-               and (not cookie["httpOnly"] or not cookie["secure"])
+            and (not cookie["httpOnly"] or not cookie["secure"])
         ]
 
         probability = 1 if insecure_cookies or cookies_in_html else 0

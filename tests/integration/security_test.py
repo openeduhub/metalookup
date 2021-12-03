@@ -1,7 +1,7 @@
 import json
 import os
 
-from app.models import StarCase, Explanation
+from app.models import Explanation, StarCase
 from features.security import Security
 from features.website_manager import WebsiteData
 from lib.logger import get_logger
@@ -73,9 +73,7 @@ def test_decide():
 
     security.expected_headers = security_tags
 
-    decision, explanation = security._decide(
-        website_data=website_data
-    )
+    decision, explanation = security._decide(website_data=website_data)
 
     assert decision == expected_decision
     assert explanation == expected_explanation

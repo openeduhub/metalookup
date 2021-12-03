@@ -35,12 +35,12 @@ from features.website_manager import Singleton, WebsiteManager
 from lib.constants import (
     ACCESSIBILITY,
     EXPLANATION,
-    STAR_CASE,
     MESSAGE_ALLOW_LIST,
     MESSAGE_BYPASS_CACHE,
     MESSAGE_EXCEPTION,
     MESSAGE_SHARED_MEMORY_NAME,
     MESSAGE_URL,
+    STAR_CASE,
     TIMESTAMP,
     VALUES,
 )

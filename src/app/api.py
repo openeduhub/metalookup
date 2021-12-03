@@ -30,7 +30,6 @@ from db.db import (
 )
 from lib.constants import (
     EXPLANATION,
-    STAR_CASE,
     MESSAGE_ALLOW_LIST,
     MESSAGE_BYPASS_CACHE,
     MESSAGE_EXCEPTION,
@@ -40,7 +39,9 @@ from lib.constants import (
     MESSAGE_SHARED_MEMORY_NAME,
     MESSAGE_URL,
     METADATA_EXTRACTOR,
-    TIME_REQUIRED, VALUES,
+    STAR_CASE,
+    TIME_REQUIRED,
+    VALUES,
 )
 from lib.settings import NUMBER_OF_EXTRACTORS, VERSION
 from lib.timing import get_utc_now
