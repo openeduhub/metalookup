@@ -29,7 +29,7 @@ class Explanation(str, Enum):
         return str(self.value)
 
 
-class StarCase(Enum):
+class StarCase(int, Enum):
     ZERO = 0
     ONE = 1
     TWO = 2

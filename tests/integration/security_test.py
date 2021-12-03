@@ -68,16 +68,14 @@ def test_decide():
         "x-xss-protection",
         "referrer-policy",
     ]
-    expected_decision = StarCase.TRUE
-    expected_probability = 1.0
+    expected_decision = StarCase.FIVE
     expected_explanation = [Explanation.MinimumSecurityRequirementsCovered]
 
     security.expected_headers = security_tags
 
-    decision, probability, explanation = security._decide(
+    decision, explanation = security._decide(
         website_data=website_data
     )
 
-    assert probability == expected_probability
     assert decision == expected_decision
     assert explanation == expected_explanation

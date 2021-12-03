@@ -96,14 +96,14 @@ class Security(MetadataBase):
 
     def _decide(
         self, website_data: WebsiteData
-    ) -> tuple[StarCase, float, list[Explanation]]:
+    ) -> tuple[StarCase,  list[Explanation]]:
         probability = len(website_data.values) / len(
             self.expected_headers.keys()
         )
         decision = self._get_inverted_decision(probability)
         explanation = (
             [Explanation.MinimumSecurityRequirementsCovered]
-            if decision == StarCase.TRUE
+            if decision == StarCase.FIVE
             else [Explanation.IndicatorsForInsufficientSecurityFound]
         )
-        return decision, probability, explanation
+        return decision, explanation

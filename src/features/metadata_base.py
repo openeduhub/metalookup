@@ -121,7 +121,7 @@ class MetadataBase:
 
     def _get_decision(self, probability: float) -> StarCase:
         decision = StarCase.ONE
-        if probability > 0 and self.decision_threshold != -1:
+        if probability >= 0 and self.decision_threshold != -1:
             if probability >= self.decision_threshold:
                 decision = StarCase.ZERO
             else:
@@ -181,9 +181,9 @@ class MetadataBase:
             else [Explanation.FoundNoListMatches]
         )
         star_case = (
-            StarCase.FIVE
+            StarCase.ZERO
             if an_occurence_has_been_found
-            else StarCase.ZERO
+            else StarCase.FIVE
         )
         return star_case, explanation
 

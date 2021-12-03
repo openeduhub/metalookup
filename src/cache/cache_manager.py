@@ -103,7 +103,7 @@ class CacheManager:
             if self.is_cached_value_recent(data[TIMESTAMP]):
                 values.extend(data[VALUES])
                 explanation.extend(data[EXPLANATION])
-                star_case.append(data[STAR_CASE])
+                star_case.append(int(data[STAR_CASE]))
 
         explanation = get_unique_list(explanation)
 

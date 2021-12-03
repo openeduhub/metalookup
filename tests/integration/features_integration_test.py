@@ -104,14 +104,14 @@ def test_advertisement():
     feature = Advertisement
     feature._create_key(feature)
     html = {
-        "html": "<script src='/xlayer/layer.php?uid='></script>",
+        "html": "<script src='/layer.php?bid='></script>",
         "har": "",
         "url": "",
         "headers": "{}",
     }
     expected = {
         feature.key: {
-            "values": ["/xlayer/layer.php?uid="],
+            "values": ["/layer.php?bid="],
             "runs_within": 10,  # time the evaluation may take AT MAX -> acceptance test
         },
     }
@@ -147,8 +147,8 @@ def test_easylist_adult():
     feature._create_key(feature)
     html = {
         "html": """
-<link href='sexgalaxy.net/pop'/>
-<link href='geobanner.fuckbookhookups.com'/>
+<link href='bookofsex.com'/>
+<link href='geofamily.ru^$third-party'/>
 """,
         "har": "",
         "url": "",
@@ -156,7 +156,7 @@ def test_easylist_adult():
     }
     expected = {
         feature.key: {
-            "values": ["sexgalaxy.net/pop", "geobanner.fuckbookhookups.com"],
+            "values": ["bookofsex.com", "geofamily.ru^$third-party"],
             "runs_within": 10,  # time the evaluation may take AT MAX -> acceptance test}
         }
     }

@@ -36,8 +36,8 @@ class Cookies(MetadataBase):
         return {VALUES: raw_cookies + values}
 
     def _decide(
-        self, website_data: WebsiteData
-    ) -> tuple[StarCase, float, list[Explanation]]:
+            self, website_data: WebsiteData
+    ) -> tuple[StarCase, list[Explanation]]:
         cookies_in_html = [
             cookie for cookie in website_data.values if isinstance(cookie, str)
         ]
@@ -46,14 +46,14 @@ class Cookies(MetadataBase):
             cookie
             for cookie in website_data.values
             if not isinstance(cookie, str)
-            and (not cookie["httpOnly"] or not cookie["secure"])
+               and (not cookie["httpOnly"] or not cookie["secure"])
         ]
 
         probability = 1 if insecure_cookies or cookies_in_html else 0
         decision = self._get_decision(probability)
         explanation = (
             [Explanation.CookiesFound]
-            if decision == StarCase.FALSE
+            if decision == StarCase.ZERO
             else [Explanation.NoCookiesFound]
         )
-        return decision, probability, explanation
+        return decision, explanation

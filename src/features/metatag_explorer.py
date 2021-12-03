@@ -18,10 +18,9 @@ class MetatagExplorer(MetadataBase):
         return {VALUES: matches}
 
     def _decide(
-        self, website_data: WebsiteData
-    ) -> tuple[StarCase, float, list[Explanation]]:
-        decision = StarCase.UNKNOWN
-        probability = 1.0
+            self, website_data: WebsiteData
+    ) -> tuple[StarCase, list[Explanation]]:
+        decision = StarCase.ONE
         explanation = [Explanation.none]
 
-        return decision, probability, explanation
+        return decision, explanation

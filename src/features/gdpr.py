@@ -78,8 +78,7 @@ class GDPR(MetadataBase):
 
         found_fonts = []
         for match in matches:
-            url_matches = re.findall(url_regex, match)
-            found_fonts += [url_match for url_match in url_matches]
+            found_fonts += list(re.findall(url_regex, match))
 
         if found_fonts:
             found_fonts = "found_fonts," + ",".join(found_fonts)
@@ -142,21 +141,21 @@ class GDPR(MetadataBase):
         flat_values = []
         for value in values:
             if isinstance(value, list):
-                flat_values.extend([el for el in value])
+                flat_values.extend(list(value))
             else:
                 flat_values.append(value)
 
         return {VALUES: list(set(flat_values))}
 
     def _decide(
-        self, website_data: WebsiteData
-    ) -> tuple[StarCase, float, list[Explanation]]:
+            self, website_data: WebsiteData
+    ) -> tuple[StarCase, list[Explanation]]:
         probability = 0.5
 
         if (
-            "https_in_url" not in website_data.values
-            or "hsts" not in website_data.values
-            or "impressum" not in website_data.values
+                "https_in_url" not in website_data.values
+                or "hsts" not in website_data.values
+                or "impressum" not in website_data.values
         ):
             probability = 0
 
@@ -165,16 +164,13 @@ class GDPR(MetadataBase):
         if "found_no_fonts" in website_data.values:
             probability -= 0.1
 
-        if probability < 0:
-            probability = 0
-
-        decision = self._get_inverted_decision(probability)
-        if decision == StarCase.TRUE:
-            decision = StarCase.UNKNOWN
+        decision = self._get_inverted_decision(max(probability, 0))
+        if decision == StarCase.FIVE:
+            decision = StarCase.ONE
 
         explanation = (
             [Explanation.MinimumGDPRRequirementsCovered]
-            if decision == StarCase.UNKNOWN
+            if decision == StarCase.ONE
             else [Explanation.PotentiallyInsufficientGDPRFound]
         )
-        return decision, probability, explanation
+        return decision, explanation
