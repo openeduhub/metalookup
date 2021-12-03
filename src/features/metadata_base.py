@@ -10,12 +10,11 @@ import adblockparser
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 
-from app.models import DecisionCase, Explanation
+from app.models import StarCase, Explanation
 from features.website_manager import WebsiteData, WebsiteManager
 from lib.constants import (
     EXPLANATION,
-    IS_HAPPY_CASE,
-    PROBABILITY,
+    STAR_CASE,
     TIME_REQUIRED,
     VALUES,
 )
@@ -93,7 +92,7 @@ class MetadataBase:
 
     @staticmethod
     def _get_ratio_of_elements(
-        website_data: WebsiteData,
+            website_data: WebsiteData,
     ) -> tuple[float, list[Explanation]]:
         if website_data.values and len(website_data.raw_links) > 0:
             ratio = round(
@@ -106,7 +105,7 @@ class MetadataBase:
         return ratio, explanation
 
     def _calculate_probability_from_ratio(
-        self, decision_indicator: float
+            self, decision_indicator: float
     ) -> float:
         return (
             round(
@@ -120,101 +119,94 @@ class MetadataBase:
             else 0
         )
 
-    def _get_decision(self, probability: float) -> DecisionCase:
-        decision = DecisionCase.UNKNOWN
+    def _get_decision(self, probability: float) -> StarCase:
+        decision = StarCase.ONE
         if probability > 0 and self.decision_threshold != -1:
             if probability >= self.decision_threshold:
-                decision = DecisionCase.FALSE
+                decision = StarCase.ZERO
             else:
-                decision = DecisionCase.TRUE
+                decision = StarCase.FIVE
         return decision
 
-    def _get_inverted_decision(self, probability: float) -> DecisionCase:
-        decision = DecisionCase.UNKNOWN
+    def _get_inverted_decision(self, probability: float) -> StarCase:
+        decision = StarCase.ONE
         if probability > 0 and self.decision_threshold != -1:
             if probability <= self.decision_threshold:
-                decision = DecisionCase.FALSE
+                decision = StarCase.ZERO
             else:
-                decision = DecisionCase.TRUE
+                decision = StarCase.FIVE
         return decision
 
     def _decide(
-        self, website_data: WebsiteData
-    ) -> tuple[DecisionCase, float, list[Explanation]]:
+            self, website_data: WebsiteData
+    ) -> tuple[StarCase, list[Explanation]]:
         if (
-            self.probability_determination_method
-            == ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
+                self.probability_determination_method
+                == ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
         ):
             decision_indicator, explanation = self._get_ratio_of_elements(
                 website_data=website_data
             )
-            probability = self._calculate_probability_from_ratio(
-                decision_indicator
-            )
-            decision = self._get_decision(decision_indicator)
+            star_case = self._get_decision(decision_indicator)
         elif (
-            self.probability_determination_method
-            == ProbabilityDeterminationMethod.SINGLE_OCCURRENCE
+                self.probability_determination_method
+                == ProbabilityDeterminationMethod.SINGLE_OCCURRENCE
         ):
             (
-                decision,
-                probability,
+                star_case,
                 explanation,
             ) = self._decide_single_occurrence(website_data)
         elif (
-            self.probability_determination_method
-            == ProbabilityDeterminationMethod.FALSE_LIST
+                self.probability_determination_method
+                == ProbabilityDeterminationMethod.FALSE_LIST
         ):
-            decision, probability, explanation = self._decide_false_list(
+            star_case, explanation = self._decide_false_list(
                 website_data
             )
         else:
-            decision, probability, explanation = self._get_default_decision()
+            star_case, explanation = self._get_default_decision()
 
-        return decision, probability, explanation
+        return star_case, explanation
 
     def _decide_single_occurrence(
-        self, website_data: WebsiteData
-    ) -> tuple[DecisionCase, float, list[Explanation]]:
+            self, website_data: WebsiteData
+    ) -> tuple[StarCase, list[Explanation]]:
 
         an_occurence_has_been_found: bool = (
-            website_data.values and len(website_data.values) > 0
+                website_data.values and len(website_data.values) > 0
         )
-        probability = 1 if an_occurence_has_been_found else 0
         explanation = (
             [Explanation.FoundListMatches]
             if an_occurence_has_been_found
             else [Explanation.FoundNoListMatches]
         )
-        decision = (
-            DecisionCase.FALSE
+        star_case = (
+            StarCase.FIVE
             if an_occurence_has_been_found
-            else DecisionCase.TRUE
+            else StarCase.ZERO
         )
-        return decision, probability, explanation
+        return star_case, explanation
 
     def _decide_false_list(
-        self, website_data: WebsiteData
-    ) -> tuple[DecisionCase, float, list[Explanation]]:
-        probability = 1
-        decision = DecisionCase.TRUE
+            self, website_data: WebsiteData
+    ) -> tuple[StarCase, list[Explanation]]:
+        decision = StarCase.FIVE
         explanation = [Explanation.NoKnockoutMatchFound]
         for false_element in self.false_list:
             if false_element in website_data.values:
-                decision = DecisionCase.FALSE
+                decision = StarCase.ZERO
                 explanation = [Explanation.KnockoutMatchFound]
                 break
 
-        return decision, probability, explanation
+        return decision, explanation
 
     @staticmethod
     def _get_default_decision() -> tuple[
-        DecisionCase, float, list[Explanation]
+        StarCase, list[Explanation]
     ]:
-        probability = 0
-        decision = DecisionCase.UNKNOWN
+        decision = StarCase.ZERO
         explanation = [Explanation.none]
-        return decision, probability, explanation
+        return decision, explanation
 
     @staticmethod
     def _prepare_website_data() -> WebsiteData:
@@ -222,11 +214,11 @@ class MetadataBase:
         return website_manager.website_data
 
     def _processing_values(
-        self, values: dict, website_data: WebsiteData, before: float
+            self, values: dict, website_data: WebsiteData, before: float
     ) -> dict:
         website_data.values = values[VALUES]
 
-        decision, probability, explanation = self._decide(
+        star_case, explanation = self._decide(
             website_data=website_data
         )
 
@@ -234,8 +226,7 @@ class MetadataBase:
             self.key: {
                 TIME_REQUIRED: get_utc_now() - before,
                 **values,
-                PROBABILITY: probability,
-                IS_HAPPY_CASE: decision,
+                STAR_CASE: star_case,
                 EXPLANATION: explanation,
             }
         }
@@ -321,7 +312,7 @@ class MetadataBase:
         return {VALUES: values}
 
     async def _download_multiple_tag_lists(
-        self, session: ClientSession
+            self, session: ClientSession
     ) -> list[str]:
         tasks = [
             self._download_tag_list(url=url, session=session)
@@ -332,7 +323,7 @@ class MetadataBase:
         return complete_list
 
     async def _download_tag_list(
-        self, url: str, session: ClientSession
+            self, url: str, session: ClientSession
     ) -> list[str]:
         taglist_path = "tag_lists/"
         if not os.path.isdir(taglist_path):
@@ -374,8 +365,8 @@ class MetadataBase:
                 self.tag_list_expires = int(match.group(1))
 
             if (
-                self.tag_list_last_modified != ""
-                and self.tag_list_expires != 0
+                    self.tag_list_last_modified != ""
+                    and self.tag_list_expires != 0
             ):
                 break
 
@@ -384,10 +375,10 @@ class MetadataBase:
             el.lower()
             for el in self.tag_list
             if el != ""
-            and (
-                self.comment_symbol == ""
-                or not el.startswith(self.comment_symbol)
-            )
+               and (
+                       self.comment_symbol == ""
+                       or not el.startswith(self.comment_symbol)
+               )
         ]
 
         self.tag_list = list(OrderedDict.fromkeys(tag_list))

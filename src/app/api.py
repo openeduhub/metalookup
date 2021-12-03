@@ -30,7 +30,7 @@ from db.db import (
 )
 from lib.constants import (
     EXPLANATION,
-    IS_HAPPY_CASE,
+    STAR_CASE,
     MESSAGE_ALLOW_LIST,
     MESSAGE_BYPASS_CACHE,
     MESSAGE_EXCEPTION,
@@ -40,9 +40,7 @@ from lib.constants import (
     MESSAGE_SHARED_MEMORY_NAME,
     MESSAGE_URL,
     METADATA_EXTRACTOR,
-    PROBABILITY,
-    TIME_REQUIRED,
-    VALUES,
+    TIME_REQUIRED, VALUES,
 )
 from lib.settings import NUMBER_OF_EXTRACTORS, VERSION
 from lib.timing import get_utc_now
@@ -77,8 +75,7 @@ def _convert_dict_to_output_model(
                 key,
                 MetadataTags(
                     values=meta[key][VALUES],
-                    probability=meta[key][PROBABILITY],
-                    isHappyCase=meta[key][IS_HAPPY_CASE],
+                    stars=meta[key][STAR_CASE],
                     time_for_completion=meta[key][TIME_REQUIRED],
                     explanation=meta[key][EXPLANATION],
                 ),

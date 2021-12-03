@@ -3,7 +3,7 @@ import json
 
 from aiohttp import ClientConnectorError, ClientSession
 
-from app.models import DecisionCase, Explanation
+from app.models import StarCase, Explanation
 from features.metadata_base import MetadataBase
 from features.website_manager import WebsiteData
 from lib.constants import (
@@ -79,18 +79,18 @@ class Accessibility(MetadataBase):
 
     def _decide(
         self, website_data: WebsiteData
-    ) -> tuple[DecisionCase, float, list[Explanation]]:
-        decision, probability, explanation = self._get_default_decision()
+    ) -> tuple[StarCase, list[Explanation]]:
+        decision, explanation = self._get_default_decision()
         if website_data.values:
             mean = round(
                 sum(website_data.values) / (len(website_data.values)), 2
             )
-            probability = self._calculate_probability_from_ratio(mean)
             decision = self._get_inverted_decision(mean)
-            if decision == DecisionCase.FALSE:
+            if decision == StarCase.ZERO:
                 explanation = [Explanation.AccessibilityTooLow]
-            elif decision == DecisionCase.UNKNOWN:
+            elif decision == StarCase.ONE:
+                # TODO unhandled case
                 explanation = [Explanation.AccessibilityServiceReturnedFailure]
             else:
                 explanation = [Explanation.AccessibilitySuitable]
-        return decision, probability, explanation
+        return decision, explanation

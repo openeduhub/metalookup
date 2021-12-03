@@ -1,4 +1,4 @@
-from app.models import DecisionCase, Explanation
+from app.models import StarCase, Explanation
 from features.metadata_base import ExtractionMethod, MetadataBase
 from features.website_manager import WebsiteData
 from lib.constants import VALUES
@@ -37,7 +37,7 @@ class Cookies(MetadataBase):
 
     def _decide(
         self, website_data: WebsiteData
-    ) -> tuple[DecisionCase, float, list[Explanation]]:
+    ) -> tuple[StarCase, float, list[Explanation]]:
         cookies_in_html = [
             cookie for cookie in website_data.values if isinstance(cookie, str)
         ]
@@ -53,7 +53,7 @@ class Cookies(MetadataBase):
         decision = self._get_decision(probability)
         explanation = (
             [Explanation.CookiesFound]
-            if decision == DecisionCase.FALSE
+            if decision == StarCase.FALSE
             else [Explanation.NoCookiesFound]
         )
         return decision, probability, explanation

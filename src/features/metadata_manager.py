@@ -35,13 +35,12 @@ from features.website_manager import Singleton, WebsiteManager
 from lib.constants import (
     ACCESSIBILITY,
     EXPLANATION,
-    IS_HAPPY_CASE,
+    STAR_CASE,
     MESSAGE_ALLOW_LIST,
     MESSAGE_BYPASS_CACHE,
     MESSAGE_EXCEPTION,
     MESSAGE_SHARED_MEMORY_NAME,
     MESSAGE_URL,
-    PROBABILITY,
     TIMESTAMP,
     VALUES,
 )
@@ -169,8 +168,7 @@ class MetadataManager:
 
                 data_to_be_cached = {
                     VALUES: values,
-                    PROBABILITY: meta_data[PROBABILITY],
-                    IS_HAPPY_CASE: meta_data[IS_HAPPY_CASE],
+                    STAR_CASE: meta_data[STAR_CASE],
                     TIMESTAMP: get_utc_now(),
                     EXPLANATION: meta_data[EXPLANATION],
                 }

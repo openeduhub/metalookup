@@ -3,13 +3,12 @@ from unittest import mock
 
 import pytest
 
-from app.models import DecisionCase, Explanation
+from app.models import StarCase, Explanation
 from cache.cache_manager import CacheManager
 from lib.constants import (
     ACCESSIBILITY,
     EXPLANATION,
-    IS_HAPPY_CASE,
-    PROBABILITY,
+    STAR_CASE,
     TIMESTAMP,
     VALUES,
 )
@@ -93,39 +92,37 @@ def test_convert_cached_data(cache_manager: CacheManager):
 
     empty_cache = cache_manager.convert_cached_data(meta_data, feature)
     assert empty_cache[EXPLANATION] == [Explanation.Cached]
-    assert empty_cache[IS_HAPPY_CASE] == DecisionCase.UNKNOWN
+    assert empty_cache[STAR_CASE] == StarCase.ONE
     assert empty_cache[VALUES] == []
-    assert empty_cache[PROBABILITY] == 0
 
     meta_data = [
-        f'{{"{VALUES}":[], "{PROBABILITY}": 1.0, "{EXPLANATION}": ["{Explanation.AccessibilityServiceReturnedFailure}"], '
-        f'"{IS_HAPPY_CASE}": "{DecisionCase.UNKNOWN}", '
+        f'{{"{VALUES}":[], "{EXPLANATION}": ["{Explanation.AccessibilityServiceReturnedFailure}"], '
+        f'"{STAR_CASE}": "{StarCase.ONE}", '
         f'"{TIMESTAMP}": {get_utc_now()}}}'
     ]
 
     cache_output = cache_manager.convert_cached_data(meta_data, feature)
     assert isinstance(cache_output, dict)
-    assert len(cache_output.keys()) == 4
+    assert len(cache_output.keys()) == 3
     assert cache_output[EXPLANATION] == [
         Explanation.Cached,
         Explanation.AccessibilityServiceReturnedFailure,
     ]
-    assert cache_output[IS_HAPPY_CASE] == DecisionCase.UNKNOWN
+    assert cache_output[STAR_CASE] == StarCase.ONE
     assert cache_output[VALUES] == []
-    assert cache_output[PROBABILITY] == 1.0
 
     meta_data = [
-        f'{{"{VALUES}":[], "{PROBABILITY}": 0, "{EXPLANATION}": [], '
-        f'"{IS_HAPPY_CASE}": "{DecisionCase.FALSE}", '
+        f'{{"{VALUES}":[], "{EXPLANATION}": [], '
+        f'"{STAR_CASE}": "{StarCase.ONE}", '
         f'"{TIMESTAMP}": {get_utc_now()}}}'
     ]
 
     cache_output = cache_manager.convert_cached_data(meta_data, feature)
-    assert cache_output[IS_HAPPY_CASE] == DecisionCase.FALSE
+    assert cache_output[STAR_CASE] == StarCase.ONE
 
     meta_data = [
-        f'{{"{VALUES}":[0.85, 0.95], "{PROBABILITY}": 1.0, "{EXPLANATION}": ["{Explanation.AccessibilitySuitable}"], '
-        f'"{IS_HAPPY_CASE}": "{DecisionCase.UNKNOWN}", '
+        f'{{"{VALUES}":[0.85, 0.95], "{EXPLANATION}": ["{Explanation.AccessibilitySuitable}"], '
+        f'"{STAR_CASE}": "{StarCase.ONE}", '
         f'"{TIMESTAMP}": {get_utc_now()}}}'
     ]
 
@@ -137,13 +134,13 @@ def test_convert_cached_data(cache_manager: CacheManager):
     ]
 
     meta_data = [
-        f'{{"{VALUES}":[], "{PROBABILITY}": 0, "{EXPLANATION}": [], '
-        f'"{IS_HAPPY_CASE}": "{DecisionCase.TRUE}", '
+        f'{{"{VALUES}":[], "{EXPLANATION}": [], '
+        f'"{STAR_CASE}": "{StarCase.FIVE}", '
         f'"{TIMESTAMP}": {get_utc_now()}}}'
     ]
 
     cache_output = cache_manager.convert_cached_data(meta_data, feature)
-    assert cache_output[IS_HAPPY_CASE] == DecisionCase.TRUE
+    assert cache_output[STAR_CASE] == StarCase.FIVE
 
 
 """
@@ -157,13 +154,12 @@ def test_get_predefined_metadata(mocker, cache_manager: CacheManager):
 
     empty_cache = cache_manager.convert_cached_data(meta_data, feature)
     assert empty_cache[EXPLANATION] == [Explanation.Cached]
-    assert empty_cache[IS_HAPPY_CASE] == DecisionCase.UNKNOWN
+    assert empty_cache[STAR_CASE] == StarCase.ONE
     assert empty_cache[VALUES] == []
-    assert empty_cache[PROBABILITY] == 0
 
     meta_data = (
-        f'{{"{VALUES}":[], "{PROBABILITY}": 1.0, "{EXPLANATION}": ["{Explanation.AccessibilityServiceReturnedFailure}"], '
-        + f'"{IS_HAPPY_CASE}": "{DecisionCase.UNKNOWN}"}}'
+        f'{{"{VALUES}":[], "{EXPLANATION}": ["{Explanation.AccessibilityServiceReturnedFailure}"], '
+        + f'"{STAR_CASE}": "{StarCase.ONE}"}}'
     )
 
     with mock.patch("cache.cache_manager.read_cached_values_by_feature"):
@@ -173,4 +169,4 @@ def test_get_predefined_metadata(mocker, cache_manager: CacheManager):
 
     assert isinstance(cache_output, dict)
     assert len(cache_output.keys()) == 1
-    assert len(cache_output[feature].keys()) == 5
+    assert len(cache_output[feature].keys()) == 4
