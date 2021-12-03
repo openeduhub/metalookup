@@ -10,15 +10,9 @@ import adblockparser
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 
-from app.models import DecisionCase, Explanation
+from app.models import Explanation, StarCase
 from features.website_manager import WebsiteData, WebsiteManager
-from lib.constants import (
-    EXPLANATION,
-    IS_HAPPY_CASE,
-    PROBABILITY,
-    TIME_REQUIRED,
-    VALUES,
-)
+from lib.constants import EXPLANATION, STAR_CASE, TIME_REQUIRED, VALUES
 from lib.settings import USE_LOCAL_IF_POSSIBLE
 from lib.timing import get_utc_now
 
@@ -120,27 +114,27 @@ class MetadataBase:
             else 0
         )
 
-    def _get_decision(self, probability: float) -> DecisionCase:
-        decision = DecisionCase.UNKNOWN
-        if probability > 0 and self.decision_threshold != -1:
+    def _get_decision(self, probability: float) -> StarCase:
+        decision = StarCase.ONE
+        if probability >= 0 and self.decision_threshold != -1:
             if probability >= self.decision_threshold:
-                decision = DecisionCase.FALSE
+                decision = StarCase.ZERO
             else:
-                decision = DecisionCase.TRUE
+                decision = StarCase.FIVE
         return decision
 
-    def _get_inverted_decision(self, probability: float) -> DecisionCase:
-        decision = DecisionCase.UNKNOWN
+    def _get_inverted_decision(self, probability: float) -> StarCase:
+        decision = StarCase.ONE
         if probability > 0 and self.decision_threshold != -1:
             if probability <= self.decision_threshold:
-                decision = DecisionCase.FALSE
+                decision = StarCase.ZERO
             else:
-                decision = DecisionCase.TRUE
+                decision = StarCase.FIVE
         return decision
 
     def _decide(
         self, website_data: WebsiteData
-    ) -> tuple[DecisionCase, float, list[Explanation]]:
+    ) -> tuple[StarCase, list[Explanation]]:
         if (
             self.probability_determination_method
             == ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
@@ -148,73 +142,60 @@ class MetadataBase:
             decision_indicator, explanation = self._get_ratio_of_elements(
                 website_data=website_data
             )
-            probability = self._calculate_probability_from_ratio(
-                decision_indicator
-            )
-            decision = self._get_decision(decision_indicator)
+            star_case = self._get_decision(decision_indicator)
         elif (
             self.probability_determination_method
             == ProbabilityDeterminationMethod.SINGLE_OCCURRENCE
         ):
             (
-                decision,
-                probability,
+                star_case,
                 explanation,
             ) = self._decide_single_occurrence(website_data)
         elif (
             self.probability_determination_method
             == ProbabilityDeterminationMethod.FALSE_LIST
         ):
-            decision, probability, explanation = self._decide_false_list(
-                website_data
-            )
+            star_case, explanation = self._decide_false_list(website_data)
         else:
-            decision, probability, explanation = self._get_default_decision()
+            star_case, explanation = self._get_default_decision()
 
-        return decision, probability, explanation
+        return star_case, explanation
 
     def _decide_single_occurrence(
         self, website_data: WebsiteData
-    ) -> tuple[DecisionCase, float, list[Explanation]]:
+    ) -> tuple[StarCase, list[Explanation]]:
 
         an_occurence_has_been_found: bool = (
             website_data.values and len(website_data.values) > 0
         )
-        probability = 1 if an_occurence_has_been_found else 0
         explanation = (
             [Explanation.FoundListMatches]
             if an_occurence_has_been_found
             else [Explanation.FoundNoListMatches]
         )
-        decision = (
-            DecisionCase.FALSE
-            if an_occurence_has_been_found
-            else DecisionCase.TRUE
+        star_case = (
+            StarCase.ZERO if an_occurence_has_been_found else StarCase.FIVE
         )
-        return decision, probability, explanation
+        return star_case, explanation
 
     def _decide_false_list(
         self, website_data: WebsiteData
-    ) -> tuple[DecisionCase, float, list[Explanation]]:
-        probability = 1
-        decision = DecisionCase.TRUE
+    ) -> tuple[StarCase, list[Explanation]]:
+        decision = StarCase.FIVE
         explanation = [Explanation.NoKnockoutMatchFound]
         for false_element in self.false_list:
             if false_element in website_data.values:
-                decision = DecisionCase.FALSE
+                decision = StarCase.ZERO
                 explanation = [Explanation.KnockoutMatchFound]
                 break
 
-        return decision, probability, explanation
+        return decision, explanation
 
     @staticmethod
-    def _get_default_decision() -> tuple[
-        DecisionCase, float, list[Explanation]
-    ]:
-        probability = 0
-        decision = DecisionCase.UNKNOWN
+    def _get_default_decision() -> tuple[StarCase, list[Explanation]]:
+        decision = StarCase.ZERO
         explanation = [Explanation.none]
-        return decision, probability, explanation
+        return decision, explanation
 
     @staticmethod
     def _prepare_website_data() -> WebsiteData:
@@ -226,16 +207,13 @@ class MetadataBase:
     ) -> dict:
         website_data.values = values[VALUES]
 
-        decision, probability, explanation = self._decide(
-            website_data=website_data
-        )
+        star_case, explanation = self._decide(website_data=website_data)
 
         data = {
             self.key: {
                 TIME_REQUIRED: get_utc_now() - before,
                 **values,
-                PROBABILITY: probability,
-                IS_HAPPY_CASE: decision,
+                STAR_CASE: star_case,
                 EXPLANATION: explanation,
             }
         }

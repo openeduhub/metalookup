@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 from pdfminer.high_level import extract_text
 from PyPDF2.utils import PdfReadError
 
-from app.models import DecisionCase, Explanation
+from app.models import Explanation, StarCase
 from features.metadata_base import MetadataBase
 from features.website_manager import WebsiteData
 from lib.constants import VALUES
@@ -198,7 +198,7 @@ class ExtractFromFiles(MetadataBase):
 
     def _decide(
         self, website_data: WebsiteData
-    ) -> tuple[DecisionCase, float, list[Explanation]]:
+    ) -> tuple[StarCase, list[Explanation]]:
         probability = 0
         extractable_files = self._get_extractable_files(website_data)
 
@@ -207,7 +207,7 @@ class ExtractFromFiles(MetadataBase):
         decision = self._get_inverted_decision(probability)
         explanation = (
             [Explanation.ExtractableFilesFound]
-            if decision == DecisionCase.TRUE
+            if decision == StarCase.FIVE
             else [Explanation.InsufficientlyExtractableFilesFound]
         )
-        return decision, probability, explanation
+        return decision, explanation

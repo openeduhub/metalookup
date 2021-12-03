@@ -1,7 +1,7 @@
 import json
 import os
 
-from app.models import DecisionCase, Explanation
+from app.models import Explanation, StarCase
 from features.security import Security
 from features.website_manager import WebsiteData
 from lib.logger import get_logger
@@ -68,16 +68,12 @@ def test_decide():
         "x-xss-protection",
         "referrer-policy",
     ]
-    expected_decision = DecisionCase.TRUE
-    expected_probability = 1.0
+    expected_decision = StarCase.FIVE
     expected_explanation = [Explanation.MinimumSecurityRequirementsCovered]
 
     security.expected_headers = security_tags
 
-    decision, probability, explanation = security._decide(
-        website_data=website_data
-    )
+    decision, explanation = security._decide(website_data=website_data)
 
-    assert probability == expected_probability
     assert decision == expected_decision
     assert explanation == expected_explanation

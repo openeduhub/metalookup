@@ -1,4 +1,4 @@
-from app.models import DecisionCase, Explanation
+from app.models import Explanation, StarCase
 from features.metadata_base import MetadataBase
 from features.website_manager import WebsiteData
 from lib.constants import STRICT_TRANSPORT_SECURITY, VALUES
@@ -96,14 +96,14 @@ class Security(MetadataBase):
 
     def _decide(
         self, website_data: WebsiteData
-    ) -> tuple[DecisionCase, float, list[Explanation]]:
+    ) -> tuple[StarCase, list[Explanation]]:
         probability = len(website_data.values) / len(
             self.expected_headers.keys()
         )
         decision = self._get_inverted_decision(probability)
         explanation = (
             [Explanation.MinimumSecurityRequirementsCovered]
-            if decision == DecisionCase.TRUE
+            if decision == StarCase.FIVE
             else [Explanation.IndicatorsForInsufficientSecurityFound]
         )
-        return decision, probability, explanation
+        return decision, explanation

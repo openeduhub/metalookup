@@ -15,8 +15,7 @@ LOGFILE_MANAGER = "manager"
 # Metadata
 
 VALUES = "values"
-PROBABILITY = "probability"
-IS_HAPPY_CASE = "isHappyCase"
+STAR_CASE = "star_case"
 TIME_REQUIRED = "time_required"
 EXPLANATION = "explanation"
 TIMESTAMP = "timestamp"
