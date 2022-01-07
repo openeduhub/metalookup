@@ -23,7 +23,6 @@ from features.html_based import (
     RegWall,
 )
 from features.javascript import Javascript
-from features.malicious_extensions import MaliciousExtensions
 from features.metatag_explorer import MetatagExplorer
 from features.website_manager import WebsiteManager
 from lib.constants import VALUES
@@ -54,7 +53,7 @@ def _test_feature(feature_class, html, expectation) -> tuple[bool, bool]:
         website_manager.reset()
 
     are_values_correct = False
-    print(data[feature.key])
+
     try:
         if data[feature.key]["values"]:
             if isinstance(data[feature.key]["values"][0], dict):
