@@ -1,3 +1,4 @@
+from app.models import Explanation, StarCase
 from features.metadata_base import MetadataBase
 from features.website_manager import WebsiteData
 from lib.constants import VALUES
@@ -8,6 +9,7 @@ class MaliciousExtensions(MetadataBase):
     #           https://www.howtogeek.com/137270/50-file-extensions-that-are-potentially-dangerous-on-windows/
     #           https://sensorstechforum.com/file-types-used-malware-2019/
     #           https://www.howtogeek.com/127154/how-hackers-can-disguise-malicious-programs-with-fake-file-extensions/
+    more_harmless_extensions = ["docx", ".js", "pptx", ".html", "pdf"]
     malicious_extensions = [
         "msp",
         "cfxxe",
@@ -28,7 +30,6 @@ class MaliciousExtensions(MetadataBase):
         "pr",
         "wlpginstall",
         "kcd",
-        "docx",
         "dom",
         "hsq",
         "aepl",
@@ -39,7 +40,6 @@ class MaliciousExtensions(MetadataBase):
         "cyw",
         "blf",
         "osa",
-        "pdf",
         "shs",
         "xlm",
         "exe_renamed",
@@ -185,13 +185,33 @@ class MaliciousExtensions(MetadataBase):
         "potm",
         "\u202e",
     ]
-    # whitelisted for now: "js", "html",
     decision_threshold = 0
 
     def _start(self, website_data: WebsiteData) -> dict:
         malicious_extensions = [
             extension
             for extension in website_data.extensions
-            if extension.replace(".", "") in self.malicious_extensions
+            if extension.replace(".", "")
+            in set(self.malicious_extensions + self.more_harmless_extensions)
         ]
         return {VALUES: malicious_extensions}
+
+    def _decide(
+        self, website_data: WebsiteData
+    ) -> tuple[StarCase, list[Explanation]]:
+        decision = StarCase.ZERO
+        explanation = Explanation.none
+        if len(website_data.values) == 0:
+            decision = StarCase.FIVE
+        else:
+            for value in website_data.values:
+                if value.replace(".", "") in self.malicious_extensions:
+                    decision = StarCase.ZERO
+                    explanation = (
+                        Explanation.PotentiallyMaliciousExtensionFound
+                    )
+                    break
+                elif value.replace(".", "") in self.more_harmless_extensions:
+                    decision = StarCase.FOUR
+                    explanation = Explanation.SlightlyMaliciousExtensionFound
+        return decision, [explanation]

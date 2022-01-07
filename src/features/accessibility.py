@@ -20,6 +20,7 @@ from lib.settings import ACCESSIBILITY_TIMEOUT, ACCESSIBILITY_URL
 class Accessibility(MetadataBase):
     decision_threshold = 0.8
     call_async = True
+    star_levels = [0.7, 0.8, 0.85, 0.9, 0.95, 1]
 
     def extract_score(self, score_text: str) -> float:
         try:
@@ -85,12 +86,21 @@ class Accessibility(MetadataBase):
             mean = round(
                 sum(website_data.values) / (len(website_data.values)), 2
             )
-            decision = self._get_inverted_decision(mean)
-            if decision == StarCase.ZERO:
-                explanation = [Explanation.AccessibilityTooLow]
-            elif decision == StarCase.ONE:
-                # TODO unhandled case
+            explanation = [Explanation.AccessibilityTooLow]
+            if mean < 0:
                 explanation = [Explanation.AccessibilityServiceReturnedFailure]
-            else:
+            elif mean <= self.star_levels[0]:
+                decision = StarCase.ZERO
+            elif mean <= self.star_levels[1]:
+                decision = StarCase.ONE
+            elif mean <= self.star_levels[2]:
+                decision = StarCase.TWO
+            elif mean <= self.star_levels[3]:
+                decision = StarCase.THREE
+            elif mean <= self.star_levels[4]:
+                decision = StarCase.FOUR
+                explanation = [Explanation.AccessibilitySuitable]
+            elif mean > self.star_levels[4]:
+                decision = StarCase.FIVE
                 explanation = [Explanation.AccessibilitySuitable]
         return decision, explanation

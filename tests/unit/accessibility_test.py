@@ -32,10 +32,40 @@ def test_accessibility(mocker, score_text, expected_score):
     "values, decision_threshold, expected_decision,  expected_explanation",
     [
         (
-            [0.5],
+            [0.98],
             0,
             StarCase.FIVE,
             [Explanation.AccessibilitySuitable],
+        ),
+        (
+            [0.94],
+            0,
+            StarCase.FOUR,
+            [Explanation.AccessibilitySuitable],
+        ),
+        (
+            [0.86],
+            0,
+            StarCase.THREE,
+            [Explanation.AccessibilityTooLow],
+        ),
+        (
+            [0.82],
+            0,
+            StarCase.TWO,
+            [Explanation.AccessibilityTooLow],
+        ),
+        (
+            [0.75],
+            0,
+            StarCase.ONE,
+            [Explanation.AccessibilityTooLow],
+        ),
+        (
+            [0.5],
+            0,
+            StarCase.ZERO,
+            [Explanation.AccessibilityTooLow],
         ),
         ([0.5], 0.5, StarCase.ZERO, [Explanation.AccessibilityTooLow]),
         (
@@ -43,12 +73,6 @@ def test_accessibility(mocker, score_text, expected_score):
             0.5,
             StarCase.ZERO,
             [Explanation.AccessibilityTooLow],
-        ),
-        (
-            [0.6, 0.8],
-            0.5,
-            StarCase.FIVE,
-            [Explanation.AccessibilitySuitable],
         ),
     ],
 )
