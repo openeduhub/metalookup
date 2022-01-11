@@ -132,7 +132,7 @@ class WebsiteManager:
     def _preprocess_header(self) -> None:
         header: str = self.website_data.raw_header.lower()
 
-        idx = header.find('b"')
+        idx = max(header.find('b"'), header.find("b'"))
         if idx >= 0:
             header = (
                 header.replace("b'", '"')

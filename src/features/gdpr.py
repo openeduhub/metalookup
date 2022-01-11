@@ -1,6 +1,6 @@
 import re
 
-from app.models import DecisionCase, Explanation
+from app.models import Explanation, StarCase
 from features.metadata_base import MetadataBase
 from features.website_manager import WebsiteData
 from lib.constants import STRICT_TRANSPORT_SECURITY, VALUES
@@ -78,8 +78,7 @@ class GDPR(MetadataBase):
 
         found_fonts = []
         for match in matches:
-            url_matches = re.findall(url_regex, match)
-            found_fonts += [url_match for url_match in url_matches]
+            found_fonts += list(re.findall(url_regex, match))
 
         if found_fonts:
             found_fonts = "found_fonts," + ",".join(found_fonts)
@@ -142,7 +141,7 @@ class GDPR(MetadataBase):
         flat_values = []
         for value in values:
             if isinstance(value, list):
-                flat_values.extend([el for el in value])
+                flat_values.extend(list(value))
             else:
                 flat_values.append(value)
 
@@ -150,7 +149,7 @@ class GDPR(MetadataBase):
 
     def _decide(
         self, website_data: WebsiteData
-    ) -> tuple[DecisionCase, float, list[Explanation]]:
+    ) -> tuple[StarCase, list[Explanation]]:
         probability = 0.5
 
         if (
@@ -165,16 +164,13 @@ class GDPR(MetadataBase):
         if "found_no_fonts" in website_data.values:
             probability -= 0.1
 
-        if probability < 0:
-            probability = 0
-
-        decision = self._get_inverted_decision(probability)
-        if decision == DecisionCase.TRUE:
-            decision = DecisionCase.UNKNOWN
+        decision = self._get_inverted_decision(max(probability, 0))
+        if decision == StarCase.FIVE:
+            decision = StarCase.ONE
 
         explanation = (
             [Explanation.MinimumGDPRRequirementsCovered]
-            if decision == DecisionCase.UNKNOWN
+            if decision == StarCase.ONE
             else [Explanation.PotentiallyInsufficientGDPRFound]
         )
-        return decision, probability, explanation
+        return decision, explanation

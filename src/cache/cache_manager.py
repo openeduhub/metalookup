@@ -2,7 +2,7 @@ import json
 import logging
 import time
 
-from app.models import DecisionCase, Explanation
+from app.models import Explanation, StarCase
 from db.db import (
     get_top_level_domains,
     read_cached_values_by_feature,
@@ -12,9 +12,8 @@ from features.website_manager import Singleton
 from lib.constants import (
     ACCESSIBILITY,
     EXPLANATION,
-    IS_HAPPY_CASE,
-    PROBABILITY,
     SECONDS_PER_DAY,
+    STAR_CASE,
     TIME_REQUIRED,
     TIMESTAMP,
     VALUES,
@@ -97,42 +96,36 @@ class CacheManager:
 
     def convert_cached_data(self, meta_data: list, key: str) -> dict:
         values = []
-        probability = []
         explanation = [Explanation.Cached]
-        isHappyCase = []
+        star_case = []
         for entry in meta_data:
             data = json.loads(entry)
             if self.is_cached_value_recent(data[TIMESTAMP]):
                 values.extend(data[VALUES])
-                probability.append(data[PROBABILITY])
                 explanation.extend(data[EXPLANATION])
-                isHappyCase.append(data[IS_HAPPY_CASE])
+                star_case.append(int(data[STAR_CASE]))
 
         explanation = get_unique_list(explanation)
 
-        isHappyCase = get_unique_list(isHappyCase)
-        if DecisionCase.FALSE in isHappyCase:
-            isHappyCase = DecisionCase.FALSE
-        elif DecisionCase.UNKNOWN in isHappyCase:
-            isHappyCase = DecisionCase.UNKNOWN
-        elif DecisionCase.TRUE in isHappyCase:
-            isHappyCase = DecisionCase.TRUE
+        star_case = get_unique_list(star_case)
+        if StarCase.ZERO in star_case:
+            star_case = StarCase.ZERO
+        elif StarCase.ONE in star_case:
+            star_case = StarCase.ONE
+        elif StarCase.FIVE in star_case:
+            star_case = StarCase.FIVE
         else:
-            isHappyCase = DecisionCase.UNKNOWN
+            star_case = StarCase.ONE
 
         if key == ACCESSIBILITY and len(values) > 0:
             values = [round(get_mean(values), 2)]
         else:
             values = []
 
-        mean_probability: float = (
-            get_mean(probability) if len(probability) > 0 else 0
-        )
         return {
             VALUES: values,
             EXPLANATION: get_unique_list(explanation),
-            PROBABILITY: mean_probability,
-            IS_HAPPY_CASE: isHappyCase,
+            STAR_CASE: star_case,
         }
 
     def get_predefined_metadata(self, key: str) -> dict:

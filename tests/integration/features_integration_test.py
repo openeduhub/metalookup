@@ -23,7 +23,6 @@ from features.html_based import (
     RegWall,
 )
 from features.javascript import Javascript
-from features.malicious_extensions import MaliciousExtensions
 from features.metatag_explorer import MetatagExplorer
 from features.website_manager import WebsiteManager
 from lib.constants import VALUES
@@ -54,6 +53,7 @@ def _test_feature(feature_class, html, expectation) -> tuple[bool, bool]:
         website_manager.reset()
 
     are_values_correct = False
+
     try:
         if data[feature.key]["values"]:
             if isinstance(data[feature.key]["values"][0], dict):
@@ -104,14 +104,14 @@ def test_advertisement():
     feature = Advertisement
     feature._create_key(feature)
     html = {
-        "html": "<script src='/xlayer/layer.php?uid='></script>",
+        "html": "<script src='/layer.php?bid='></script>",
         "har": "",
         "url": "",
         "headers": "{}",
     }
     expected = {
         feature.key: {
-            "values": ["/xlayer/layer.php?uid="],
+            "values": ["/layer.php?bid="],
             "runs_within": 10,  # time the evaluation may take AT MAX -> acceptance test
         },
     }
@@ -147,8 +147,8 @@ def test_easylist_adult():
     feature._create_key(feature)
     html = {
         "html": """
-<link href='sexgalaxy.net/pop'/>
-<link href='geobanner.fuckbookhookups.com'/>
+<link href='bookofsex.com'/>
+<link href='geofamily.ru^$third-party'/>
 """,
         "har": "",
         "url": "",
@@ -156,7 +156,7 @@ def test_easylist_adult():
     }
     expected = {
         feature.key: {
-            "values": ["sexgalaxy.net/pop", "geobanner.fuckbookhookups.com"],
+            "values": ["bookofsex.com", "geofamily.ru^$third-party"],
             "runs_within": 10,  # time the evaluation may take AT MAX -> acceptance test}
         }
     }
@@ -228,55 +228,6 @@ src='https://cdn.fluidplayer.com/v2/current/fluidplayer.min.js?ver=5.6' id='flui
             "excluded_values": [
                 "https://cdn.fluidplayer.com/v2/current/fluidplayer.min.js?ver=5.6"
             ],
-            "runs_within": 10,  # time the evaluation may take AT MAX -> acceptance test}
-        }
-    }
-
-    are_values_correct, runs_fast_enough = _test_feature(
-        feature_class=feature, html=html, expectation=expected
-    )
-    assert are_values_correct and runs_fast_enough
-
-
-def test_malicious_extensions():
-    feature = MaliciousExtensions
-    feature._create_key(feature)
-    html = {
-        "html": """<a href=\"https://dll-production.s3-de-central.profitbricks.com/media/filer_public/06/78/0678543a-fa24-4aa4-9250-e6a8d7650fd3/arbeitsblatt_analog_losung.pdf\" target=\"_blank\">
-Arbeitsblatt analog L\u00f6sung.pdf</a></li><li>
-<a href=\"https://dll-production.s3-de-central.profitbricks.com/media/filer_public/32/f6/32f602de-c2df-406b-a678-d8149a84ba9c/arbeitsblatt_analog.pdf\" target=\"_blank\">
-Arbeitsblatt analog.pdf</a></li><li>
-<a href=\"https://dll-production.s3-de-central.profitbricks.com/media/filer_public/a8/dd/a8dd165c-e432-4355-8144-10312de3ab68/arbeitsblatt_losung.pdf\" target=\"_blank\">
-Arbeitsblatt L\u00f6sung.pdf</a></li><li>
-<a href=\"https://dll-production.s3-de-central.profitbricks.com/media/filer_public/b0/6c/b06ca365-1001-477a-b85a-9870bfc290f1/arbeitsblatt.pdf\" target=\"_blank\">
-Arbeitsblatt.pdf</a></li><li>
-<a href=\"https://dll-production.s3-de-central.profitbricks.com/media/filer_public/05/15/051593ca-6338-4950-82d2-30f35cbbb8d7/transparenter_verlauf.pdf\" target=\"_blank\">
-Transparenter Verlauf.pdf</a></li><li>
-<a href=\"https://dll-production.s3-de-central.profitbricks.com/media/filer_public/d7/fc/d7fc692b-304f-44f9-9215-40091c866bef/vorubung.pdf\" target=\"_blank\">
-Vor\u00fcbung.pdf</a></li><li>
-<a href=\"https://dll-production.s3-de-central.profitbricks.com/media/filer_public/38/cb/38cbab5e-193e-4014-9e40-3576c0c999da/zusatzmaterial.pdf\" target=\"_blank\">
-Zusatzmaterial.pdf</a><li>
-<a href=\"https://dll-production.s3-de-central.profitbricks.com/malicious.exe\" target=\"_blank\">
-Zusatzmaterial.pdf</a>
-<script type="6cf3255238f69b4dbff7a6d1-text/javascript">!(function(o,n,t){t=o.createElement(n),
-o=o.getElementsByTagName(n)[0],t.async=1,t.src=
-"https://steadfastsystem.com/v2/0/mhdUYBjmgxDP_SQetgnGiancNmP1JIkDmyyXS_JPnDK2hCg_pE_-EVQw61Zu8YEjN6n_TSzbOSci6fkr2DxbJ4T-NH35ngHIfU1tGluTSrud8VFduwH1nKtjGf3-jvZWHD2MaGeUQ",
-o.parentNode.insertBefore(t,o)})(document,"script"),
-(function(o,n){o[n]=o[n]||function(){(o[n].q=o[n].q||[]).push(arguments)}})(window,"admiral");
-!(function(n,e,r,t){function o(){if((function o(t){try{return(t=localStorage.getItem("v4ac1eiZr0"))&&0<t.split(",")[4]}
-catch(n){}return!1})()){var t=n[e].pubads();typeof t.setTargeting===r&&t.setTargeting("admiral-engaged","true")}}
-(t=n[e]=n[e]||{}).cmd=t.cmd||[],typeof t.pubads===r?o():typeof t.cmd.unshift===r?t.cmd.unshift(o):t.cmd.push(o)})
-(window,"googletag","function");</script><script type="6cf3255238f69b4dbff7a6d1-text/javascript"
-src='https://cdn.fluidplayer.com/v2/current/fluidplayer.min.js?ver=5.6' id='fluid-player-js-js'></script>
-""",
-        "har": "",
-        "url": "",
-        "headers": "{}",
-    }
-    expected = {
-        feature.key: {
-            "values": [".exe", ".pdf"],
-            "excluded_values": [".6"],
             "runs_within": 10,  # time the evaluation may take AT MAX -> acceptance test}
         }
     }

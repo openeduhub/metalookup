@@ -24,15 +24,20 @@ class Explanation(str, Enum):
         "IndicatorsForInsufficientSecurityFound"
     )
     MinimumSecurityRequirementsCovered = "MinimumSecurityRequirementsCovered"
+    PotentiallyMaliciousExtensionFound = "PotentiallyMaliciousExtensionFound"
+    SlightlyMaliciousExtensionFound = "SlightlyMaliciousExtensionFound"
 
     def __repr__(self):
         return str(self.value)
 
 
-class DecisionCase(str, Enum):
-    TRUE = "true"
-    FALSE = "false"
-    UNKNOWN = "unknown"
+class StarCase(int, Enum):
+    ZERO = 0
+    ONE = 1
+    TWO = 2
+    THREE = 3
+    FOUR = 4
+    FIVE = 5
 
     def __repr__(self):
         return str(self.value)
@@ -42,12 +47,8 @@ class MetadataTags(BaseModel):
     values: list = Field(
         default=[], description="Raw values found by the metadata extractors."
     )
-    probability: float = Field(
-        default=0,
-        description="The calculated probability that the isHappyCase is certain.",
-    )
-    isHappyCase: DecisionCase = Field(
-        default=DecisionCase.UNKNOWN,
+    stars: StarCase = Field(
+        default=StarCase.ZERO,
         description="A user friendly decision whether or not the happy case is fulfilled"
         " or whether everything is unclear",
     )

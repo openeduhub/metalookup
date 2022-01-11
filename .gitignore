@@ -17,3 +17,5 @@ Pipfile
 src/logs/*
 *.json
 *.csv
+/tests/tag_lists
+/tag_lists

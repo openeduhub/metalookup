@@ -1,4 +1,4 @@
-from app.models import DecisionCase, Explanation
+from app.models import Explanation, StarCase
 from features.metadata_base import MetadataBase
 from features.website_manager import WebsiteData
 from lib.constants import VALUES
@@ -19,9 +19,8 @@ class MetatagExplorer(MetadataBase):
 
     def _decide(
         self, website_data: WebsiteData
-    ) -> tuple[DecisionCase, float, list[Explanation]]:
-        decision = DecisionCase.UNKNOWN
-        probability = 1.0
+    ) -> tuple[StarCase, list[Explanation]]:
+        decision = StarCase.ONE
         explanation = [Explanation.none]
 
-        return decision, probability, explanation
+        return decision, explanation
