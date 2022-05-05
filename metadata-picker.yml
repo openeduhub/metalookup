@@ -3,7 +3,7 @@ version: '3.3'
 services:
   extractor:
     dns: 8.8.8.8
-    image: community.docker.edu-sharing.com/oeh-search-meta:latest
+    image: docker.edu-sharing.com/projects/oeh-redaktion/edusharing-projects-oeh-redaktion-metalookup-extractor:latest
     ports:
       - "5057:5057"
     links:
@@ -53,7 +53,7 @@ services:
       - traefik-public
   accessibility:
     dns: 8.8.8.8
-    image: community.docker.edu-sharing.com/oeh-search-meta_lighthouse:latest
+    image: docker.edu-sharing.com/projects/oeh-redaktion/edusharing-projects-oeh-redaktion-metalookup-lighthouse:latest
     restart: always
     ports:
       - "5058:5058"

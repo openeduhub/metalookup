@@ -3,7 +3,7 @@ version: '3.4'
 services:
   nightly_rerun:
     dns: 8.8.8.8
-    image: metalookup_nightly_rerun:latest
+    image: docker.edu-sharing.com/projects/oeh-redaktion/edusharing-projects-oeh-redaktion-metalookup-nightly_rerun:latest
     ports:
       - "5056:5056"
     environment:

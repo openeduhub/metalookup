@@ -1,0 +1,52 @@
+name: Build Docker Images
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - dev
+
+env:
+  docker_repository: "docker.edu-sharing.com"
+
+jobs:
+  build-lighthouse:
+    name: Build docker image
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Log in to edu sharing
+        run: docker login ${{env.docker_repository}} -u ${{ secrets.DOCKER_EDU_HUB_REGISTRY_USERNAME }} -p ${{ secrets.DOCKER_EDU_HUB_REGISTRY_PASSWORD }}
+
+      - name: Build the container
+        run: docker build -f dockerfile_lighthouse -t community.docker.edu-sharing.com/oeh-search-meta_lighthouse:latest .
+
+  build-nightly:
+    name: Build docker image
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Log in to edu sharing
+        run: docker login ${{env.docker_repository}} -u ${{ secrets.DOCKER_EDU_HUB_REGISTRY_USERNAME }} -p ${{ secrets.DOCKER_EDU_HUB_REGISTRY_PASSWORD }}
+
+      - name: Build the container
+        run: docker build -f dockerfile_nightly_rerun -t community.docker.edu-sharing.com/oeh-search-meta_nightly_rerun:latest .
+
+  build-extractor:
+    name: Build docker image
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Log in to edu sharing
+        run: docker login ${{env.docker_repository}} -u ${{ secrets.DOCKER_EDU_HUB_REGISTRY_USERNAME }} -p ${{ secrets.DOCKER_EDU_HUB_REGISTRY_PASSWORD }}
+
+      - name: Build the container
+        run: docker build -t community.docker.edu-sharing.com/oeh-search-meta:latest .
