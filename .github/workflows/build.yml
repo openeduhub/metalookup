@@ -1,4 +1,4 @@
-name: Lighthouse Docker Image
+name: Build Docker Images
 
 on:
   push:

@@ -1,4 +1,4 @@
-name: Metadata Extractor Docker Image
+name: Build and push Docker Images
 
 on:
   push:
