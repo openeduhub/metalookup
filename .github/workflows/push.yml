@@ -10,7 +10,7 @@ on:
 
 env:
   docker_repository: "docker.edu-sharing.com"
-  path_prefix: "/projects/oeh-redaktion/edusharing-projects-oeh-redaktion-metalookup-"
+  path_prefix: "/projects/oeh-redaktion/edusharing-projects-oeh-redaktion-metalookup"
 
 jobs:
   build-and-push-extractor:
