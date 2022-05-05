@@ -90,12 +90,12 @@ def _test_feature(feature_class, html, expectation) -> tuple[bool, bool]:
     if are_values_correct and "excluded_values" in expectation[feature.key]:
         are_values_correct = (
             not data[feature.key]["values"]
-            in expectation[feature.key]["excluded_values"]
+                in expectation[feature.key]["excluded_values"]
         )
 
     runs_fast_enough = (
-        data[feature.key]["time_required"]
-        <= expectation[feature.key]["runs_within"]
+            data[feature.key]["time_required"]
+            <= expectation[feature.key]["runs_within"]
     )
     return are_values_correct, runs_fast_enough
 
@@ -223,10 +223,12 @@ src='https://cdn.fluidplayer.com/v2/current/fluidplayer.min.js?ver=5.6' id='flui
         feature.key: {
             "values": [
                 "//www.googletagmanager.com",
-                "https://steadfastsystem.com/v2/0/mhdUYBjmgxDP_SQetgnGiancNmP1JIkDmyyXS_JPnDK2hCg_pE_-EVQw61Zu8YEjN6n_TSzbOSci6fkr2DxbJ4T-NH35ngHIfU1tGluTSrud8VFduwH1nKtjGf3-jvZWHD2MaGeUQ",
+                "https://steadfastsystem.com/v2/0/mhdUYBjmgxDP_SQetgnGiancNmP1JIkDmyyXS_JPnDK2hCg_pE_-EVQw61Zu8YEjN6n_"
+                "TSzbOSci6fkr2DxbJ4T-NH35ngHIfU1tGluTSrud8VFduwH1nKtjGf3-jvZWHD2MaGeUQ",
+                "https://cdn.fluidplayer.com/v2/current/fluidplayer.min.js?ver=5.6"
             ],
             "excluded_values": [
-                "https://cdn.fluidplayer.com/v2/current/fluidplayer.min.js?ver=5.6"
+
             ],
             "runs_within": 10,  # time the evaluation may take AT MAX -> acceptance test}
         }
@@ -428,7 +430,7 @@ format("svg");font-weight: normal;font-style: normal;font-display: fallback;}
         "har": "",
         "url": "https://www.tutory.de",
         "headers": '{b"Referrer-Policy": [b"no-referrer"],'
-        'b"Strict-Transport-Security": [b"max-age=15724800; includeSubDomains"]}',
+                   'b"Strict-Transport-Security": [b"max-age=15724800; includeSubDomains"]}',
     }
     expected = {
         feature.key: {
@@ -673,7 +675,7 @@ def test_javascript():
 
     html = {
         "html": "<script src='/xlayer/layer.php?uid='></script>"
-        "<script href='some_test_javascript.js'></script>",
+                "<script href='some_test_javascript.js'></script>",
         "har": "",
         "url": "",
         "headers": "",

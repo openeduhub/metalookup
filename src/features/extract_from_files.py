@@ -106,7 +106,7 @@ class ExtractFromFiles(MetadataBase):
                     extracted_content += (
                         f"{parameter}, {getattr(data, parameter)}"
                     )
-                except AttributeError as err:
+                except (AttributeError, TypeError) as err:
                     self._logger.exception(
                         f"Parameter in pdf content failed to be retrieved: {parameter} with {err.args}"
                     )
