@@ -3,6 +3,12 @@ name = "oeh-search-meta"
 version = "0.1.0"
 description = ""
 authors = ["Robert Meissner <robert.meissner@codecentric.de>"]
+packages = [
+    { include = "*", from = "src" },
+]
+
+[tool.poetry.scripts]
+meta-lookup = 'manager:main'
 
 [tool.poetry.dependencies]
 python = "^3.9.1"

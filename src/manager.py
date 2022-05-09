@@ -122,16 +122,20 @@ class Manager:
 
 
 def launch_api_server(
-    queue: multiprocessing.Queue, return_queue: multiprocessing.Queue
+        queue: multiprocessing.Queue, return_queue: multiprocessing.Queue
 ) -> None:
     app.communicator = QueueCommunicator(queue, return_queue)
     uvicorn.run(app, host="0.0.0.0", port=API_PORT, log_level="debug")
 
 
-if __name__ == "__main__":
+def main():
     if WANT_PROFILING:
         profiler = cProfile.Profile()
         profiler.enable()
 
     manager = Manager()
     manager.shutdown()
+
+
+if __name__ == "__main__":
+    main()
