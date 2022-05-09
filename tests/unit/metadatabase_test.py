@@ -4,8 +4,8 @@ import adblockparser
 import pytest
 
 from app.models import Explanation, StarCase
-from features.metadata_base import MetadataBase, ProbabilityDeterminationMethod
-from features.website_manager import WebsiteData
+from core.metadata_base import MetadataBase, ProbabilityDeterminationMethod
+from core.website_manager import WebsiteData
 
 
 @pytest.fixture
@@ -60,7 +60,7 @@ def test_start(metadatabase: MetadataBase, mocker):
     }
 
     with mock.patch(
-        "features.metadata_base.WebsiteManager"
+        "core.metadata_base.WebsiteManager"
     ) as mocked_website_manager:
         mocked_website_manager.get_instance().website_data = WebsiteData(
             html=html_content,

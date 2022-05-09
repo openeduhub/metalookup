@@ -1,5 +1,5 @@
-from features.metadata_base import MetadataBase
-from features.website_manager import WebsiteData
+from core.metadata_base import MetadataBase
+from core.website_manager import WebsiteData
 from lib.constants import VALUES
 
 

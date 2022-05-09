@@ -1,8 +1,8 @@
 import pytest
 
 from app.models import Explanation, StarCase
+from core.website_manager import WebsiteData
 from features.accessibility import Accessibility
-from features.website_manager import WebsiteData
 
 """
 --------------------------------------------------------------------------------

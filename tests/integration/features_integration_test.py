@@ -4,6 +4,7 @@ import time
 import traceback
 from urllib.parse import urlparse
 
+from core.website_manager import WebsiteManager
 from features.cookies import Cookies
 from features.extract_from_files import ExtractFromFiles
 from features.gdpr import GDPR
@@ -24,7 +25,6 @@ from features.html_based import (
 )
 from features.javascript import Javascript
 from features.metatag_explorer import MetatagExplorer
-from features.website_manager import WebsiteManager
 from lib.constants import VALUES
 from lib.logger import get_logger
 

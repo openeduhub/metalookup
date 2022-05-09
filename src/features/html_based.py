@@ -1,4 +1,4 @@
-from features.metadata_base import (
+from core.metadata_base import (
     ExtractionMethod,
     MetadataBase,
     ProbabilityDeterminationMethod,

@@ -11,8 +11,8 @@ from pdfminer.high_level import extract_text
 from PyPDF2.utils import PdfReadError
 
 from app.models import Explanation, StarCase
-from features.metadata_base import MetadataBase
-from features.website_manager import WebsiteData
+from core.metadata_base import MetadataBase
+from core.website_manager import WebsiteData
 from lib.constants import VALUES
 from lib.settings import RETURN_IMAGES_IN_METADATA
 

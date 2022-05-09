@@ -6,6 +6,8 @@ from multiprocessing import shared_memory
 
 from app.models import Explanation
 from cache.cache_manager import CacheManager
+from core.metadata_base import MetadataBase
+from core.website_manager import Singleton, WebsiteManager
 from db.db import create_cache_entry
 from features.accessibility import Accessibility
 from features.cookies import Cookies
@@ -28,10 +30,8 @@ from features.html_based import (
 )
 from features.javascript import Javascript
 from features.malicious_extensions import MaliciousExtensions
-from features.metadata_base import MetadataBase
 from features.metatag_explorer import MetatagExplorer
 from features.security import Security
-from features.website_manager import Singleton, WebsiteManager
 from lib.constants import (
     ACCESSIBILITY,
     EXPLANATION,

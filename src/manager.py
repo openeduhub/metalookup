@@ -10,7 +10,7 @@ import uvicorn
 
 from app.api import app
 from app.communication import QueueCommunicator
-from features.metadata_manager import MetadataManager
+from core.metadata_manager import MetadataManager
 from lib.constants import MESSAGE_EXCEPTION
 from lib.logger import create_logger
 from lib.settings import API_PORT, WANT_PROFILING

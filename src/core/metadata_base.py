@@ -11,7 +11,7 @@ from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 
 from app.models import Explanation, StarCase
-from features.website_manager import WebsiteData, WebsiteManager
+from core.website_manager import WebsiteData, WebsiteManager
 from lib.constants import EXPLANATION, STAR_CASE, TIME_REQUIRED, VALUES
 from lib.settings import USE_LOCAL_IF_POSSIBLE
 from lib.timing import get_utc_now

@@ -1,8 +1,8 @@
 import pytest
 
 from app.models import StarCase
+from core.website_manager import WebsiteManager
 from features.malicious_extensions import MaliciousExtensions
-from features.website_manager import WebsiteManager
 from lib.constants import STAR_CASE
 from lib.logger import get_logger
 from tests.integration.features_integration_test import _test_feature
