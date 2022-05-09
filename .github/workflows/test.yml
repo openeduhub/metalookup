@@ -1,12 +1,7 @@
 name: Run python unittests, formatting checks, and build wheel file.
 
-on:
-  push:
-    branches:
-      - "**"
-  pull_request:
-    branches:
-      - dev
+on: push
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
