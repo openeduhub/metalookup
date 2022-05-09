@@ -48,15 +48,22 @@ build-backend = "poetry.core.masonry.api"
 [tool.black]
 line-length = 79
 include = '\.pyi?$'
-exclude = '''
-/(
-    \.git
-  | \.mypy_cache
-  | \.venv
-  | logs
-  | src\logs
-)/
-'''
+# exclude = '''
+# /(
+#     \.git
+#   | \.mypy_cache
+#   | \.venv
+#   | logs
+#   | src\logs
+# )/
+# '''
 
-[tool.pytest]
-testpaths = "tests"
+[tool.pytest.ini_options]
+minversion = "6.0"
+log_cli = "false"
+log_level = "INFO"
+log_format = "%(asctime)s %(levelname)s %(message)s"
+log_date_format = "%Y-%m-%d %H:%M:%S"
+testpaths = [
+    "tests",
+]

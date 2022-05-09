@@ -1,9 +1,11 @@
 repos:
-  - repo: https://github.com/ambv/black
-    rev: 20.8b1
+  - repo: local
     hooks:
-      - id: black
-        language_version: python3.9
+      - name: Black
+        id: black
+        entry: poetry run black .
+        pass_filenames: false
+        language: system
   - repo: https://gitlab.com/pycqa/flake8
     rev: 3.8.4
     hooks:

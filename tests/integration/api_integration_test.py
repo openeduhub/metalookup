@@ -1,6 +1,5 @@
 import json
 import multiprocessing
-import os
 import time
 from unittest import mock
 
@@ -9,11 +8,7 @@ import uvicorn
 
 from app.api import Input, app
 from lib.settings import API_PORT
-
-if "PRE_COMMIT" in os.environ:
-    from test_libs import DOCKER_TEST_HEADERS, DOCKER_TEST_URL
-else:
-    from tests.test_libs import DOCKER_TEST_HEADERS, DOCKER_TEST_URL
+from tests.test_libs import DOCKER_TEST_HEADERS, DOCKER_TEST_URL
 
 """
 --------------------------------------------------------------------------------

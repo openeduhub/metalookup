@@ -1,25 +1,15 @@
 import json
-import os
-import time
 from json import JSONDecodeError
 
 import pytest
 import requests
 
 from lib.settings import SKIP_E2E_TESTS
-
-if "PRE_COMMIT" in os.environ:
-    from test_libs import (
-        DOCKER_TEST_HEADERS,
-        DOCKER_TEST_URL,
-        _build_and_run_docker,
-    )
-else:
-    from tests.test_libs import (
-        DOCKER_TEST_HEADERS,
-        DOCKER_TEST_URL,
-        _build_and_run_docker,
-    )
+from tests.test_libs import (
+    DOCKER_TEST_HEADERS,
+    DOCKER_TEST_URL,
+    _build_and_run_docker,
+)
 
 
 @pytest.mark.skipif(
