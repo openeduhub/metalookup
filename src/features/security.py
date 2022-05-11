@@ -25,7 +25,7 @@ class Security(MetadataBase):
     def _unify_text(text: str) -> str:
         return text.replace("_", "").replace("-", "").lower()
 
-    def _start(self, website_data: WebsiteData) -> list[str]:
+    async def _start(self, website_data: WebsiteData) -> list[str]:
         values = []
 
         for tag, expected_value in self.expected_headers.items():

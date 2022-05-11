@@ -6,7 +6,7 @@ from core.website_manager import WebsiteData
 class Javascript(MetadataBase):
     decision_threshold = 0
 
-    def _start(self, website_data: WebsiteData) -> list[str]:
+    async def _start(self, website_data: WebsiteData) -> list[str]:
         matches = []
         for script in website_data.soup.select("script"):
             attributes = script.attrs

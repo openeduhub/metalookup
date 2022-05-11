@@ -7,7 +7,7 @@ from core.website_manager import WebsiteData
 class MetatagExplorer(MetadataBase):
     decision_threshold = 1
 
-    def _start(self, website_data: WebsiteData) -> list[str]:
+    async def _start(self, website_data: WebsiteData) -> list[str]:
         matches = []
         for tag in website_data.soup.select("meta"):
             if "name" in tag.attrs.keys() and "content" in tag.attrs.keys():

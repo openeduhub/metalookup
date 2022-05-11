@@ -19,7 +19,6 @@ from lib.settings import RETURN_IMAGES_IN_METADATA
 @MetadataBase.with_key()
 class ExtractFromFiles(MetadataBase):
     decision_threshold = 0.5
-    call_async = True
 
     xmp_metadata = [
         "dc_contributor",
@@ -191,7 +190,7 @@ class ExtractFromFiles(MetadataBase):
 
         return extractable_files
 
-    async def _astart(self, website_data: WebsiteData) -> list[str]:
+    async def _start(self, website_data: WebsiteData) -> list[str]:
         extractable_files = self._get_extractable_files(website_data)
         return await self._work_files(files=extractable_files)
 

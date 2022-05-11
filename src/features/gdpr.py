@@ -67,7 +67,6 @@ class GDPR(MetadataBase):
             ]
         else:
             values += ["no_link_rel"]
-
         return values
 
     @staticmethod
@@ -126,8 +125,8 @@ class GDPR(MetadataBase):
             inputs = "found_no_inputs"
         return [inputs]
 
-    def _start(self, website_data: WebsiteData) -> list[str]:
-        values = super()._start(website_data=website_data)
+    async def _start(self, website_data: WebsiteData) -> list[str]:
+        values = await super()._start(website_data=website_data)
 
         for func in [
             self._check_https_in_url,

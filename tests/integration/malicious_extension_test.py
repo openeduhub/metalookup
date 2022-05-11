@@ -1,3 +1,5 @@
+import asyncio
+
 import pytest
 
 from app.models import StarCase
@@ -70,6 +72,6 @@ def test_malicious_extensions(
 
     website_manager.load_website_data(html)
 
-    data = feature.start()
+    data = asyncio.run(feature.start())
     assert data["malicious_extensions"][STAR_CASE] == expected_decision
     website_manager.reset()

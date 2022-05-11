@@ -140,11 +140,8 @@ class MetadataManager:
                     )
                     data.update(extracted_metadata)
                     shared_status[0] += 1
-                elif metadata_extractor.call_async:
-                    tasks.append(metadata_extractor.astart())
                 else:
-                    data.update(metadata_extractor.start())
-                    shared_status[0] += 1
+                    tasks.append(metadata_extractor.start())
 
         extracted_metadata: tuple[dict] = await asyncio.gather(*tasks)
         shared_status[0] += len(tasks)

@@ -47,7 +47,6 @@ class MetadataBase:
         ProbabilityDeterminationMethod.SINGLE_OCCURRENCE
     )
     extraction_method: ExtractionMethod = ExtractionMethod.MATCH_DIRECTLY
-    call_async: bool = False
     match_rules = None
 
     adblockparser_options = {
@@ -240,24 +239,14 @@ class MetadataBase:
         website_data = self._prepare_website_data()
         return before, website_data
 
-    async def astart(self) -> dict:
+    async def start(self) -> dict:
         before, website_data = self._prepare_start()
-        values = await self._astart(website_data=website_data)
+        values = await self._start(website_data=website_data)
         return self._processing_values(
             values=values, website_data=website_data, before=before
         )
 
-    def start(self) -> dict:
-        before, website_data = self._prepare_start()
-        values = self._start(website_data=website_data)
-        return self._processing_values(
-            values=values, website_data=website_data, before=before
-        )
-
-    async def _astart(self, website_data: WebsiteData) -> list[str]:
-        return self._work_html_content(website_data=website_data)
-
-    def _start(self, website_data: WebsiteData) -> list[str]:
+    async def _start(self, website_data: WebsiteData) -> list[str]:
         if self.evaluate_header:
             return self._work_header(website_data.headers)
         else:

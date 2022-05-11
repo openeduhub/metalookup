@@ -6,21 +6,13 @@ from aiohttp import ClientConnectorError, ClientSession
 from app.models import Explanation, StarCase
 from core.metadata_base import MetadataBase
 from core.website_manager import WebsiteData
-from lib.constants import (
-    ACCESSIBILITY,
-    DESKTOP,
-    MESSAGE_URL,
-    MOBILE,
-    SCORE,
-    VALUES,
-)
+from lib.constants import ACCESSIBILITY, DESKTOP, MESSAGE_URL, MOBILE, SCORE
 from lib.settings import ACCESSIBILITY_TIMEOUT, ACCESSIBILITY_URL
 
 
 @MetadataBase.with_key()
 class Accessibility(MetadataBase):
     decision_threshold = 0.8
-    call_async = True
     star_levels = [0.7, 0.8, 0.85, 0.9, 0.95, 1]
 
     def extract_score(self, score_text: str) -> float:
@@ -64,7 +56,7 @@ class Accessibility(MetadataBase):
             score = self.extract_score(score_text)
         return score
 
-    async def _astart(self, website_data: WebsiteData) -> list[str]:
+    async def _start(self, website_data: WebsiteData) -> list[str]:
         async with ClientSession() as session:
             score = await asyncio.gather(
                 *[

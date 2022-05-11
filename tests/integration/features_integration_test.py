@@ -41,10 +41,7 @@ def _test_feature(feature_class, html, expectation) -> tuple[bool, bool]:
     website_manager.load_website_data(html)
 
     try:
-        if feature.call_async:
-            data = asyncio.run(feature.astart())
-        else:
-            data = feature.start()
+        data = asyncio.run(feature.start())
     except Exception as e:
         print("Exception: ", e.args)
         traceback.print_exc()
@@ -234,7 +231,7 @@ src='https://cdn.fluidplayer.com/v2/current/fluidplayer.min.js?ver=5.6' id='flui
     assert are_values_correct and runs_fast_enough
 
 
-def _test_extract_from_files_start_wrapper(self):
+async def _test_extract_from_files_start_wrapper(self):
     before = time.perf_counter()
     website_data = self._prepare_website_data()
     extractable_files = self._get_extractable_files(website_data)
@@ -270,7 +267,6 @@ def _test_extract_from_files_start_wrapper(self):
 def test_extract_from_files():
     feature = ExtractFromFiles
     feature.start = _test_extract_from_files_start_wrapper
-    feature.call_async = False
 
     html = {
         "html": """<a href=\"arbeitsblatt_analog_losung.pdf\" target=\"_blank\">

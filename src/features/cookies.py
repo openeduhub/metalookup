@@ -15,11 +15,10 @@ class Cookies(MetadataBase):
         "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_specific_hide.txt",
         "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_thirdparty.txt",
     ]
-    call_async = False
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
-    def _start(self, website_data: WebsiteData) -> list[str]:
-        values = super()._start(website_data=website_data)
+    async def _start(self, website_data: WebsiteData) -> list[str]:
+        values = await super()._start(website_data=website_data)
 
         try:
             data: list = website_data.har["log"]["entries"]

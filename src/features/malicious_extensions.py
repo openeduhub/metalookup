@@ -187,7 +187,7 @@ class MaliciousExtensions(MetadataBase):
     ]
     decision_threshold = 0
 
-    def _start(self, website_data: WebsiteData) -> list[str]:
+    async def _start(self, website_data: WebsiteData) -> list[str]:
         return [
             extension
             for extension in website_data.extensions
