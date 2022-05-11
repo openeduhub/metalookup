@@ -43,6 +43,3 @@ PROFILING_HOST_NAME = "local_record"
 CACHE_RETENTION_TIME_DAYS = 4 * 7
 MINIMUM_REQUIRED_ENTRIES = 5
 BYPASS_CACHE = False
-
-METALOOKUP_RECORDS = "https://metalookup.openeduhub.net/records"
-METALOOKUP_EXTRACT_META = "https://metalookup.openeduhub.net/extract_meta"

@@ -11,6 +11,7 @@ src/app/__pycache__/
 .sonarlint
 
 # Local data
+dist
 /local_tools/
 .coverage
 Pipfile

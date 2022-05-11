@@ -1,15 +1,10 @@
 import json
-import os
 
 from app.models import Explanation, StarCase
 from features.security import Security
 from features.website_manager import WebsiteData
 from lib.logger import get_logger
-
-if "PRE_COMMIT" in os.environ:
-    from integration.features_integration_test import _test_feature
-else:
-    from tests.integration.features_integration_test import _test_feature
+from tests.integration.features_integration_test import _test_feature
 
 security_tags = {
     "x-frame-options": ["same_origin"],

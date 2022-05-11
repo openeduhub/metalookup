@@ -4,16 +4,13 @@ import os
 import time
 from unittest import mock
 
+import pytest
 import requests
 import uvicorn
 
 from app.api import Input, app
 from lib.settings import API_PORT
-
-if "PRE_COMMIT" in os.environ:
-    from test_libs import DOCKER_TEST_HEADERS, DOCKER_TEST_URL
-else:
-    from tests.test_libs import DOCKER_TEST_HEADERS, DOCKER_TEST_URL
+from tests.test_libs import DOCKER_TEST_HEADERS, DOCKER_TEST_URL
 
 """
 --------------------------------------------------------------------------------
@@ -59,6 +56,10 @@ def test_ping_container():
 """
 
 
+@pytest.mark.skipif(
+    "CI" in os.environ,
+    reason="Skip this test on the github CI as it causes problems there.",
+)
 def test_extract_meta_container(mocker):
     send_message = mocker.MagicMock()
     send_message.return_value = 3

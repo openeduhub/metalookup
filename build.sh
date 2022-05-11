@@ -1,4 +1,4 @@
-poetry export --without-hashes -o requirements.txt
+poetry build
 
 docker volume create db_volume
 

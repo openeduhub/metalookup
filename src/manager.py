@@ -67,9 +67,9 @@ class Manager:
                 f"got response at {time.perf_counter() - global_start} since start"
             )
             if WANT_PROFILING:
-                profiler.disable()
-                profiler.dump_stats("profile.log")
-                profiler.enable()
+                profiler.disable()  # noqa
+                profiler.dump_stats("profile.log")  # noqa
+                profiler.enable()  # noqa
 
             self._logger.debug(
                 f"return response at {time.perf_counter() - global_start} since start"
@@ -128,10 +128,15 @@ def launch_api_server(
     uvicorn.run(app, host="0.0.0.0", port=API_PORT, log_level="debug")
 
 
-if __name__ == "__main__":
+def main():
     if WANT_PROFILING:
+        global profiler
         profiler = cProfile.Profile()
         profiler.enable()
 
     manager = Manager()
     manager.shutdown()
+
+
+if __name__ == "__main__":
+    main()
