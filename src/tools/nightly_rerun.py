@@ -1,16 +1,33 @@
+import datetime
 import json
 import sys
 
 import requests
 
-from lib.constants import MESSAGE_EXCEPTION, MESSAGE_URL, SECONDS_PER_DAY
-from lib.settings import METALOOKUP_EXTRACT_META, METALOOKUP_RECORDS
-from lib.timing import get_utc_now
-from lib.tools import get_unique_list
+METALOOKUP_RECORDS = "https://metalookup.openeduhub.net/records"
+METALOOKUP_EXTRACT_META = "https://metalookup.openeduhub.net/extract_meta"
+
+SECONDS_PER_DAY = 60 * 60 * 24
+MESSAGE_URL = "url"
+MESSAGE_EXCEPTION = "exception"
+
+
+def get_unique_list(items: list) -> list:
+    seen = set()
+    for element in range(len(items) - 1, -1, -1):
+        item = items[element]
+        if item in seen:
+            del items[element]
+        else:
+            seen.add(item)
+    return items
+
+
+def get_utc_now() -> float:
+    return datetime.datetime.utcnow().timestamp()
 
 
 def main(maximum_age_in_seconds: int = SECONDS_PER_DAY):
-
     payload = {}
     headers = {}
 
