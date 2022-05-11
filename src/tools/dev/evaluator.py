@@ -82,7 +82,7 @@ def load_raw_data_and_save_to_dataframe():
 
 
 def regex_cookie_parameter(cookie: str, parameter: str = "name"):
-    regex = re.compile(fr"'{parameter}':\s'(.*?)',")
+    regex = re.compile(rf"'{parameter}':\s'(.*?)',")
     matches = []
     if not isinstance(cookie, float):
         matches = regex.findall(cookie)
