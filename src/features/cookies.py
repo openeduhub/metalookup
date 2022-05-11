@@ -3,6 +3,7 @@ from core.metadata_base import ExtractionMethod, MetadataBase
 from core.website_manager import WebsiteData
 
 
+@MetadataBase.with_key()
 class Cookies(MetadataBase):
     decision_threshold = 0.5
     urls = [

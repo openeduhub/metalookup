@@ -102,7 +102,6 @@ def _test_feature(feature_class, html, expectation) -> tuple[bool, bool]:
 
 def test_advertisement():
     feature = Advertisement
-    feature._create_key(feature)
     html = {
         "html": "<script src='/layer.php?bid='></script>",
         "har": "",
@@ -144,7 +143,6 @@ def test_paywalls():
 
 def test_easylist_adult():
     feature = EasylistAdult
-    feature._create_key(feature)
     html = {
         "html": """
 <link href='bookofsex.com'/>
@@ -169,7 +167,6 @@ def test_easylist_adult():
 
 def test_cookies_in_html():
     feature = Cookies
-    feature._create_key(feature)
     html = {
         "html": """<div class='ast-small-footer-section ast-small-footer-section-1 ast-small-footer-section-equally ast-col-md-6 ast-col-xs-12' >
 Copyright © 2021 Can You Block It<br><a href='https://www.iubenda.com/privacy-policy/24196256'
@@ -201,7 +198,6 @@ if(w.attachEvent){w.attachEvent("onload", loader);}else{w.onload = loader;}})(wi
 
 def test_easy_privacy():
     feature = EasyPrivacy
-    feature._create_key(feature)
     html = {
         "html": """<link rel='dns-prefetch' href='//www.googletagmanager.com' />
 <script type="6cf3255238f69b4dbff7a6d1-text/javascript">!(function(o,n,t){t=o.createElement(n),
@@ -273,7 +269,6 @@ def _test_extract_from_files_start_wrapper(self):
 
 def test_extract_from_files():
     feature = ExtractFromFiles
-    feature._create_key(feature)
     feature.start = _test_extract_from_files_start_wrapper
     feature.call_async = False
 
@@ -306,7 +301,6 @@ Arbeitsblatt analog L\u00f6sung.docx</a>
 
 def test_fanboy_social_media():
     feature = FanboySocialMedia
-    feature._create_key(feature)
 
     html = {
         "html": """<link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href=
@@ -339,7 +333,6 @@ id='share-link-js'></script>
 
 def test_pop_up():
     feature = PopUp
-    feature._create_key(feature)
 
     html = {
         "html": """<noscript><img width="845" height="477"
@@ -382,7 +375,6 @@ sizes="(max-width: 845px) 100vw, 845px" /></noscript>
 
 def test_log_in_out():
     feature = LogInOut
-    feature._create_key(feature)
 
     html = {
         "html": """input[type="email"]:focus,input[type="url"]:focus,input[type="password"]:focus,input[type="reset"]:
@@ -412,7 +404,6 @@ input#submit,input[type="button"],input[type="submit"],input[type="reset"]
 
 def test_g_d_p_r():
     feature = GDPR
-    feature._create_key(feature)
 
     html = {
         "html": """
@@ -462,7 +453,6 @@ format("svg");font-weight: normal;font-style: normal;font-display: fallback;}
 
 def test_easylist_germany():
     feature = EasylistGermany
-    feature._create_key(feature)
 
     html = {
         "html": """
@@ -498,7 +488,6 @@ def test_easylist_germany():
 
 def test_anti_adblock():
     feature = AntiAdBlock
-    feature._create_key(feature)
 
     html = {
         "html": """
@@ -536,7 +525,6 @@ def test_anti_adblock():
 
 def test_fanboy_notification():
     feature = FanboyNotification
-    feature._create_key(feature)
 
     html = {
         "html": """
@@ -572,7 +560,6 @@ def test_fanboy_notification():
 
 def test_fanboy_annoyance():
     feature = FanboyAnnoyance
-    feature._create_key(feature)
 
     html = {
         "html": """
@@ -608,7 +595,6 @@ def test_fanboy_annoyance():
 
 def test_reg_wall():
     feature = RegWall
-    feature._create_key(feature)
 
     html = {
         "html": """
@@ -640,7 +626,6 @@ def test_reg_wall():
 
 def test_iframe_embeddable():
     feature = IFrameEmbeddable
-    feature._create_key(feature)
 
     html = {
         "html": "empty_html",
@@ -669,7 +654,6 @@ def test_iframe_embeddable():
 
 def test_javascript():
     feature = Javascript
-    feature._create_key(feature)
 
     html = {
         "html": "<script src='/xlayer/layer.php?uid='></script>"
@@ -699,7 +683,6 @@ def test_javascript():
 
 def test_cookies():
     feature = Cookies
-    feature._create_key(feature)
 
     html = {
         "html": "empty_html",
@@ -749,7 +732,6 @@ def test_cookies():
 
 def test_metatag_explorer():
     feature = MetatagExplorer
-    feature._create_key(feature)
 
     html = {
         "html": """
@@ -801,7 +783,6 @@ def test_metatag_explorer():
 
 def test_empty_html():
     feature = MetatagExplorer
-    feature._create_key(feature)
 
     html = {
         "html": "",

@@ -5,6 +5,7 @@ from core.metadata_base import (
 )
 
 
+@MetadataBase.with_key()
 class Advertisement(MetadataBase):
     urls = [
         "https://easylist.to/easylist/easylist.txt",
@@ -28,6 +29,7 @@ class Advertisement(MetadataBase):
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
 
+@MetadataBase.with_key()
 class EasyPrivacy(MetadataBase):
     urls: list = [
         "https://easylist.to/easylist/easyprivacy.txt",
@@ -45,6 +47,7 @@ class EasyPrivacy(MetadataBase):
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
 
+@MetadataBase.with_key()
 class FanboyAnnoyance(MetadataBase):
     urls = [
         "https://easylist.to/easylist/fanboy-annoyance.txt",
@@ -60,6 +63,7 @@ class FanboyAnnoyance(MetadataBase):
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
 
+@MetadataBase.with_key()
 class FanboyNotification(MetadataBase):
     urls = [
         # "https://raw.githubusercontent.com/easylist/easylist/master/fanboy-addon/fanboy_notifications_allowlist.txt",
@@ -74,6 +78,7 @@ class FanboyNotification(MetadataBase):
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
 
+@MetadataBase.with_key()
 class FanboySocialMedia(MetadataBase):
     urls = [
         "https://easylist.to/easylist/fanboy-social.txt",
@@ -90,6 +95,7 @@ class FanboySocialMedia(MetadataBase):
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
 
+@MetadataBase.with_key(key="anti_adblock")
 class AntiAdBlock(MetadataBase):
     urls: list = [
         "https://easylist-downloads.adblockplus.org/antiadblockfilters.txt",
@@ -100,6 +106,7 @@ class AntiAdBlock(MetadataBase):
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
 
+@MetadataBase.with_key()
 class EasylistGermany(MetadataBase):
     urls: list = [
         "https://easylist.to/easylistgermany/easylistgermany.txt",
@@ -122,6 +129,7 @@ class EasylistGermany(MetadataBase):
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
 
+@MetadataBase.with_key()
 class EasylistAdult(MetadataBase):
     urls: list = [
         "https://raw.githubusercontent.com/easylist/easylist/master/easylist_adult/adult_adservers.txt",
@@ -138,14 +146,14 @@ class EasylistAdult(MetadataBase):
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
 
+@MetadataBase.with_key(key="paywall")
 class Paywalls(MetadataBase):
     tag_list = ["paywall", "paywalluser"]
-    key: str = "paywall"
 
 
+@MetadataBase.with_key(key="iframe_embeddable")
 class IFrameEmbeddable(MetadataBase):
     tag_list = ["X-Frame-Options"]
-    key: str = "iframe_embeddable"
     evaluate_header = True
     decision_threshold = 0
     false_list = ["same-origin", "sameorigin", "deny"]
@@ -154,6 +162,7 @@ class IFrameEmbeddable(MetadataBase):
     )
 
 
+@MetadataBase.with_key()
 class PopUp(MetadataBase):
     tag_list = [
         "popup",
@@ -167,6 +176,7 @@ class PopUp(MetadataBase):
     ]
 
 
+@MetadataBase.with_key()
 class RegWall(MetadataBase):
     tag_list = [
         "regwall",
@@ -181,6 +191,7 @@ class RegWall(MetadataBase):
     ]
 
 
+@MetadataBase.with_key()
 class LogInOut(MetadataBase):
     tag_list = [
         "email",

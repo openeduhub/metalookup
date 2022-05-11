@@ -42,7 +42,6 @@ def test_malicious_extensions(
     expected_decision,
 ):
     feature = MaliciousExtensions
-    feature._create_key(feature)
     html = {
         "html": input_html,
         "har": "",
@@ -72,5 +71,5 @@ def test_malicious_extensions(
     website_manager.load_website_data(html)
 
     data = feature.start()
-    assert data["type"][STAR_CASE] == expected_decision
+    assert data["malicious_extensions"][STAR_CASE] == expected_decision
     website_manager.reset()

@@ -17,7 +17,6 @@ security_tags = {
 
 def test_start():
     feature = Security
-    feature._create_key(feature)
 
     html = {
         "html": "empty_html",

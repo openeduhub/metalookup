@@ -4,6 +4,7 @@ from core.website_manager import WebsiteData
 from lib.constants import STRICT_TRANSPORT_SECURITY
 
 
+@MetadataBase.with_key()
 class Security(MetadataBase):
     decision_threshold = 0.99
 

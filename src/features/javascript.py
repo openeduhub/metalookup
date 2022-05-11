@@ -2,6 +2,7 @@ from core.metadata_base import MetadataBase
 from core.website_manager import WebsiteData
 
 
+@MetadataBase.with_key()
 class Javascript(MetadataBase):
     decision_threshold = 0
 

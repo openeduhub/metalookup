@@ -6,6 +6,7 @@ from core.website_manager import WebsiteData
 from lib.constants import STRICT_TRANSPORT_SECURITY
 
 
+@MetadataBase.with_key(key="g_d_p_r")  # fixme use GDPR as key!
 class GDPR(MetadataBase):
     tag_list = ["impressum"]
     decision_threshold = 0.3

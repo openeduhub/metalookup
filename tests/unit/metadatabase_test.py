@@ -23,7 +23,6 @@ def test_init(metadatabase: MetadataBase, mocker):
     assert metadatabase.tag_list == []
     assert metadatabase.tag_list_last_modified == ""
     assert metadatabase.tag_list_expires == 0
-    assert metadatabase.key == "metadata_base"
     assert metadatabase.url == ""
     assert metadatabase.comment_symbol == ""
     assert not metadatabase.evaluate_header

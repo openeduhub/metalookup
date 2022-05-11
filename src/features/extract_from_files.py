@@ -16,6 +16,7 @@ from core.website_manager import WebsiteData
 from lib.settings import RETURN_IMAGES_IN_METADATA
 
 
+@MetadataBase.with_key()
 class ExtractFromFiles(MetadataBase):
     decision_threshold = 0.5
     call_async = True

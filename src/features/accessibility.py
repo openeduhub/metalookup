@@ -17,6 +17,7 @@ from lib.constants import (
 from lib.settings import ACCESSIBILITY_TIMEOUT, ACCESSIBILITY_URL
 
 
+@MetadataBase.with_key()
 class Accessibility(MetadataBase):
     decision_threshold = 0.8
     call_async = True

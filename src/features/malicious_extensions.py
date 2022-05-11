@@ -3,6 +3,7 @@ from core.metadata_base import MetadataBase
 from core.website_manager import WebsiteData
 
 
+@MetadataBase.with_key()
 class MaliciousExtensions(MetadataBase):
     # Based on: https://www.file-extensions.org/filetype/extension/name/dangerous-malicious-files
     #           https://www.howtogeek.com/137270/50-file-extensions-that-are-potentially-dangerous-on-windows/

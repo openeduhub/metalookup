@@ -4,6 +4,7 @@ import re
 from collections import OrderedDict
 from enum import Enum
 from logging import Logger
+from typing import Optional, Type
 from urllib.parse import urlparse
 
 import adblockparser
@@ -37,7 +38,6 @@ class MetadataBase:
     tag_list_last_modified = ""
     tag_list_expires: int = 0
     false_list: list = []
-    key: str = ""
     url: str = ""
     urls: list = []
     comment_symbol: str = ""
@@ -74,16 +74,24 @@ class MetadataBase:
         "domain": "",
     }
 
-    def _create_key(self) -> None:
-        self.key = re.sub(
-            r"(?<!^)(?=[A-Z])", "_", self.__class__.__name__
-        ).lower()
+    @staticmethod
+    def with_key(key: Optional[str] = None):
+        """
+        Provide the class with a key attribute.
+        :param key: The key to use. Defaults to transformed snake_case of ClassName.
+        :return: A decorator that adds a key attribute to the class.
+        """
+
+        def decorator(cls: Type["MetadataBase"]) -> Type["MetadataBase"]:
+            cls.key = (
+                key or re.sub("" r"(?<!^)(?=[A-Z])", "_", cls.__name__).lower()
+            )
+            return cls
+
+        return decorator
 
     def __init__(self, logger: Logger) -> None:
         self._logger = logger
-
-        if self.key == "":
-            self._create_key()
 
     @staticmethod
     def _get_ratio_of_elements(
