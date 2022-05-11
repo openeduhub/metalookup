@@ -7,8 +7,15 @@ repos:
   - repo: https://gitlab.com/pycqa/flake8
     rev: 3.8.4
     hooks:
+      # Unfortunately flake8 doesn't support having configuration in pyproject.toml, so we configure it here.
+      # https://github.com/PyCQA/flake8/issues/234
       - id: flake8
-        args: [ "--max-line-length", "140","--per-file-ignores" ,"__init__.py:F401", "--extend-ignore", "E203" ]
+        args: [
+            "--max-line-length", "120",
+            "--ignore", "E203,E266,E501,W503,F403,F401",
+            "--max-complexity", "18",
+            "--select", "B,C,E,F,W,T4,B9"
+        ]
   - repo: https://github.com/PyCQA/isort
     rev: 5.6.4
     hooks:
