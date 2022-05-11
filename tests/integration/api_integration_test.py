@@ -1,8 +1,10 @@
 import json
 import multiprocessing
+import os
 import time
 from unittest import mock
 
+import pytest
 import requests
 import uvicorn
 
@@ -54,6 +56,10 @@ def test_ping_container():
 """
 
 
+@pytest.mark.skipif(
+    "CI" in os.environ,
+    reason="Skip this test on the github CI as it causes problems there.",
+)
 def test_extract_meta_container(mocker):
     send_message = mocker.MagicMock()
     send_message.return_value = 3
