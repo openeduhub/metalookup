@@ -13,9 +13,9 @@ RUN apk update && \
     apk add postgresql-dev
 
 # make wheel file built with poetry build available in docker build step
-COPY ./dist /dist
+COPY ./*.whl /home/extractor
 # install the wheel file and all its (transitive) dependencies
-RUN pip install --no-cache-dir /dist/*.whl
+RUN pip install --no-cache-dir /home/extractor/*.whl
 RUN apk del .build-deps
 
 USER extractor
