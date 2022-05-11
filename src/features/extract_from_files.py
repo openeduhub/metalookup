@@ -13,7 +13,6 @@ from PyPDF2.utils import PdfReadError
 from app.models import Explanation, StarCase
 from core.metadata_base import MetadataBase
 from core.website_manager import WebsiteData
-from lib.constants import VALUES
 from lib.settings import RETURN_IMAGES_IN_METADATA
 
 
@@ -170,12 +169,12 @@ class ExtractFromFiles(MetadataBase):
             filename = ""
         return filename
 
-    async def _work_files(self, files: list) -> dict:
+    async def _work_files(self, files: list) -> list[str]:
         async with ClientSession() as session:
             tasks = [self._process_file(file, session) for file in files]
             extractable_files = await asyncio.gather(*tasks)
 
-        return {VALUES: [file for file in extractable_files if file != ""]}
+        return [file for file in extractable_files if file != ""]
 
     @staticmethod
     def _get_extractable_files(website_data: WebsiteData) -> list:
@@ -191,10 +190,9 @@ class ExtractFromFiles(MetadataBase):
 
         return extractable_files
 
-    async def _astart(self, website_data: WebsiteData) -> dict:
+    async def _astart(self, website_data: WebsiteData) -> list[str]:
         extractable_files = self._get_extractable_files(website_data)
-        values = await self._work_files(files=extractable_files)
-        return {**values}
+        return await self._work_files(files=extractable_files)
 
     def _decide(
         self, website_data: WebsiteData

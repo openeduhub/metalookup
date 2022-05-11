@@ -63,7 +63,7 @@ class Accessibility(MetadataBase):
             score = self.extract_score(score_text)
         return score
 
-    async def _astart(self, website_data: WebsiteData) -> dict:
+    async def _astart(self, website_data: WebsiteData) -> list[str]:
         async with ClientSession() as session:
             score = await asyncio.gather(
                 *[
@@ -75,8 +75,8 @@ class Accessibility(MetadataBase):
                     for strategy in [DESKTOP, MOBILE]
                 ]
             )
-        score = [value for value in score if value != -1]
-        return {VALUES: score}
+        score = [str(value) for value in score if value != -1]
+        return score
 
     def _decide(
         self, website_data: WebsiteData

@@ -1,7 +1,6 @@
 from app.models import Explanation, StarCase
 from core.metadata_base import ExtractionMethod, MetadataBase
 from core.website_manager import WebsiteData
-from lib.constants import VALUES
 
 
 class Cookies(MetadataBase):
@@ -18,8 +17,8 @@ class Cookies(MetadataBase):
     call_async = False
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
-    def _start(self, website_data: WebsiteData) -> dict:
-        values = super()._start(website_data=website_data)[VALUES]
+    def _start(self, website_data: WebsiteData) -> list[str]:
+        values = super()._start(website_data=website_data)
 
         try:
             data: list = website_data.har["log"]["entries"]
@@ -33,7 +32,7 @@ class Cookies(MetadataBase):
             for cookie in element[key]["cookies"]
         ]
 
-        return {VALUES: raw_cookies + values}
+        return raw_cookies + values
 
     def _decide(
         self, website_data: WebsiteData

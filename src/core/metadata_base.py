@@ -203,16 +203,16 @@ class MetadataBase:
         return website_manager.website_data
 
     def _processing_values(
-        self, values: dict, website_data: WebsiteData, before: float
+        self, values: list[str], website_data: WebsiteData, before: float
     ) -> dict:
-        website_data.values = values[VALUES]
+        website_data.values = values
 
         star_case, explanation = self._decide(website_data=website_data)
 
         data = {
             self.key: {
                 TIME_REQUIRED: get_utc_now() - before,
-                **values,
+                VALUES: values,
                 STAR_CASE: star_case,
                 EXPLANATION: explanation,
             }
@@ -226,25 +226,34 @@ class MetadataBase:
             )
         return data
 
-    def _prepare_start(self, key: str) -> tuple[float, WebsiteData]:
-        self._logger.info(f"Starting {self.__class__.__name__} {key}.")
+    def _prepare_start(self) -> tuple[float, WebsiteData]:
+        self._logger.info(f"Starting {self.__class__.__name__}.")
         before = get_utc_now()
         website_data = self._prepare_website_data()
         return before, website_data
 
     async def astart(self) -> dict:
-        before, website_data = self._prepare_start("async")
+        before, website_data = self._prepare_start()
         values = await self._astart(website_data=website_data)
         return self._processing_values(
             values=values, website_data=website_data, before=before
         )
 
     def start(self) -> dict:
-        before, website_data = self._prepare_start("sync")
+        before, website_data = self._prepare_start()
         values = self._start(website_data=website_data)
         return self._processing_values(
             values=values, website_data=website_data, before=before
         )
+
+    async def _astart(self, website_data: WebsiteData) -> list[str]:
+        return self._work_html_content(website_data=website_data)
+
+    def _start(self, website_data: WebsiteData) -> list[str]:
+        if self.evaluate_header:
+            return self._work_header(website_data.headers)
+        else:
+            return self._work_html_content(website_data)
 
     def _work_header(self, header: dict) -> list:
         values = []
@@ -286,17 +295,6 @@ class MetadataBase:
                 values = self._parse_adblock_rules(website_data=website_data)
 
         return values
-
-    async def _astart(self, website_data: WebsiteData) -> dict:
-        values = self._work_html_content(website_data=website_data)
-        return {VALUES: values}
-
-    def _start(self, website_data: WebsiteData) -> dict:
-        if self.evaluate_header:
-            values = self._work_header(website_data.headers)
-        else:
-            values = self._work_html_content(website_data)
-        return {VALUES: values}
 
     async def _download_multiple_tag_lists(
         self, session: ClientSession

@@ -95,7 +95,7 @@ def test_under_start(metadatabase: MetadataBase, mocker):
 
     values = metadatabase._start(website_data=website_data)
 
-    assert isinstance(values, dict)
+    assert isinstance(values, list)
     assert work_header_spy.call_count == 0
     assert work_html_content_spy.call_count == 1
 

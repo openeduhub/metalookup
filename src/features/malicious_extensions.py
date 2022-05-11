@@ -1,7 +1,6 @@
 from app.models import Explanation, StarCase
 from core.metadata_base import MetadataBase
 from core.website_manager import WebsiteData
-from lib.constants import VALUES
 
 
 class MaliciousExtensions(MetadataBase):
@@ -187,14 +186,13 @@ class MaliciousExtensions(MetadataBase):
     ]
     decision_threshold = 0
 
-    def _start(self, website_data: WebsiteData) -> dict:
-        malicious_extensions = [
+    def _start(self, website_data: WebsiteData) -> list[str]:
+        return [
             extension
             for extension in website_data.extensions
             if extension.replace(".", "")
             in set(self.malicious_extensions + self.more_harmless_extensions)
         ]
-        return {VALUES: malicious_extensions}
 
     def _decide(
         self, website_data: WebsiteData
