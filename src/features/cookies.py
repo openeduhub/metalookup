@@ -1,9 +1,9 @@
 from app.models import Explanation, StarCase
-from features.metadata_base import ExtractionMethod, MetadataBase
-from features.website_manager import WebsiteData
-from lib.constants import VALUES
+from core.metadata_base import ExtractionMethod, MetadataBase
+from core.website_manager import WebsiteData
 
 
+@MetadataBase.with_key()
 class Cookies(MetadataBase):
     decision_threshold = 0.5
     urls = [
@@ -15,11 +15,10 @@ class Cookies(MetadataBase):
         "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_specific_hide.txt",
         "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_thirdparty.txt",
     ]
-    call_async = False
     extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
 
-    def _start(self, website_data: WebsiteData) -> dict:
-        values = super()._start(website_data=website_data)[VALUES]
+    async def _start(self, website_data: WebsiteData) -> list[str]:
+        values = await super()._start(website_data=website_data)
 
         try:
             data: list = website_data.har["log"]["entries"]
@@ -33,7 +32,7 @@ class Cookies(MetadataBase):
             for cookie in element[key]["cookies"]
         ]
 
-        return {VALUES: raw_cookies + values}
+        return raw_cookies + values
 
     def _decide(
         self, website_data: WebsiteData

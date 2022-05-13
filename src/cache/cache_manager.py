@@ -3,12 +3,12 @@ import logging
 import time
 
 from app.models import Explanation, StarCase
+from core.website_manager import Singleton
 from db.db import (
     get_top_level_domains,
     read_cached_values_by_feature,
     reset_cache,
 )
-from features.website_manager import Singleton
 from lib.constants import (
     ACCESSIBILITY,
     EXPLANATION,

@@ -1,9 +1,9 @@
 from app.models import Explanation, StarCase
-from features.metadata_base import MetadataBase
-from features.website_manager import WebsiteData
-from lib.constants import VALUES
+from core.metadata_base import MetadataBase
+from core.website_manager import WebsiteData
 
 
+@MetadataBase.with_key()
 class MaliciousExtensions(MetadataBase):
     # Based on: https://www.file-extensions.org/filetype/extension/name/dangerous-malicious-files
     #           https://www.howtogeek.com/137270/50-file-extensions-that-are-potentially-dangerous-on-windows/
@@ -187,14 +187,13 @@ class MaliciousExtensions(MetadataBase):
     ]
     decision_threshold = 0
 
-    def _start(self, website_data: WebsiteData) -> dict:
-        malicious_extensions = [
+    async def _start(self, website_data: WebsiteData) -> list[str]:
+        return [
             extension
             for extension in website_data.extensions
             if extension.replace(".", "")
             in set(self.malicious_extensions + self.more_harmless_extensions)
         ]
-        return {VALUES: malicious_extensions}
 
     def _decide(
         self, website_data: WebsiteData

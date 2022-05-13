@@ -1,11 +1,12 @@
+import asyncio
 from unittest import mock
 
 import adblockparser
 import pytest
 
 from app.models import Explanation, StarCase
-from features.metadata_base import MetadataBase, ProbabilityDeterminationMethod
-from features.website_manager import WebsiteData
+from core.metadata_base import MetadataBase, ProbabilityDeterminationMethod
+from core.website_manager import WebsiteData
 
 
 @pytest.fixture
@@ -23,7 +24,6 @@ def test_init(metadatabase: MetadataBase, mocker):
     assert metadatabase.tag_list == []
     assert metadatabase.tag_list_last_modified == ""
     assert metadatabase.tag_list_expires == 0
-    assert metadatabase.key == "metadata_base"
     assert metadatabase.url == ""
     assert metadatabase.comment_symbol == ""
     assert not metadatabase.evaluate_header
@@ -40,7 +40,7 @@ def test_start(metadatabase: MetadataBase, mocker):
     header = {"header": "empty_header"}
     metadatabase.key = "test_key"
     start_spy = mocker.spy(metadatabase, "_start")
-    values = metadatabase.start()
+    values = asyncio.run(metadatabase.start())
 
     values_has_only_one_key = len(values.keys()) == 1
 
@@ -60,14 +60,14 @@ def test_start(metadatabase: MetadataBase, mocker):
     }
 
     with mock.patch(
-        "features.metadata_base.WebsiteManager"
+        "core.metadata_base.WebsiteManager"
     ) as mocked_website_manager:
         mocked_website_manager.get_instance().website_data = WebsiteData(
             html=html_content,
             raw_header="",
             headers=header,
         )
-        _ = metadatabase.start()
+        _ = asyncio.run(metadatabase.start())
         assert start_spy.call_args_list[1][1] == {
             "website_data": WebsiteData(
                 html=html_content, values=[], headers=header
@@ -93,14 +93,14 @@ def test_under_start(metadatabase: MetadataBase, mocker):
         html=html_content, values=[], headers=processed_header
     )
 
-    values = metadatabase._start(website_data=website_data)
+    values = asyncio.run(metadatabase._start(website_data=website_data))
 
-    assert isinstance(values, dict)
+    assert isinstance(values, list)
     assert work_header_spy.call_count == 0
     assert work_html_content_spy.call_count == 1
 
     metadatabase.evaluate_header = True
-    _ = metadatabase._start(website_data=website_data)
+    _ = asyncio.run(metadatabase._start(website_data=website_data))
     assert work_header_spy.call_count == 1
     assert work_html_content_spy.call_count == 1
 

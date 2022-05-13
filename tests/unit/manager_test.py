@@ -2,7 +2,7 @@ from unittest import mock
 
 import pytest
 
-from features.website_manager import WebsiteManager
+from core.website_manager import WebsiteManager
 from lib.settings import WANT_PROFILING
 from manager import Manager
 

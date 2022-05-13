@@ -1,18 +1,16 @@
-from features.metadata_base import MetadataBase
-from features.website_manager import WebsiteData
-from lib.constants import VALUES
+from core.metadata_base import MetadataBase
+from core.website_manager import WebsiteData
 
 
+@MetadataBase.with_key()
 class Javascript(MetadataBase):
     decision_threshold = 0
 
-    def _start(self, website_data: WebsiteData) -> dict:
-        scripts = list(website_data.soup.select("script"))
-
+    async def _start(self, website_data: WebsiteData) -> list[str]:
         matches = []
-        for script in scripts:
+        for script in website_data.soup.select("script"):
             attributes = script.attrs
             if "src" in attributes.keys():
                 matches.append(attributes["src"])
 
-        return {VALUES: matches}
+        return matches

@@ -4,6 +4,7 @@ import re
 from collections import OrderedDict
 from enum import Enum
 from logging import Logger
+from typing import Optional, Type
 from urllib.parse import urlparse
 
 import adblockparser
@@ -11,7 +12,7 @@ from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 
 from app.models import Explanation, StarCase
-from features.website_manager import WebsiteData, WebsiteManager
+from core.website_manager import WebsiteData, WebsiteManager
 from lib.constants import EXPLANATION, STAR_CASE, TIME_REQUIRED, VALUES
 from lib.settings import USE_LOCAL_IF_POSSIBLE
 from lib.timing import get_utc_now
@@ -37,7 +38,6 @@ class MetadataBase:
     tag_list_last_modified = ""
     tag_list_expires: int = 0
     false_list: list = []
-    key: str = ""
     url: str = ""
     urls: list = []
     comment_symbol: str = ""
@@ -47,7 +47,6 @@ class MetadataBase:
         ProbabilityDeterminationMethod.SINGLE_OCCURRENCE
     )
     extraction_method: ExtractionMethod = ExtractionMethod.MATCH_DIRECTLY
-    call_async: bool = False
     match_rules = None
 
     adblockparser_options = {
@@ -74,16 +73,24 @@ class MetadataBase:
         "domain": "",
     }
 
-    def _create_key(self) -> None:
-        self.key = re.sub(
-            r"(?<!^)(?=[A-Z])", "_", self.__class__.__name__
-        ).lower()
+    @staticmethod
+    def with_key(key: Optional[str] = None):
+        """
+        Provide the class with a key attribute.
+        :param key: The key to use. Defaults to transformed snake_case of ClassName.
+        :return: A decorator that adds a key attribute to the class.
+        """
+
+        def decorator(cls: Type["MetadataBase"]) -> Type["MetadataBase"]:
+            cls.key = (
+                key or re.sub("" r"(?<!^)(?=[A-Z])", "_", cls.__name__).lower()
+            )
+            return cls
+
+        return decorator
 
     def __init__(self, logger: Logger) -> None:
         self._logger = logger
-
-        if self.key == "":
-            self._create_key()
 
     @staticmethod
     def _get_ratio_of_elements(
@@ -203,16 +210,16 @@ class MetadataBase:
         return website_manager.website_data
 
     def _processing_values(
-        self, values: dict, website_data: WebsiteData, before: float
+        self, values: list[str], website_data: WebsiteData, before: float
     ) -> dict:
-        website_data.values = values[VALUES]
+        website_data.values = values
 
         star_case, explanation = self._decide(website_data=website_data)
 
         data = {
             self.key: {
                 TIME_REQUIRED: get_utc_now() - before,
-                **values,
+                VALUES: values,
                 STAR_CASE: star_case,
                 EXPLANATION: explanation,
             }
@@ -226,25 +233,24 @@ class MetadataBase:
             )
         return data
 
-    def _prepare_start(self, key: str) -> tuple[float, WebsiteData]:
-        self._logger.info(f"Starting {self.__class__.__name__} {key}.")
+    def _prepare_start(self) -> tuple[float, WebsiteData]:
+        self._logger.info(f"Starting {self.__class__.__name__}.")
         before = get_utc_now()
         website_data = self._prepare_website_data()
         return before, website_data
 
-    async def astart(self) -> dict:
-        before, website_data = self._prepare_start("async")
-        values = await self._astart(website_data=website_data)
+    async def start(self) -> dict:
+        before, website_data = self._prepare_start()
+        values = await self._start(website_data=website_data)
         return self._processing_values(
             values=values, website_data=website_data, before=before
         )
 
-    def start(self) -> dict:
-        before, website_data = self._prepare_start("sync")
-        values = self._start(website_data=website_data)
-        return self._processing_values(
-            values=values, website_data=website_data, before=before
-        )
+    async def _start(self, website_data: WebsiteData) -> list[str]:
+        if self.evaluate_header:
+            return self._work_header(website_data.headers)
+        else:
+            return self._work_html_content(website_data)
 
     def _work_header(self, header: dict) -> list:
         values = []
@@ -286,17 +292,6 @@ class MetadataBase:
                 values = self._parse_adblock_rules(website_data=website_data)
 
         return values
-
-    async def _astart(self, website_data: WebsiteData) -> dict:
-        values = self._work_html_content(website_data=website_data)
-        return {VALUES: values}
-
-    def _start(self, website_data: WebsiteData) -> dict:
-        if self.evaluate_header:
-            values = self._work_header(website_data.headers)
-        else:
-            values = self._work_html_content(website_data)
-        return {VALUES: values}
 
     async def _download_multiple_tag_lists(
         self, session: ClientSession

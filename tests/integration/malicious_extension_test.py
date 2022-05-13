@@ -1,8 +1,10 @@
+import asyncio
+
 import pytest
 
 from app.models import StarCase
+from core.website_manager import WebsiteManager
 from features.malicious_extensions import MaliciousExtensions
-from features.website_manager import WebsiteManager
 from lib.constants import STAR_CASE
 from lib.logger import get_logger
 from tests.integration.features_integration_test import _test_feature
@@ -42,7 +44,6 @@ def test_malicious_extensions(
     expected_decision,
 ):
     feature = MaliciousExtensions
-    feature._create_key(feature)
     html = {
         "html": input_html,
         "har": "",
@@ -71,6 +72,6 @@ def test_malicious_extensions(
 
     website_manager.load_website_data(html)
 
-    data = feature.start()
-    assert data["type"][STAR_CASE] == expected_decision
+    data = asyncio.run(feature.start())
+    assert data["malicious_extensions"][STAR_CASE] == expected_decision
     website_manager.reset()

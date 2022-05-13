@@ -1,17 +1,18 @@
 import re
 
 from app.models import Explanation, StarCase
-from features.metadata_base import MetadataBase
-from features.website_manager import WebsiteData
-from lib.constants import STRICT_TRANSPORT_SECURITY, VALUES
+from core.metadata_base import MetadataBase
+from core.website_manager import WebsiteData
+from lib.constants import STRICT_TRANSPORT_SECURITY
 
 
+@MetadataBase.with_key(key="g_d_p_r")  # fixme use GDPR as key!
 class GDPR(MetadataBase):
     tag_list = ["impressum"]
     decision_threshold = 0.3
 
     @staticmethod
-    def _check_https_in_url(website_data: WebsiteData) -> list:
+    def _check_https_in_url(website_data: WebsiteData) -> list[str]:
         value = "not" if "https" not in website_data.url else ""
         return [value + "https_in_url"]
 
@@ -26,7 +27,7 @@ class GDPR(MetadataBase):
         return values
 
     @staticmethod
-    def _extract_max_age(sts: list) -> list:
+    def _extract_max_age(sts: list) -> list[str]:
         values = ["do_not_max_age"]
         regex = re.compile(r"max-age=(\d*)")
         try:
@@ -40,7 +41,7 @@ class GDPR(MetadataBase):
         return values
 
     @staticmethod
-    def _extract_sts(sts: list) -> list:
+    def _extract_sts(sts: list) -> list[str]:
         values = []
         for key in ["includesubdomains", "preload"]:
             matches = [element for element in sts if key in element]
@@ -51,11 +52,10 @@ class GDPR(MetadataBase):
         return values
 
     @staticmethod
-    def _get_referrer_policy(website_data: WebsiteData) -> list:
+    def _get_referrer_policy(website_data: WebsiteData) -> list[str]:
         referrer_policy = "referrer-policy"
-        rp = referrer_policy in website_data.headers.keys()
-        if rp:
-            values = [website_data.headers[referrer_policy]]
+        if referrer_policy in website_data.headers.keys():
+            values = website_data.headers[referrer_policy]
         else:
             values = [f"no_{referrer_policy}"]
 
@@ -67,7 +67,6 @@ class GDPR(MetadataBase):
             ]
         else:
             values += ["no_link_rel"]
-
         return values
 
     @staticmethod
@@ -126,8 +125,8 @@ class GDPR(MetadataBase):
             inputs = "found_no_inputs"
         return [inputs]
 
-    def _start(self, website_data: WebsiteData) -> dict:
-        values = super()._start(website_data=website_data)[VALUES]
+    async def _start(self, website_data: WebsiteData) -> list[str]:
+        values = await super()._start(website_data=website_data)
 
         for func in [
             self._check_https_in_url,
@@ -138,14 +137,7 @@ class GDPR(MetadataBase):
         ]:
             values += func(website_data=website_data)
 
-        flat_values = []
-        for value in values:
-            if isinstance(value, list):
-                flat_values.extend(list(value))
-            else:
-                flat_values.append(value)
-
-        return {VALUES: list(set(flat_values))}
+        return list(set(values))
 
     def _decide(
         self, website_data: WebsiteData

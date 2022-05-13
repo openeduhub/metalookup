@@ -1,8 +1,8 @@
 import json
 
 from app.models import Explanation, StarCase
+from core.website_manager import WebsiteData
 from features.security import Security
-from features.website_manager import WebsiteData
 from lib.logger import get_logger
 from tests.integration.features_integration_test import _test_feature
 
@@ -17,7 +17,6 @@ security_tags = {
 
 def test_start():
     feature = Security
-    feature._create_key(feature)
 
     html = {
         "html": "empty_html",

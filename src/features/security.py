@@ -1,9 +1,10 @@
 from app.models import Explanation, StarCase
-from features.metadata_base import MetadataBase
-from features.website_manager import WebsiteData
-from lib.constants import STRICT_TRANSPORT_SECURITY, VALUES
+from core.metadata_base import MetadataBase
+from core.website_manager import WebsiteData
+from lib.constants import STRICT_TRANSPORT_SECURITY
 
 
+@MetadataBase.with_key()
 class Security(MetadataBase):
     decision_threshold = 0.99
 
@@ -24,7 +25,7 @@ class Security(MetadataBase):
     def _unify_text(text: str) -> str:
         return text.replace("_", "").replace("-", "").lower()
 
-    def _start(self, website_data: WebsiteData) -> dict:
+    async def _start(self, website_data: WebsiteData) -> list[str]:
         values = []
 
         for tag, expected_value in self.expected_headers.items():
@@ -56,7 +57,7 @@ class Security(MetadataBase):
                     if found_keys == len(expected_value.keys()):
                         values.append(tag)
 
-        return {VALUES: values}
+        return values
 
     def _extract_header_values(self, header: list) -> list:
         header_value = [
