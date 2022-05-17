@@ -59,8 +59,8 @@ def test_ping_container():
 
 
 @pytest.mark.skipif(
-    "CI" in os.environ,
-    reason="Skip this test on the github CI as it causes problems there.",
+    True,
+    reason="Causes problems in the CI and might not be necessary in the future",
 )
 def test_extract_meta_container(mocker):
     send_message = mocker.MagicMock()

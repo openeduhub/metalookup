@@ -2,18 +2,15 @@ import asyncio
 import json
 import os
 from logging import Logger
+from pathlib import Path
 from unittest import mock
-from unittest.mock import AsyncMock
 
 import pytest
-from integration.features_integration_test import mock_website_data
 
 from app.communication import Message
 from app.models import Explanation, StarCase
 from cache.cache_manager import CacheManager
-from core import website_manager
 from core.metadata_manager import MetadataManager
-from features import accessibility
 from features.html_based import Advertisement
 from features.javascript import Javascript
 from lib.constants import (
@@ -24,6 +21,7 @@ from lib.constants import (
     VALUES,
 )
 from lib.settings import NUMBER_OF_EXTRACTORS
+from tests.integration.features_integration_test import mock_website_data
 
 
 @pytest.fixture
@@ -100,8 +98,8 @@ def test_cache_data(metadata_manager: MetadataManager):
 
 
 @pytest.mark.skipif(
-    "CI" in os.environ,
-    reason="Skip this test on the github CI as it causes problems there.",
+    True,
+    reason="Causes problems in the CI and might not be necessary in the future",
 )
 def test_extract_meta_data(metadata_manager: MetadataManager):
     paywall = "paywall"
@@ -198,7 +196,9 @@ def test_start(metadata_manager: MetadataManager):
         har={},
     )
 
-    with open("spash-response-google.json", "r") as f:
+    with open(
+        Path(__file__).parent.parent / "splash-response-google.json", "r"
+    ) as f:
         splash_response = json.load(f)
 
     async def accessibility_api_call_mock(

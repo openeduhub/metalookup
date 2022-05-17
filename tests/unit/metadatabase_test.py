@@ -2,10 +2,10 @@ import asyncio
 
 import adblockparser
 import pytest
-from integration.features_integration_test import mock_website_data
 
 from app.models import Explanation, StarCase
 from core.metadata_base import MetadataBase, ProbabilityDeterminationMethod
+from tests.integration.features_integration_test import mock_website_data
 
 
 @pytest.fixture

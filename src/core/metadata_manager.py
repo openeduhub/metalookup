@@ -1,12 +1,12 @@
 import asyncio
 import time
 from multiprocessing import shared_memory
-from typing import Optional, Union
+from typing import Optional
 
 from tldextract import TLDExtract
 
 from app.communication import Message
-from app.models import Explanation, StarCase
+from app.models import Explanation
 from cache.cache_manager import CacheManager
 from core.metadata_base import MetadataBase
 from core.website_manager import Singleton, WebsiteData
