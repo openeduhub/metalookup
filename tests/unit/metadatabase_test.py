@@ -1,12 +1,11 @@
 import asyncio
-from unittest import mock
 
 import adblockparser
 import pytest
+from integration.features_integration_test import mock_website_data
 
 from app.models import Explanation, StarCase
 from core.metadata_base import MetadataBase, ProbabilityDeterminationMethod
-from core.website_manager import WebsiteData
 
 
 @pytest.fixture
@@ -36,43 +35,19 @@ def test_init(metadatabase: MetadataBase, mocker):
 
 
 def test_start(metadatabase: MetadataBase, mocker):
-    html_content = "html_content"
-    header = {"header": "empty_header"}
+    site = mock_website_data()
     metadatabase.key = "test_key"
     start_spy = mocker.spy(metadatabase, "_start")
-    values = asyncio.run(metadatabase.start())
+    _, values, _, _ = asyncio.run(metadatabase.start(site=site))
 
-    values_has_only_one_key = len(values.keys()) == 1
+    assert isinstance(values, list)
+    assert values == []
 
-    assert isinstance(values, dict)
-    assert metadatabase.key in values.keys()
-    assert values_has_only_one_key
-    assert values[metadatabase.key]["values"] == []
-
-    if "tag_list_last_modified" in values[metadatabase.key].keys():
-        assert values[metadatabase.key]["tag_list_last_modified"] == ""
-        assert values[metadatabase.key]["tag_list_expires"] == 0
     assert start_spy.call_count == 1
-    assert start_spy.call_args_list[0][1] == {
-        "website_data": WebsiteData(
-            html="", values=[], headers={}, raw_header=""
-        )
-    }
+    assert start_spy.call_args_list[0][1] == {"website_data": site}
 
-    with mock.patch(
-        "core.metadata_base.WebsiteManager"
-    ) as mocked_website_manager:
-        mocked_website_manager.get_instance().website_data = WebsiteData(
-            html=html_content,
-            raw_header="",
-            headers=header,
-        )
-        _ = asyncio.run(metadatabase.start())
-        assert start_spy.call_args_list[1][1] == {
-            "website_data": WebsiteData(
-                html=html_content, values=[], headers=header
-            )
-        }
+    _ = asyncio.run(metadatabase.start(site))
+    assert start_spy.call_args_list[1][1] == {"website_data": site}
 
 
 """
@@ -81,17 +56,11 @@ def test_start(metadatabase: MetadataBase, mocker):
 
 
 def test_under_start(metadatabase: MetadataBase, mocker):
-    html_content = "html_content"
-    header = "header"
-    processed_header = {header: header}
-
     work_header_spy = mocker.spy(metadatabase, "_work_header")
     work_html_content_spy = mocker.spy(metadatabase, "_work_html_content")
 
     metadatabase.evaluate_header = False
-    website_data = WebsiteData(
-        html=html_content, values=[], headers=processed_header
-    )
+    website_data = mock_website_data()
 
     values = asyncio.run(metadatabase._start(website_data=website_data))
 
@@ -110,7 +79,8 @@ def test_under_start(metadatabase: MetadataBase, mocker):
 """
 
 
-def test_setup(metadatabase: MetadataBase, mocker):
+@pytest.mark.asyncio
+async def test_setup(metadatabase: MetadataBase, mocker):
     metadatabase._download_tag_list = mocker.AsyncMock(return_value=[])
     metadatabase._download_multiple_tag_lists = mocker.AsyncMock(
         return_value=[]
@@ -120,14 +90,14 @@ def test_setup(metadatabase: MetadataBase, mocker):
     )
     prepare_tag_spy = mocker.spy(metadatabase, "_prepare_tag_list")
 
-    metadatabase.setup()
+    await metadatabase.setup()
     assert metadatabase._download_tag_list.call_count == 0
     assert metadatabase._download_multiple_tag_lists.call_count == 0
     assert extract_date_from_list_spy.call_count == 0
     assert prepare_tag_spy.call_count == 0
 
     metadatabase.url = "hello"
-    metadatabase.setup()
+    await metadatabase.setup()
     assert metadatabase._download_tag_list.call_count == 1
     assert metadatabase._download_multiple_tag_lists.call_count == 0
     assert extract_date_from_list_spy.call_count == 0
@@ -136,7 +106,7 @@ def test_setup(metadatabase: MetadataBase, mocker):
     metadatabase.url = ""
     metadatabase.urls = ["Hello1", "Hello2"]
     metadatabase._download_tag_list.return_value = ["empty_list"]
-    metadatabase.setup()
+    await metadatabase.setup()
     assert metadatabase._download_tag_list.call_count == 1
     assert metadatabase._download_multiple_tag_lists.call_count == 1
     assert extract_date_from_list_spy.call_count == 0
@@ -144,7 +114,7 @@ def test_setup(metadatabase: MetadataBase, mocker):
 
     metadatabase.tag_list = ["empty_list"]
     metadatabase.urls = []
-    metadatabase.setup()
+    await metadatabase.setup()
     assert metadatabase._download_tag_list.call_count == 1
     assert metadatabase._download_multiple_tag_lists.call_count == 1
     assert extract_date_from_list_spy.call_count == 1
@@ -222,7 +192,7 @@ def test_decide_single(
     expected_decision,
     expected_explanation,
 ):
-    website_data = WebsiteData()
+    website_data = mock_website_data()
 
     website_data.values = values
     metadatabase.decision_threshold = decision_threshold
@@ -281,7 +251,7 @@ def test_decide_number_of_elements(
     raw_links,
     expected_explanation,
 ):
-    website_data = WebsiteData()
+    website_data = mock_website_data()
 
     website_data.values = values
     website_data.raw_links = raw_links
@@ -355,7 +325,7 @@ def test_false_list(
     false_list,
     expected_explanation,
 ):
-    website_data = WebsiteData()
+    website_data = mock_website_data()
 
     website_data.values = values
     metadatabase.false_list = false_list
