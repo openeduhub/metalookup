@@ -177,6 +177,11 @@ class WebsiteData:
         soup = BeautifulSoup(message.html, "lxml")
         image_links = [image.attrs.get("src") for image in soup.findAll("img")]
         raw_links = extract_raw_links(soup=soup, image_links=image_links)
+        headers = (
+            headers_from_splash(message.header)
+            if fetched_from_splash
+            else preprocess_header(message.header)
+        )
         return WebsiteData(
             url=message.url,
             html=message.html,
@@ -190,9 +195,7 @@ class WebsiteData:
             image_links=image_links,
             raw_links=raw_links,
             # fixme: remove the separate code paths
-            headers=headers_from_splash(message.header)
-            if fetched_from_splash
-            else preprocess_header(message.header),
+            headers=headers,
             extensions=extract_extensions(raw_links=raw_links),
             values=[],
         )
