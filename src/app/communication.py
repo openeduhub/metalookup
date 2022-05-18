@@ -1,14 +1,15 @@
 import multiprocessing
 import queue
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Optional
 from uuid import UUID, uuid4
 
+from app.splash_models import SplashResponse
 from lib.settings import API_RETRIES
 
 
 @dataclass(frozen=True)
-class Message:
+class Message:  # fixme: should eventually become obsolete and be identical with input model.
     """
     If a message is lacking any of the html, header, or har fields, then the URL will be
     used to issue a request and fetch the content, headers, and har. I.e the response will
@@ -17,12 +18,11 @@ class Message:
 
     url: str
     """The url of the content to analyze."""
-    html: Optional[str]
-    """The content to analyze."""
-    header: Optional[str]
-    """The headers received together with the content."""
-    har: Optional[dict[str, Any]]
-    """Optional dictionary resembling the HTTP Archive format (https://en.wikipedia.org/wiki/HAR_(file_format))"""
+    splash_response: Optional[SplashResponse]
+    """
+    Optional dictionary resembling the Response format of Splash which must also
+    include the har (HTTP Archive format https://en.wikipedia.org/wiki/HAR_(file_format)))
+    """
     whitelist: Optional[list[str]]
     """Which extractors (defined by their keys) to use. If none, then all extractors should be used."""
     bypass_cache: bool

@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import time
-from typing import Any, Optional
+from typing import Optional
 from unittest import mock
 from urllib.parse import urlparse
 
@@ -10,6 +10,16 @@ import pytest
 from tldextract.tldextract import ExtractResult, TLDExtract
 
 from app.communication import Message
+from app.splash_models import (
+    HAR,
+    Cookie,
+    Entry,
+    Header,
+    Log,
+    Request,
+    Response,
+    SplashResponse,
+)
 from core.website_manager import WebsiteData
 from features.cookies import Cookies
 from features.extract_from_files import ExtractFromFiles
@@ -37,20 +47,39 @@ from lib.logger import get_logger
 def mock_website_data(
     html: Optional[str] = None,
     url: Optional[str] = None,
-    header: Optional[str] = None,
-    har: Optional[dict[str, Any]] = None,
+    header: Optional[dict[str, str]] = None,
+    har: Optional[HAR] = None,
 ) -> WebsiteData:
+
+    if har is not None and header is not None:
+        raise ValueError("Cannot provide both har and header!")
+
     mock_extractor = mock.Mock(
         return_value=ExtractResult(
             domain="cnn", suffix="com", subdomain="forms.news"
         )
     )
+
+    url = url or "https://forums.news.cnn.com/"
+    html = html or "<html></html>"
+    headers = [Header(name=k, value=v) for k, v in (header or {}).items()]
+    har = har or HAR(
+        log=Log(
+            entries=[
+                Entry(
+                    request=Request(headers=[], cookies=[]),
+                    response=Response(headers=headers, cookies=[]),
+                )
+            ]
+        )
+    )
+
+    splash_response = SplashResponse(url=url, html=html, har=har)
+
     return WebsiteData.from_message(
         Message(
-            url=url or "https://forums.news.cnn.com/",
-            html=html or "<body></body>",
-            har=har or {},
-            header=header or "",
+            url=url,
+            splash_response=splash_response,
             bypass_cache=False,
             whitelist=None,
             _shared_memory_name="",
@@ -282,10 +311,10 @@ async def test_g_d_p_r():
             """
 
     url = "https://www.tutory.de"
-    header = (
-        '{b"Referrer-Policy": [b"no-referrer"],'
-        'b"Strict-Transport-Security": [b"max-age=15724800; includeSubDomains"]}'
-    )
+    header = {
+        "Referrer-Policy": "no-referrer",
+        "Strict-Transport-Security": "max-age=15724800; includeSubDomains; preload",
+    }
 
     site = mock_website_data(html=html, url=url, header=header)
     duration, values, stars, explanation = await feature.start(site)
@@ -295,7 +324,6 @@ async def test_g_d_p_r():
         "https_in_url",
         "hsts",
         "includesubdomains",
-        "do_not_preload",
         "max_age",
         "found_fonts,https://canyoublockit.com/wp-content/themes/astra/assets/fonts/astra.svg#astra",
         "no-referrer",
@@ -434,11 +462,13 @@ async def test_iframe_embeddable():
     feature = IFrameEmbeddable()
     await feature.setup()
 
-    header = '{"X-Frame-Options": "deny", "x-frame-options": "same_origin"}'
+    # fixme: This actually tests whether the header normalization in WebsiteData works correctly :-/
+    header = {"X-Frame-Options": "deny", "x-frame-options": "same_origin"}
+    #
     site = mock_website_data(header=header)
     duration, values, stars, explanation = await feature.start(site)
     assert duration < 2
-    assert values == ["same_origin"]
+    assert values == ["deny;same_origin"]
 
 
 """
@@ -471,24 +501,29 @@ async def test_cookies():
     feature = Cookies()
     await feature.setup()
 
-    har = json.loads(
-        """{
+    har = HAR.parse_obj(
+        json.loads(
+            """{
         "log": {
             "entries": [
                 {
                     "response": {
+                        "headers": [],
                         "cookies": [
                             {
                                 "name": "test_response_cookie",
+                                "value": "dummy",
                                 "httpOnly": "false",
                                 "secure": "true"
                             }
                         ]
                     },
                     "request": {
+                        "headers": [],
                         "cookies": [
                             {
                                 "name": "test_request_cookie",
+                                "value": "dummy",
                                 "httpOnly": "false",
                                 "secure": "true"
                             }
@@ -498,18 +533,25 @@ async def test_cookies():
             ]
         }
     }"""
+        )
     )
     site = mock_website_data(har=har)
     duration, values, stars, explanation = await feature.start(site)
     assert duration < 2
     # fixme: This should also return a list of strings?
     assert values == [
-        {
-            "httpOnly": "false",
-            "name": "test_response_cookie",
-            "secure": "true",
-        },
-        {"httpOnly": "false", "name": "test_request_cookie", "secure": "true"},
+        Cookie(
+            httpOnly=False,
+            value="dummy",
+            name="test_response_cookie",
+            secure=True,
+        ),
+        Cookie(
+            httpOnly=False,
+            name="test_request_cookie",
+            secure=True,
+            value="dummy",
+        ),
     ]
 
 

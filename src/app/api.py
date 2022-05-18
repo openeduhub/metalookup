@@ -99,10 +99,10 @@ def extract_meta(input_data: Input):
             + str(err.args)
             + "".join(traceback.format_exception(None, err, err.__traceback__))
         )
-    har = {} if input_data.har is None else json.loads(input_data.har)
-    extractors = (
+    # build a list of extractors that are set to True
+    whitelist = (
         None
-        if input_data.allow_list.fields is None
+        if input_data.allow_list is None
         else [k for k, v in allowance.items() if v]
     )
     bypass_cache = (
@@ -111,12 +111,8 @@ def extract_meta(input_data: Input):
     uuid = app.communicator.send_message(
         message=Message(
             url=input_data.url,
-            html=input_data.html,
-            header=input_data.headers,
-            # todo return a Bad Request (400) if the provided har is not a valid json or HAR document?!
-            har=har,
-            # build a list of extractors that are set to True
-            extractors=extractors,
+            splash_response=input_data.splash_response,
+            whitelist=whitelist,
             _shared_memory_name=shared_status.shm.name,  # fixme: eventually remove?
             bypass_cache=bypass_cache,
         )
