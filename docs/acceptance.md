@@ -279,6 +279,7 @@ Da es derzeit rein explorativ ist, wird dieses Merkmal stets `unknown` als `isHa
 Dieses Merkmal untersucht verschiedene HTTP-Header Eigenschaften, um Aussagen über optimal konfigurierte Sicherheitseinstellungen zu liefern.
 Sind alle Eigenschaften gesetzt, so gibt dieses Merkmal `true` zurück, d. h., es ist strikt.
 Es ist zu erwarten, dass nur die wenigsten Webseiten dieses Merkmal erfüllen.
+Für Information zu den verschiedenen Headern siehe z.B.: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers
 
 #### Vorteil
 

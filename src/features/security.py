@@ -9,18 +9,7 @@ from core.website_manager import WebsiteData
 class Security(MetadataBase):
     """
     Checks various HTTP headers for security aspects resulting in either a zero or five star rating.
-
-    The following checks are performed:
-    1. Are the `content-security-policy` and `referrer-policy` headers set.
-    2. Is the `cache-control` header set such that no data can be cached (no-cache or no-store)
-    3. Is the `x-content-type-options` header set to `nosniff`.
-    4. Is the `x-frame-options` header set to `deny` or `same_origin`, such that the site cannot be embedded as iframe.
-    5. Is the `x-xss-protection` header set to `1` and `mode=block` to deactivate cross-site-scripting.
-    TODO: Discuss whether that still makes sense. Mozilla recommends to set this only if legacy browser support is required:
-          https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-XSS-Protection
-    6. Is the `strict-transport-security` header set to `includeSubDomains`
-
-    For information about the respective headers see e.g.: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers
+    See '../../docs/acceptance.md#(Sicherheit alias Security)' for details.
     """
 
     # The validators that all must yield a positive result for a website to get 5 stars.
