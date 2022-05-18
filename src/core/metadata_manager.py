@@ -1,7 +1,7 @@
 import asyncio
 import time
 from multiprocessing import shared_memory
-from typing import Optional
+from typing import Optional, Type
 
 from tldextract import TLDExtract
 
@@ -41,25 +41,24 @@ from lib.timing import get_utc_now, global_start
 
 @Singleton
 class MetadataManager:
-    metadata_extractors: list[type(MetadataBase)] = []
-
-    blacklisted_for_cache = [MaliciousExtensions, ExtractFromFiles, Javascript]
-
     def __init__(self) -> None:
         self._logger = get_logger()
-        self._setup_extractors()
+        self.metadata_extractors: list[MetadataBase] = [
+            self._setup_extractor(extractor) for extractor in self._extractors()
+        ]
         self.tld_extractor: TLDExtract = TLDExtract(cache_dir=None)
+        self.blacklisted_for_cache = [MaliciousExtensions, ExtractFromFiles, Javascript]
 
     def _setup_extractor(self, extractor_class: type(MetadataBase)) -> MetadataBase:
         self._logger.debug(f"Starting setup for {extractor_class} {get_utc_now()}")
         extractor = extractor_class(self._logger)
-        extractor.setup()
+        asyncio.run(extractor.setup())
         self._logger.debug(f"Finished setup for {extractor_class} {get_utc_now()}")
         return extractor
 
-    def _setup_extractors(self) -> None:
-
-        extractors = [
+    @classmethod
+    def _extractors(cls) -> list[Type[MetadataBase]]:
+        return [
             Advertisement,
             EasyPrivacy,
             MaliciousExtensions,
@@ -81,10 +80,6 @@ class MetadataManager:
             Javascript,
             MetatagExplorer,
             Accessibility,
-        ]
-
-        self.metadata_extractors: list[type(MetadataBase)] = [
-            self._setup_extractor(extractor) for extractor in extractors
         ]
 
     def is_feature_whitelisted_for_cache(self, extractor: type(MetadataBase)) -> bool:
