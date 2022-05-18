@@ -1,11 +1,10 @@
-import http
 import json
 import os
 import re
 import time
 from dataclasses import dataclass
 from logging import Logger
-from typing import Any, NoReturn
+from typing import NoReturn
 from urllib.parse import urlparse
 
 import requests
@@ -13,6 +12,7 @@ from bs4 import BeautifulSoup
 from tldextract.tldextract import TLDExtract
 
 from app.communication import Message
+from app.splash_models import HAR, SplashResponse
 from lib.constants import SCRIPT
 from lib.settings import SPLASH_HEADERS, SPLASH_TIMEOUT, SPLASH_URL
 from lib.timing import global_start
@@ -23,9 +23,8 @@ from lib.tools import get_unique_list
 class WebsiteData:
     url: str
     html: str
-    raw_header: str
     soup: BeautifulSoup
-    har: dict[str, Any]
+    har: HAR
     domain: str
     """A dictionary with the http headers where all keys have been converted to lowercase."""
     headers: dict[str, str]
@@ -34,20 +33,17 @@ class WebsiteData:
     image_links: list[str]
     extensions: list[str]
 
+    # fixme: make this async
     @classmethod
-    def fetch_content(
-        cls, message: Message
-    ) -> Message:  # fixme: make this async
+    def fetch_content(cls, url: str) -> SplashResponse:
         """
         Build a new message from url in given message where html content, headers and har are populated.
-
         Uses splash, so the splash docker container must be running an reachable.
-
         Will raise if splash is not reachable or the returned response is malformed (doesn't match expected structure).
         """
 
         splash_url = (
-            f"{SPLASH_URL}/render.json?url={message.url}&html={1}&iframes={1}"
+            f"{SPLASH_URL}/render.json?url={url}&html={1}&iframes={1}"
             f"&har={1}&response_body={1}&wait={10}&render_all={1}&script={1}&timeout={SPLASH_TIMEOUT}"
         )
         response = requests.get(
@@ -55,16 +51,8 @@ class WebsiteData:
             headers=SPLASH_HEADERS,
             params={},
         )
-        data = json.loads(response.content.decode("UTF-8"))
-
-        return Message(
-            url=message.url,
-            html=data["html"],
-            header=data["har"]["log"]["entries"][0]["response"]["headers"],
-            har=data["har"],
-            whitelist=message.whitelist,
-            bypass_cache=message.bypass_cache,
-            _shared_memory_name=message._shared_memory_name,
+        return SplashResponse.parse_obj(
+            json.loads(response.content.decode("UTF-8"))
         )
 
     @classmethod
@@ -132,70 +120,47 @@ class WebsiteData:
             file_extensions = [extension_from_link(link) for link in raw_links]
             return [x for x in get_unique_list(file_extensions) if x != ""]
 
-        def preprocess_header(header: str) -> dict:
-            header = header.lower()
+        if message.splash_response is None:
+            logger.debug(f"Missing har -> fetching {message.url}")
+            splash_response = cls.fetch_content(message.url)
+        else:
+            splash_response = message.splash_response
 
-            idx = max(header.find('b"'), header.find("b'"))
-            if idx >= 0:
-                header = (
-                    header.replace("b'", '"')
-                    .replace('b"', '"')
-                    .replace("/'", '"')
-                    .replace("'", '"')
-                    .replace('""', '"')
-                    .replace('/"', "/")
-                )
-
-            if len(header) > 0:
-                return json.loads(header)
-            return {}
-
-        fetched_from_splash = False
-        if (
-            message.html is None
-            or message.header is None
-            or message.har is None
-        ):
-            logger.debug(
-                f"Missing one of html, header, or har -> fetching {message.url}"
-            )
-            message = cls.fetch_content(message)
-            fetched_from_splash = True
-
-        def headers_from_splash(
-            headers: list[dict[str, str]]
-        ) -> dict[str, str]:
+        def headers_from_splash(splash: SplashResponse) -> dict[str, str]:
             """
             Splash returns headers as a list of dicts with 'name' and 'value' entries for each header field.
             Here this list of dicts is transformed into a single dictionary with lowercase header field names.
 
-            Note: If splash does not normalize duplicate header fields into a comma separate list, then we will lose
-            them here!
+            Note: As splash potentially does not normalize duplicate header fields into a comma separate list, we will
+                  normalize them here!
             """
-            return {d["name"].lower().strip(): d["value"] for d in headers}
+            result = dict()
+            # fixme: we just use the first response here which might just be a redirect...
+            #        See also https://github.com/openeduhub/metalookup/issues/85
+            for header in splash.har.log.entries[0].response.headers:
+                lower = header.name.lower()
+                if lower not in result:
+                    result[lower] = header.value
+                else:
+                    if result[lower].endswith(";"):
+                        result[lower] = result[lower] + header.value
+                    else:
+                        result[lower] = result[lower] + ";" + header.value
+            return result
 
-        soup = BeautifulSoup(message.html, "lxml")
+        soup = BeautifulSoup(splash_response.html, "lxml")
         image_links = [image.attrs.get("src") for image in soup.findAll("img")]
         raw_links = extract_raw_links(soup=soup, image_links=image_links)
-        headers = (
-            headers_from_splash(message.header)
-            if fetched_from_splash
-            else preprocess_header(message.header)
-        )
+
         return WebsiteData(
             url=message.url,
-            html=message.html,
-            # fixme: remove the separate code paths
-            raw_header=json.dumps(message.header)
-            if fetched_from_splash
-            else message.header,
+            html=splash_response.html,
             domain=top_level_domain(url=message.url),
             soup=soup,
-            har=message.har,
+            har=splash_response.har,
             image_links=image_links,
             raw_links=raw_links,
-            # fixme: remove the separate code paths
-            headers=headers,
+            headers=headers_from_splash(splash_response),
             extensions=extract_extensions(raw_links=raw_links),
             values=[],
         )

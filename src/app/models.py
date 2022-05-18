@@ -1,7 +1,9 @@
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
+
+from app.splash_models import SplashResponse
 
 
 class Explanation(str, Enum):
@@ -229,17 +231,15 @@ class ExtractorTags(BaseModel):
 
 
 class Input(BaseModel):
-    url: str = Field(..., description="The base url of the scraped website.")
-    html: Optional[str] = Field(
-        default=None,
-        description="Everything scraped from the website as text.",
+    url: HttpUrl = Field(
+        ..., description="The URL where the content was crawled from."
     )
-    headers: Optional[str] = Field(
+    splash_response: Optional[SplashResponse] = Field(
         default=None,
-        description="The response header originally received together with the content.",
-    )
-    har: Optional[str] = Field(
-        default=None, description="The har object interpretable as json."
+        description="The response object returned from splash when queried with "
+        "html=1, iframes=1, har=1, response_body=1, render_all=1, script=1."
+        "See https://splash.readthedocs.io/en/stable/api.html#render-html for more information."
+        "If omitted, a respective query will be issued to splash internally.",
     )
     allow_list: Optional[ListTags] = Field(
         default=ListTags(),

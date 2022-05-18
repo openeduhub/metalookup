@@ -27,14 +27,11 @@ def session():
 
 
 def test_create_dummy_record():
-    output = create_dummy_record()
+    output: RecordSchema = create_dummy_record()
 
     assert isinstance(output, RecordSchema)
     assert output.id == -1
     assert output.url == ""
-    assert output.html == ""
-    assert output.headers == ""
-    assert output.har == ""
     assert output.allow_list == ""
     assert output.meta == ""
     assert output.exception == ""

@@ -1,4 +1,5 @@
 from app.models import Explanation, StarCase
+from app.splash_models import Cookie, Entry
 from core.metadata_base import ExtractionMethod, MetadataBase
 from core.website_manager import WebsiteData
 
@@ -20,16 +21,13 @@ class Cookies(MetadataBase):
     async def _start(self, website_data: WebsiteData) -> list[str]:
         values = await super()._start(website_data=website_data)
 
-        try:
-            data: list = website_data.har["log"]["entries"]
-        except KeyError:
-            data = []
+        entries: list[Entry] = website_data.har.log.entries
 
         raw_cookies = [
             cookie
-            for element in data
-            for key in ("response", "request")
-            for cookie in element[key]["cookies"]
+            for entry in entries
+            for cookies in (entry.response.cookies, entry.request.cookies)
+            for cookie in cookies
         ]
 
         return raw_cookies + values
@@ -44,8 +42,8 @@ class Cookies(MetadataBase):
         insecure_cookies = [
             cookie
             for cookie in website_data.values
-            if not isinstance(cookie, str)
-            and (not cookie["httpOnly"] or not cookie["secure"])
+            if isinstance(cookie, Cookie)
+            and (not cookie.httpOnly or not cookie.secure)
         ]
 
         probability = 1 if insecure_cookies or cookies_in_html else 0

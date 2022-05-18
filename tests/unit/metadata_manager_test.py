@@ -9,6 +9,7 @@ import pytest
 
 from app.communication import Message
 from app.models import Explanation, StarCase
+from app.splash_models import SplashResponse
 from cache.cache_manager import CacheManager
 from core.metadata_manager import MetadataManager
 from features.html_based import Advertisement
@@ -186,20 +187,18 @@ def test_start(metadata_manager: MetadataManager):
     cache_manager._hosts = []
     cache_manager.domain = "google.com"
 
-    message = Message(
-        whitelist=None,
-        bypass_cache=False,
-        html=None,
-        header=None,
-        url="https://google.com",
-        _shared_memory_name="test",
-        har={},
-    )
-
     with open(
         Path(__file__).parent.parent / "splash-response-google.json", "r"
     ) as f:
-        splash_response = json.load(f)
+        splash_response = SplashResponse.parse_obj(json.load(f))
+
+    message = Message(
+        url="https://google.com",
+        splash_response=splash_response,
+        whitelist=None,
+        bypass_cache=False,
+        _shared_memory_name="test",
+    )
 
     async def accessibility_api_call_mock(
         self, website_data, session, strategy

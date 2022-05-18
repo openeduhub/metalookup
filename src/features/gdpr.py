@@ -3,13 +3,14 @@ import re
 from app.models import Explanation, StarCase
 from core.metadata_base import MetadataBase
 from core.website_manager import WebsiteData
-from lib.constants import STRICT_TRANSPORT_SECURITY
 
 
 @MetadataBase.with_key(key="g_d_p_r")  # fixme use GDPR as key!
 class GDPR(MetadataBase):
     tag_list = ["impressum"]
     decision_threshold = 0.3
+    _MAX_AGE_REGEX = re.compile(r"max-age=(\d*)")
+    _MAX_AGE_REQUIREMENT = 100 * 24 * 60 * 60  # 100 days
 
     @staticmethod
     def _check_https_in_url(website_data: WebsiteData) -> list[str]:
@@ -17,45 +18,36 @@ class GDPR(MetadataBase):
         return [value + "https_in_url"]
 
     def _get_hsts(self, website_data: WebsiteData) -> list:
-        if STRICT_TRANSPORT_SECURITY in website_data.headers.keys():
-            sts = website_data.headers[STRICT_TRANSPORT_SECURITY]
+        if "strict-transport-security" in website_data.headers.keys():
+            sts = website_data.headers["strict-transport-security"]
             values = ["hsts"]
-            values.extend(self._extract_sts(sts))
-            values.extend(self._extract_max_age(sts))
+            values.extend(self._extract_sts(sts.split(";")))
+            values.extend(self._extract_max_age(sts.split(";")))
         else:
             values = ["no_hsts"]
         return values
 
-    @staticmethod
-    def _extract_max_age(sts: list) -> list[str]:
-        values = ["do_not_max_age"]
-        regex = re.compile(r"max-age=(\d*)")
-        try:
-            match = min(
-                [int(regex.match(element).group(1)) for element in sts]
-            )
-            if match > 10886400:
-                values = ["max_age"]
-        except AttributeError:
-            pass
-        return values
+    @classmethod
+    def _extract_max_age(cls, sts: list[str]) -> list[str]:
+        for value in sts:
+            if match := cls._MAX_AGE_REGEX.match(value):
+                if int(match.group(1)) >= cls._MAX_AGE_REQUIREMENT:
+                    return ["max_age"]
+        return ["do_not_max_age"]
 
     @staticmethod
-    def _extract_sts(sts: list) -> list[str]:
-        values = []
-        for key in ["includesubdomains", "preload"]:
-            matches = [element for element in sts if key in element]
-            if matches:
-                values += [key]
-            else:
-                values += [f"do_not_{key}"]
-        return values
+    def _extract_sts(sts: list[str]) -> list[str]:
+        normalized = {e.lower().strip() for e in sts}
+        return [
+            key if key in normalized else f"do_not_{key}"
+            for key in ["includesubdomains", "preload"]
+        ]
 
     @staticmethod
     def _get_referrer_policy(website_data: WebsiteData) -> list[str]:
         referrer_policy = "referrer-policy"
         if referrer_policy in website_data.headers.keys():
-            values = website_data.headers[referrer_policy]
+            values = [website_data.headers[referrer_policy]]
         else:
             values = [f"no_{referrer_policy}"]
 
