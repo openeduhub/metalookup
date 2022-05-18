@@ -9,6 +9,9 @@ from core.website_manager import WebsiteData
 from lib.constants import ACCESSIBILITY
 from lib.settings import ACCESSIBILITY_TIMEOUT, ACCESSIBILITY_URL
 
+_DESKTOP = "desktop"
+_MOBILE = "mobile"
+
 
 @MetadataBase.with_key()
 class Accessibility(MetadataBase):
@@ -47,7 +50,7 @@ class Accessibility(MetadataBase):
                         session=session,
                         strategy=strategy,
                     )
-                    for strategy in ["desktop", "mobile"]
+                    for strategy in [_DESKTOP, _MOBILE]
                 ]
             )
         # take the average score over desktop and mobile.
