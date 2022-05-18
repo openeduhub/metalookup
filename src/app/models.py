@@ -22,9 +22,7 @@ class Explanation(str, Enum):
     InsufficientlyExtractableFilesFound = "InsufficientlyExtractableFilesFound"
     PotentiallyInsufficientGDPRFound = "PotentiallyInsufficientGDPRFound"
     MinimumGDPRRequirementsCovered = "MinimumGDPRRequirementsCovered"
-    IndicatorsForInsufficientSecurityFound = (
-        "IndicatorsForInsufficientSecurityFound"
-    )
+    IndicatorsForInsufficientSecurityFound = "IndicatorsForInsufficientSecurityFound"
     MinimumSecurityRequirementsCovered = "MinimumSecurityRequirementsCovered"
     PotentiallyMaliciousExtensionFound = "PotentiallyMaliciousExtensionFound"
     SlightlyMaliciousExtensionFound = "SlightlyMaliciousExtensionFound"
@@ -46,9 +44,7 @@ class StarCase(int, Enum):
 
 
 class MetadataTags(BaseModel):
-    values: list = Field(
-        default=[], description="Raw values found by the metadata extractors."
-    )
+    values: list = Field(default=[], description="Raw values found by the metadata extractors.")
     stars: StarCase = Field(
         default=StarCase.ZERO,
         description="A user friendly decision whether or not the happy case is fulfilled"
@@ -103,9 +99,7 @@ class ExtractorTags(BaseModel):
     )
     easy_privacy: MetadataTags = Field(
         default=None,
-        description="Beta. Are there trackers?"
-        "Probability = "
-        "1 If any element is found, else 0",
+        description="Beta. Are there trackers?" "Probability = " "1 If any element is found, else 0",
     )
     malicious_extensions: MetadataTags = Field(
         default=None,
@@ -129,15 +123,11 @@ class ExtractorTags(BaseModel):
     )
     fanboy_annoyance: MetadataTags = Field(
         default=None,
-        description="Beta. Code that indicates 'annoying' behaviour."
-        "Probability = "
-        "Ratio of matching elements.",
+        description="Beta. Code that indicates 'annoying' behaviour." "Probability = " "Ratio of matching elements.",
     )
     fanboy_notification: MetadataTags = Field(
         default=None,
-        description="Beta. Code that indicates notifications."
-        "Probability = "
-        "Ratio of matching elements.",
+        description="Beta. Code that indicates notifications." "Probability = " "Ratio of matching elements.",
     )
     fanboy_social_media: MetadataTags = Field(
         default=None,
@@ -178,15 +168,11 @@ class ExtractorTags(BaseModel):
     )
     iframe_embeddable: MetadataTags = Field(
         default=None,
-        description="Release. Are iFrames embeddable?"
-        "Probability = "
-        "1 If any matching element is found, else 0.",
+        description="Release. Are iFrames embeddable?" "Probability = " "1 If any matching element is found, else 0.",
     )
     pop_up: MetadataTags = Field(
         default=None,
-        description="Alpha. Are pop ups present?"
-        "Probability = "
-        "1 If any matching element is found, else 0.",
+        description="Alpha. Are pop ups present?" "Probability = " "1 If any matching element is found, else 0.",
     )
     reg_wall: MetadataTags = Field(
         default=None,
@@ -215,8 +201,7 @@ class ExtractorTags(BaseModel):
     )
     javascript: MetadataTags = Field(
         default=None,
-        description="Alpha. Is there javascript among the files of this website?"
-        "Always False for now",
+        description="Alpha. Is there javascript among the files of this website?" "Always False for now",
     )
     metatag_explorer: MetadataTags = Field(
         default=None,
@@ -231,9 +216,7 @@ class ExtractorTags(BaseModel):
 
 
 class Input(BaseModel):
-    url: HttpUrl = Field(
-        ..., description="The URL where the content was crawled from."
-    )
+    url: HttpUrl = Field(..., description="The URL where the content was crawled from.")
     splash_response: Optional[SplashResponse] = Field(
         default=None,
         description="The response object returned from splash when queried with "
@@ -269,8 +252,7 @@ class Output(BaseModel):
     )
     time_until_complete: float = Field(
         default=-1,
-        description="The time needed from starting the extraction"
-        " until sending the resulting meta data out.",
+        description="The time needed from starting the extraction" " until sending the resulting meta data out.",
     )
 
     class Config:
@@ -301,6 +283,4 @@ class DeleteCacheOutput(BaseModel):
 
 
 class DeleteCacheInput(BaseModel):
-    domain: Optional[str] = Field(
-        default="", description="The host domain to be reset."
-    )
+    domain: Optional[str] = Field(default="", description="The host domain to be reset.")

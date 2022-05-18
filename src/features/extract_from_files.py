@@ -48,9 +48,7 @@ class ExtractFromFiles(MetadataBase):
     ]
 
     @staticmethod
-    def _get_xml_body(
-        soup: BeautifulSoup, xml_file: zipfile.ZipInfo
-    ) -> BeautifulSoup:
+    def _get_xml_body(soup: BeautifulSoup, xml_file: zipfile.ZipInfo) -> BeautifulSoup:
         body = BeautifulSoup()
         if xml_file.filename == "word/document.xml":
             body = soup.document.body
@@ -61,9 +59,7 @@ class ExtractFromFiles(MetadataBase):
         return body
 
     @staticmethod
-    def _extract_xml_content(
-        document: zipfile.ZipFile, xml_file: zipfile.ZipInfo
-    ) -> list:
+    def _extract_xml_content(document: zipfile.ZipFile, xml_file: zipfile.ZipInfo) -> list:
         content = document.read(xml_file, pwd=None).decode()
         soup = BeautifulSoup(content, "xml")
 
@@ -71,9 +67,7 @@ class ExtractFromFiles(MetadataBase):
         return [tag.string for tag in body.find_all("t")]
 
     @staticmethod
-    def _extract_image_content(
-        document: zipfile.ZipFile, xml_file: zipfile.ZipInfo
-    ) -> dict:
+    def _extract_image_content(document: zipfile.ZipFile, xml_file: zipfile.ZipInfo) -> dict:
         image = document.read(xml_file, pwd=None)
         image = base64.b64encode(image).decode()
         return {xml_file.filename: image}
@@ -87,24 +81,18 @@ class ExtractFromFiles(MetadataBase):
         for file in document.filelist:
             if file.filename.find(".xml") >= 0:
                 extracted_content += self._extract_xml_content(document, file)
-            elif (
-                RETURN_IMAGES_IN_METADATA and file.filename.find("media") >= 0
-            ):
+            elif RETURN_IMAGES_IN_METADATA and file.filename.find("media") >= 0:
                 images.update(self._extract_image_content(document, file))
 
         return {"extracted_content": extracted_content, "images": images}
 
-    def _get_pdf_content(
-        self, filename: str, pdf_file: PyPDF2.PdfFileReader
-    ) -> str:
+    def _get_pdf_content(self, filename: str, pdf_file: PyPDF2.PdfFileReader) -> str:
         extracted_content = f"{pdf_file.getDocumentInfo()}"
         data = pdf_file.getXmpMetadata()
         for parameter in self.xmp_metadata:
             if parameter:
                 try:
-                    extracted_content += (
-                        f"{parameter}, {getattr(data, parameter)}"
-                    )
+                    extracted_content += f"{parameter}, {getattr(data, parameter)}"
                 except (AttributeError, TypeError) as err:
                     self._logger.exception(
                         f"Parameter in pdf content failed to be retrieved: {parameter} with {err.args}"
@@ -120,10 +108,7 @@ class ExtractFromFiles(MetadataBase):
         subtype_tag = "/Subtype"
         for page in range(pdf_file.getNumPages()):
             pdf_page = pdf_file.getPage(page)
-            if (
-                resources_tag in pdf_page.keys()
-                and xobject_tag in pdf_page[resources_tag].keys()
-            ):
+            if resources_tag in pdf_page.keys() and xobject_tag in pdf_page[resources_tag].keys():
                 x_object = pdf_page[resources_tag][xobject_tag].getObject()
 
                 for obj in x_object:
@@ -142,14 +127,10 @@ class ExtractFromFiles(MetadataBase):
 
         return {"extracted_content": extracted_content, "images": images}
 
-    async def _download_file(
-        self, file_url: str, filename: str, session: ClientSession
-    ) -> None:
+    async def _download_file(self, file_url: str, filename: str, session: ClientSession) -> None:
         result = await session.get(url=file_url)
         if result.status != 200:
-            self._logger.exception(
-                f"Downloading file '{file_url}' yielded status code '{result.status}'."
-            )
+            self._logger.exception(f"Downloading file '{file_url}' yielded status code '{result.status}'.")
         open(filename, "wb").write(await result.read())
 
     async def _process_file(self, file: str, session: ClientSession) -> str:
@@ -178,14 +159,10 @@ class ExtractFromFiles(MetadataBase):
 
     @staticmethod
     def _get_extractable_files(website_data: WebsiteData) -> list:
-        file_extensions = [
-            os.path.splitext(link)[-1] for link in website_data.raw_links
-        ]
+        file_extensions = [os.path.splitext(link)[-1] for link in website_data.raw_links]
 
         extractable_files = [
-            file
-            for file, extension in zip(website_data.raw_links, file_extensions)
-            if extension in [".docx", ".pdf"]
+            file for file, extension in zip(website_data.raw_links, file_extensions) if extension in [".docx", ".pdf"]
         ]
 
         return extractable_files
@@ -194,9 +171,7 @@ class ExtractFromFiles(MetadataBase):
         extractable_files = self._get_extractable_files(website_data)
         return await self._work_files(files=extractable_files)
 
-    def _decide(
-        self, website_data: WebsiteData
-    ) -> tuple[StarCase, list[Explanation]]:
+    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, list[Explanation]]:
         probability = 0
         extractable_files = self._get_extractable_files(website_data)
 

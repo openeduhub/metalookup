@@ -2,11 +2,7 @@ import json
 
 import sqlalchemy.exc
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy.exc import (
-    OperationalError,
-    PendingRollbackError,
-    ProgrammingError,
-)
+from sqlalchemy.exc import OperationalError, PendingRollbackError, ProgrammingError
 from sqlalchemy.orm import Session, sessionmaker
 
 import db.models as db_models
@@ -16,14 +12,10 @@ from db.base import database_engine
 from lib.constants import ActionEnum
 from lib.logger import get_logger
 
-SessionLocal = sessionmaker(
-    autocommit=False, autoflush=False, bind=database_engine
-)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=database_engine)
 
 
-def create_request_record(
-    timestamp: float, input_data: Input, allowance: dict
-):
+def create_request_record(timestamp: float, input_data: Input, allowance: dict):
     print("Writing request to db")
     session = SessionLocal()
     new_input = db_models.Record(
@@ -137,30 +129,20 @@ def load_cache():
 def get_top_level_domains():
     with SessionLocal() as session:
         try:
-            entries = session.query(
-                db_models.CacheEntry.top_level_domain
-            ).all()
+            entries = session.query(db_models.CacheEntry.top_level_domain).all()
         except sqlalchemy.exc.SQLAlchemyError as err:
             session.rollback()
             entries = []
-            print(
-                f"Error while loading top level domains: {err.args}, {str(err)}"
-            )
+            print(f"Error while loading top level domains: {err.args}, {str(err)}")
     return [entry[0] for entry in entries]
 
 
-def create_cache_entry(
-    top_level_domain: str, feature: str, values: dict, logger
-):
+def create_cache_entry(top_level_domain: str, feature: str, values: dict, logger):
     logger.debug("Writing to cache")
 
     with SessionLocal() as session:
         try:
-            entry = (
-                session.query(db_models.CacheEntry)
-                .filter_by(top_level_domain=top_level_domain)
-                .first()
-            )
+            entry = session.query(db_models.CacheEntry).filter_by(top_level_domain=top_level_domain).first()
 
             if entry is None:
                 entry = db_models.CacheEntry(
@@ -173,9 +155,9 @@ def create_cache_entry(
             else:
                 updated_values = entry.__getattribute__(feature)
                 updated_values.append(json.dumps(values))
-                session.query(db_models.CacheEntry).filter_by(
-                    top_level_domain=top_level_domain
-                ).update({feature: updated_values})
+                session.query(db_models.CacheEntry).filter_by(top_level_domain=top_level_domain).update(
+                    {feature: updated_values}
+                )
 
             session.commit()
         except (sqlalchemy.exc.SQLAlchemyError, TypeError) as err:
@@ -187,22 +169,14 @@ def create_cache_entry(
 
 def reset_cache(domain: str) -> int:
     logger = get_logger()
-    logger.info(
-        f"Resetting cache for domain: {'all' if domain == '' else domain}"
-    )
+    logger.info(f"Resetting cache for domain: {'all' if domain == '' else domain}")
 
     session = SessionLocal()
     try:
         if domain == "":
-            resulting_row_count: int = session.query(
-                db_models.CacheEntry
-            ).delete()
+            resulting_row_count: int = session.query(db_models.CacheEntry).delete()
         else:
-            resulting_row_count: int = (
-                session.query(db_models.CacheEntry)
-                .filter_by(top_level_domain=domain)
-                .delete()
-            )
+            resulting_row_count: int = session.query(db_models.CacheEntry).filter_by(top_level_domain=domain).delete()
         session.commit()
         session.close()
     except sqlalchemy.exc.SQLAlchemyError as err:
@@ -219,11 +193,7 @@ def read_cached_values_by_feature(key: str, domain: str) -> list:
     logger = get_logger()
     with SessionLocal() as session:
         try:
-            entry = (
-                session.query(db_models.CacheEntry)
-                .filter_by(top_level_domain=domain)
-                .first()
-            )
+            entry = session.query(db_models.CacheEntry).filter_by(top_level_domain=domain).first()
         except (ProgrammingError, AttributeError) as e:
             logger.exception(f"Reading cache failed: {e.args}")
             entry = []

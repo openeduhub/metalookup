@@ -1,8 +1,4 @@
-from core.metadata_base import (
-    ExtractionMethod,
-    MetadataBase,
-    ProbabilityDeterminationMethod,
-)
+from core.metadata_base import ExtractionMethod, MetadataBase, ProbabilityDeterminationMethod
 
 
 @MetadataBase.with_key()
@@ -149,9 +145,7 @@ class IFrameEmbeddable(MetadataBase):
     evaluate_header = True
     decision_threshold = 0
     false_list = ["same-origin", "sameorigin", "deny"]
-    probability_determination_method = (
-        ProbabilityDeterminationMethod.FALSE_LIST
-    )
+    probability_determination_method = ProbabilityDeterminationMethod.FALSE_LIST
 
 
 @MetadataBase.with_key()

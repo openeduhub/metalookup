@@ -82,12 +82,8 @@ def test_under_start(metadatabase: MetadataBase, mocker):
 @pytest.mark.asyncio
 async def test_setup(metadatabase: MetadataBase, mocker):
     metadatabase._download_tag_list = mocker.AsyncMock(return_value=[])
-    metadatabase._download_multiple_tag_lists = mocker.AsyncMock(
-        return_value=[]
-    )
-    extract_date_from_list_spy = mocker.spy(
-        metadatabase, "_extract_date_from_list"
-    )
+    metadatabase._download_multiple_tag_lists = mocker.AsyncMock(return_value=[])
+    extract_date_from_list_spy = mocker.spy(metadatabase, "_extract_date_from_list")
     prepare_tag_spy = mocker.spy(metadatabase, "_prepare_tag_list")
 
     await metadatabase.setup()
@@ -196,9 +192,7 @@ def test_decide_single(
 
     website_data.values = values
     metadatabase.decision_threshold = decision_threshold
-    metadatabase.probability_determination_method = (
-        ProbabilityDeterminationMethod.SINGLE_OCCURRENCE
-    )
+    metadatabase.probability_determination_method = ProbabilityDeterminationMethod.SINGLE_OCCURRENCE
     decision, explanation = metadatabase._decide(website_data=website_data)
 
     assert decision == expected_decision
@@ -256,9 +250,7 @@ def test_decide_number_of_elements(
     website_data.values = values
     website_data.raw_links = raw_links
     metadatabase.decision_threshold = decision_threshold
-    metadatabase.probability_determination_method = (
-        ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
-    )
+    metadatabase.probability_determination_method = ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
     decision, explanation = metadatabase._decide(website_data=website_data)
 
     assert decision == expected_decision
@@ -330,9 +322,7 @@ def test_false_list(
     website_data.values = values
     metadatabase.false_list = false_list
     metadatabase.decision_threshold = decision_threshold
-    metadatabase.probability_determination_method = (
-        ProbabilityDeterminationMethod.FALSE_LIST
-    )
+    metadatabase.probability_determination_method = ProbabilityDeterminationMethod.FALSE_LIST
     decision, explanation = metadatabase._decide(website_data=website_data)
 
     assert decision == expected_decision

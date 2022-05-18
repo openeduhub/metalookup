@@ -90,9 +90,7 @@ def test_extract_meta_container(mocker):
             api_process.terminate()
             api_process.join()
 
-    assert (
-        response.ok
-    ), f"Received response {response} is not OK. {response.text}"
+    assert response.ok, f"Received response {response} is not OK. {response.text}"
     # make sure, that our result actually complies with the promised open api spec.
     data = Output.parse_obj(json.loads(response.text))
     print(data)

@@ -21,12 +21,7 @@ from app.models import (
 )
 from app.schemas import CacheOutput, RecordSchema, RecordsOutput
 from cache.cache_manager import CacheManager
-from db.db import (
-    create_request_record,
-    create_response_record,
-    load_cache,
-    load_records,
-)
+from db.db import create_request_record, create_response_record, load_cache, load_records
 from lib.constants import (
     EXPLANATION,
     MESSAGE_EXCEPTION,
@@ -55,9 +50,7 @@ shared_status = shared_memory.ShareableList([0, " " * 1024])
 db.base.create_metadata(db.base.database_engine)
 
 
-def _convert_dict_to_output_model(
-    meta: dict, debug: bool = False
-) -> ExtractorTags:
+def _convert_dict_to_output_model(meta: dict, debug: bool = False) -> ExtractorTags:
     extractor_tags = ExtractorTags()
     for key in ExtractorTags.__fields__.keys():
         if key in meta.keys() and VALUES in meta[key]:
@@ -90,24 +83,14 @@ def extract_meta(input_data: Input):
 
     database_exception = ""
     try:
-        create_request_record(
-            starting_extraction, input_data=input_data, allowance=allowance
-        )
+        create_request_record(starting_extraction, input_data=input_data, allowance=allowance)
     except OperationalError as err:
         database_exception += (
-            "\nDatabase exception: "
-            + str(err.args)
-            + "".join(traceback.format_exception(None, err, err.__traceback__))
+            "\nDatabase exception: " + str(err.args) + "".join(traceback.format_exception(None, err, err.__traceback__))
         )
     # build a list of extractors that are set to True
-    whitelist = (
-        None
-        if input_data.allow_list is None
-        else [k for k, v in allowance.items() if v]
-    )
-    bypass_cache = (
-        False if input_data.bypass_cache is None else input_data.bypass_cache
-    )
+    whitelist = None if input_data.allow_list is None else [k for k, v in allowance.items() if v]
+    bypass_cache = False if input_data.bypass_cache is None else input_data.bypass_cache
     uuid = app.communicator.send_message(
         message=Message(
             url=input_data.url,
@@ -120,9 +103,7 @@ def extract_meta(input_data: Input):
 
     meta_data: dict = app.communicator.get_message(uuid)
     if meta_data:
-        extractor_tags = _convert_dict_to_output_model(
-            meta_data, input_data.debug
-        )
+        extractor_tags = _convert_dict_to_output_model(meta_data, input_data.debug)
 
         if MESSAGE_EXCEPTION in meta_data.keys():
             exception = meta_data[MESSAGE_EXCEPTION]
@@ -150,9 +131,7 @@ def extract_meta(input_data: Input):
         )
     except OperationalError as err:
         database_exception += (
-            "\nDatabase exception: "
-            + str(err.args)
-            + "".join(traceback.format_exception(None, err, err.__traceback__))
+            "\nDatabase exception: " + str(err.args) + "".join(traceback.format_exception(None, err, err.__traceback__))
         )
         out.exception += database_exception
 
@@ -186,11 +165,7 @@ def ping():
     response_model=ProgressOutput,
 )
 def get_progress(progress_input: ProgressInput):
-    if (
-        progress_input.url != ""
-        and shared_status[1] != ""
-        and shared_status[1] in progress_input.url
-    ):
+    if progress_input.url != "" and shared_status[1] != "" and shared_status[1] in progress_input.url:
         progress = round(shared_status[0] / NUMBER_OF_EXTRACTORS, 2)
     else:
         progress = -1

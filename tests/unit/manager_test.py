@@ -59,10 +59,7 @@ def test_handle_content(manager: Manager, mocker):
 
     manager._handle_content(request)
 
-    assert (
-        manager.metadata_manager.get_instance().load_website_data.call_count
-        == 0
-    )
+    assert manager.metadata_manager.get_instance().load_website_data.call_count == 0
     assert manager.metadata_manager.get_instance().reset.call_count == 0
 
     allow_list = {}
@@ -84,8 +81,7 @@ def test_handle_content(manager: Manager, mocker):
 
     assert manager.metadata_manager.start.call_count == 1
 
-    is_extract_meta_data_called_with_empty_html = (
-        manager.metadata_manager.start.call_args_list[0][1]
-        == {"message": request["some_uuid"]}
-    )
+    is_extract_meta_data_called_with_empty_html = manager.metadata_manager.start.call_args_list[0][1] == {
+        "message": request["some_uuid"]
+    }
     assert is_extract_meta_data_called_with_empty_html

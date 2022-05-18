@@ -17,15 +17,9 @@ register_adapter(ActionEnum, adapt_action_enum)
 
 class RecordSchema(Output, Input):
     id: int = Field(default=-1, description="Primary key")
-    timestamp: float = Field(
-        default=-1, description="timestamp in milliseconds"
-    )
-    start_time: float = Field(
-        default=-1, description="timestamp of start in milliseconds"
-    )
-    action: ActionEnum = Field(
-        default=ActionEnum.NONE, description="Either 'response' or 'request'"
-    )
+    timestamp: float = Field(default=-1, description="timestamp in milliseconds")
+    start_time: float = Field(default=-1, description="timestamp of start in milliseconds")
+    action: ActionEnum = Field(default=ActionEnum.NONE, description="Either 'response' or 'request'")
     allow_list: str = Field(
         default="",
         description="Overwrite of original allow_list. Storing as json string",

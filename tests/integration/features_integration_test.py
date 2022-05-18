@@ -10,16 +10,7 @@ import pytest
 from tldextract.tldextract import ExtractResult, TLDExtract
 
 from app.communication import Message
-from app.splash_models import (
-    HAR,
-    Cookie,
-    Entry,
-    Header,
-    Log,
-    Request,
-    Response,
-    SplashResponse,
-)
+from app.splash_models import HAR, Cookie, Entry, Header, Log, Request, Response, SplashResponse
 from core.website_manager import WebsiteData
 from features.cookies import Cookies
 from features.extract_from_files import ExtractFromFiles
@@ -54,11 +45,7 @@ def mock_website_data(
     if har is not None and header is not None:
         raise ValueError("Cannot provide both har and header!")
 
-    mock_extractor = mock.Mock(
-        return_value=ExtractResult(
-            domain="cnn", suffix="com", subdomain="forms.news"
-        )
-    )
+    mock_extractor = mock.Mock(return_value=ExtractResult(domain="cnn", suffix="com", subdomain="forms.news"))
 
     url = url or "https://forums.news.cnn.com/"
     html = html or "<html></html>"
@@ -84,9 +71,7 @@ def mock_website_data(
             whitelist=None,
             _shared_memory_name="",
         ),
-        tld_extractor=mock_extractor
-        if url is None
-        else TLDExtract(cache_dir=None),
+        tld_extractor=mock_extractor if url is None else TLDExtract(cache_dir=None),
         logger=get_logger(),
     )
 
@@ -214,9 +199,7 @@ async def test_extract_from_files():
     feature = ExtractFromFiles(logger)
 
     await feature.setup()
-    feature.start = _test_extract_from_files_start_wrapper.__get__(
-        feature, ExtractFromFiles
-    )
+    feature.start = _test_extract_from_files_start_wrapper.__get__(feature, ExtractFromFiles)
 
     html = """<a href=\"arbeitsblatt_analog_losung.pdf\" target=\"_blank\">
            Arbeitsblatt analog L\u00f6sung.pdf</a>

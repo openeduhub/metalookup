@@ -6,13 +6,7 @@ import uvicorn as uvicorn
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
-from lib.constants import (
-    ACCESSIBILITY,
-    DESKTOP,
-    LIGHTHOUSE_EXTRACTOR,
-    MOBILE,
-    SCORE,
-)
+from lib.constants import ACCESSIBILITY, DESKTOP, LIGHTHOUSE_EXTRACTOR, MOBILE, SCORE
 from lib.settings import ACCESSIBILITY_TIMEOUT, LIGHTHOUSE_API_PORT, VERSION
 
 app = FastAPI(title=LIGHTHOUSE_EXTRACTOR, version=str(VERSION))
@@ -58,12 +52,7 @@ def accessibility(input_data: Input):
         stderr=subprocess.STDOUT,
     )
 
-    lighthouse_output = "".join(
-        [
-            line.decode()
-            for line in iter(lighthouse_process.stdout.readline, b"")
-        ]
-    )
+    lighthouse_output = "".join([line.decode() for line in iter(lighthouse_process.stdout.readline, b"")])
     try:
         lighthouse_output = json.loads(lighthouse_output)
     except json.decoder.JSONDecodeError as e:
@@ -73,9 +62,7 @@ def accessibility(input_data: Input):
     output.score = [-1.0]
     try:
         if "runtimeError" not in lighthouse_output.keys():
-            output.score = lighthouse_output["categories"][
-                input_data.category
-            ][SCORE]
+            output.score = lighthouse_output["categories"][input_data.category][SCORE]
             if isinstance(output.score, float):
                 output.score = [output.score]
     except KeyError:
@@ -90,6 +77,4 @@ def ping():
 
 
 if __name__ == "__main__":
-    uvicorn.run(
-        app, host="0.0.0.0", port=LIGHTHOUSE_API_PORT, log_level="info"
-    )
+    uvicorn.run(app, host="0.0.0.0", port=LIGHTHOUSE_API_PORT, log_level="info")

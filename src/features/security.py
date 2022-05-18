@@ -18,14 +18,11 @@ class Security(MetadataBase):
     header_checks: dict[str, Callable[[str], bool]] = {
         "content-security-policy": lambda _: True,
         "referrer-policy": lambda _: True,
-        "cache-control": lambda s: "no-cache" in s.lower()
-        or "no-store" in s.lower(),
+        "cache-control": lambda s: "no-cache" in s.lower() or "no-store" in s.lower(),
         "x-content-type-options": lambda s: s.lower() == "nosniff",
-        "x-frame-options": lambda s: s.lower() == "deny"
-        or s.lower() == "sameorigin",
+        "x-frame-options": lambda s: s.lower() == "deny" or s.lower() == "sameorigin",
         "x-xss-protection": lambda s: "1;mode=block" in s.lower(),
-        "strict-transport-security": lambda s: "includesubdomains"
-        in s.lower(),
+        "strict-transport-security": lambda s: "includesubdomains" in s.lower(),
     }
 
     async def _start(self, website_data: WebsiteData) -> list[str]:
@@ -36,19 +33,15 @@ class Security(MetadataBase):
         return [
             field
             for field, check in self.header_checks.items()
-            if field in website_data.headers
-            and check(website_data.headers[field])
+            if field in website_data.headers and check(website_data.headers[field])
         ]
 
-    def _decide(
-        self, website_data: WebsiteData
-    ) -> tuple[StarCase, list[Explanation]]:
+    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, list[Explanation]]:
         # fixme: Currently copy pasted from _start.
         passed = [
             field
             for field, check in self.header_checks.items()
-            if field in website_data.headers
-            and check(website_data.headers[field])
+            if field in website_data.headers and check(website_data.headers[field])
         ]
 
         return (

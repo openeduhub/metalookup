@@ -42,15 +42,9 @@ def load_raw_data_and_save_to_dataframe():
         "g_d_p_r",
     ]
     row_names = ["values", "probability", "isHappyCase", "time_for_completion"]
-    col_names = [
-        f"{key}.{row_name}"
-        for row_name in row_names
-        for key in meta_feature_keys
-    ]
+    col_names = [f"{key}.{row_name}" for row_name in row_names for key in meta_feature_keys]
 
-    col_names.extend(
-        ["time_until_complete", "time_for_extraction", "exception"]
-    )
+    col_names.extend(["time_until_complete", "time_for_extraction", "exception"])
 
     print("col_names")
     print(col_names)
@@ -110,11 +104,7 @@ def evaluator(want_details: bool = False):
         else:
             var = 0
 
-        print(
-            f"Total extraction time: {total_time}s or "
-            f"{total_time / len(df)}"
-            f"+-{var / len(df)}s per file."
-        )
+        print(f"Total extraction time: {total_time}s or " f"{total_time / len(df)}" f"+-{var / len(df)}s per file.")
     failed_evaluations = {}
 
     # Get rows with none content
@@ -128,15 +118,8 @@ def evaluator(want_details: bool = False):
     unique_values = []
     for row in gdpr_values:
         if isinstance(row, str):
-            row = (
-                row.replace("'", "")
-                .replace("[", "")
-                .replace("]", "")
-                .split(", ")
-            )
-            unique_values += [
-                element for element in row if element not in unique_values
-            ]
+            row = row.replace("'", "").replace("[", "").replace("]", "").split(", ")
+            unique_values += [element for element in row if element not in unique_values]
     print(f"Unique values in GDPR: {unique_values}")
 
     rslt_df = df[df.loc[:, "accessibility.probability"] < 0]
@@ -148,27 +131,19 @@ def evaluator(want_details: bool = False):
     df.insert(0, "accessibility", df.loc[:, "accessibility.probability"])
     df.insert(0, "found_ads", df.loc[:, "advertisement.probability"])
 
-    print(
-        f"Total urls with negative accessibility: {len(failed_evaluations['negative_accessibility'])}"
-    )
-    print(
-        f"Total urls with NaN in evaluation results: {len(failed_evaluations['nan_evaluation'])}"
-    )
+    print(f"Total urls with negative accessibility: {len(failed_evaluations['negative_accessibility'])}")
+    print(f"Total urls with NaN in evaluation results: {len(failed_evaluations['nan_evaluation'])}")
 
     # Cookie
     cookies_values = "cookies.values"
-    cookies_df = df.apply(
-        lambda df_row: regex_cookie_parameter(df_row[cookies_values]), axis=1
-    ).tolist()
+    cookies_df = df.apply(lambda df_row: regex_cookie_parameter(df_row[cookies_values]), axis=1).tolist()
     cookies_df = set(item for subl in cookies_df for item in subl)
     print("Unique cookies".center(120, "-"))
     print(cookies_df)
 
     # Domain
     domains = df.apply(
-        lambda df_row: regex_cookie_parameter(
-            df_row[cookies_values], parameter="domain"
-        ),
+        lambda df_row: regex_cookie_parameter(df_row[cookies_values], parameter="domain"),
         axis=1,
     ).tolist()
     domains = set(item for subl in domains for item in subl if item != "")
@@ -181,11 +156,7 @@ def evaluator(want_details: bool = False):
     for parameter in parameters:
         ads = df.loc[:, f"{parameter}.values"].tolist()
         ads = [ad.split(", ") for ad in ads if isinstance(ad, str)]
-        ads = set(
-            item.replace("'", "").replace("[", "").replace("]", "")
-            for sub in ads
-            for item in sub
-        )
+        ads = set(item.replace("'", "").replace("[", "").replace("]", "") for sub in ads for item in sub)
         print(f"{len(ads)} unique values for {parameter}".center(120, "-"))
         if want_details:
             print(ads)
@@ -205,18 +176,14 @@ def evaluator(want_details: bool = False):
     # Extensions
     extract_from_files_values = "extract_from_files.values"
     file_extensions = [
-        os.path.splitext(link)[-1]
-        if not (link == [] or isinstance(link, float))
-        else []
+        os.path.splitext(link)[-1] if not (link == [] or isinstance(link, float)) else []
         for link in df.loc[:, extract_from_files_values]
     ]
     file_extensions = set(x for x in file_extensions if x not in ([], ""))
     print("Unique file extensions".center(120, "-"))
     print(file_extensions)
 
-    df.insert(
-        0, "time_difference", df.loc[:, "time_for_extraction"].copy(deep=True)
-    )
+    df.insert(0, "time_difference", df.loc[:, "time_for_extraction"].copy(deep=True))
 
     # extract time_for_completion
     performance_columns = ["key", "average", "std", "domain"]
@@ -255,9 +222,7 @@ def evaluator(want_details: bool = False):
                             name=key,
                         )
                     )
-                df.loc[:, "time_difference"] = df.loc[
-                    :, "time_difference"
-                ].sub(df[column], fill_value=0)
+                df.loc[:, "time_difference"] = df.loc[:, "time_difference"].sub(df[column], fill_value=0)
 
     # Plotting
     fig_width = 500
@@ -356,11 +321,7 @@ def evaluator(want_details: bool = False):
         .properties(width=fig_width, height=fig_height)
     )
 
-    (
-        chart1 & chart3
-        | chart2 & performance_monitor
-        | difference_meta_overall
-    ).show()
+    (chart1 & chart3 | chart2 & performance_monitor | difference_meta_overall).show()
 
 
 if __name__ == "__main__":

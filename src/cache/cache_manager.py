@@ -4,26 +4,10 @@ import time
 
 from app.models import Explanation, StarCase
 from core.website_manager import Singleton
-from db.db import (
-    get_top_level_domains,
-    read_cached_values_by_feature,
-    reset_cache,
-)
-from lib.constants import (
-    ACCESSIBILITY,
-    EXPLANATION,
-    SECONDS_PER_DAY,
-    STAR_CASE,
-    TIME_REQUIRED,
-    TIMESTAMP,
-    VALUES,
-)
+from db.db import get_top_level_domains, read_cached_values_by_feature, reset_cache
+from lib.constants import ACCESSIBILITY, EXPLANATION, SECONDS_PER_DAY, STAR_CASE, TIME_REQUIRED, TIMESTAMP, VALUES
 from lib.logger import get_logger
-from lib.settings import (
-    BYPASS_CACHE,
-    CACHE_RETENTION_TIME_DAYS,
-    MINIMUM_REQUIRED_ENTRIES,
-)
+from lib.settings import BYPASS_CACHE, CACHE_RETENTION_TIME_DAYS, MINIMUM_REQUIRED_ENTRIES
 from lib.timing import get_utc_now, global_start
 from lib.tools import get_mean, get_unique_list
 
@@ -38,9 +22,7 @@ class CacheManager:
     def __init__(self):
         super().__init__()
         self._logger = get_logger()
-        self._logger.debug(
-            f"CacheManager loaded at {time.perf_counter() - global_start} since start"
-        )
+        self._logger.debug(f"CacheManager loaded at {time.perf_counter() - global_start} since start")
         self.reset()
         self._prepare_cache_manager()
 
@@ -65,13 +47,9 @@ class CacheManager:
         self._hosts = get_top_level_domains()
 
     def _prepare_cache_manager(self) -> None:
-        self._logger.debug(
-            f"get_top_level_domains at {time.perf_counter() - global_start} since start"
-        )
+        self._logger.debug(f"get_top_level_domains at {time.perf_counter() - global_start} since start")
         self.update_hosts()
-        self._logger.debug(
-            f"get_top_level_domains done at {time.perf_counter() - global_start} since start"
-        )
+        self._logger.debug(f"get_top_level_domains done at {time.perf_counter() - global_start} since start")
 
     def is_host_predefined(self) -> bool:
         return self._domain in self._hosts
@@ -90,9 +68,7 @@ class CacheManager:
 
     @staticmethod
     def is_cached_value_recent(timestamp: float) -> bool:
-        return timestamp >= (
-            get_utc_now() - CACHE_RETENTION_TIME_DAYS * SECONDS_PER_DAY
-        )
+        return timestamp >= (get_utc_now() - CACHE_RETENTION_TIME_DAYS * SECONDS_PER_DAY)
 
     def convert_cached_data(self, meta_data: list, key: str) -> dict:
         values = []

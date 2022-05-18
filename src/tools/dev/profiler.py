@@ -13,33 +13,23 @@ from lib.settings import METALOOKUP_RECORDS, PROFILING_HOST_NAME
 from lib.timing import get_utc_now
 from lib.tools import get_mean, get_std_dev, get_unique_list
 
-profiling_engine = create_database_engine(
-    PROFILING_HOST_NAME, "postgres", "postgres"
-)
-ProfilerSession = sessionmaker(
-    autocommit=False, autoflush=False, bind=profiling_engine
-)
+profiling_engine = create_database_engine(PROFILING_HOST_NAME, "postgres", "postgres")
+ProfilerSession = sessionmaker(autocommit=False, autoflush=False, bind=profiling_engine)
 
 
 def download_remote_records():
     payload = {}
     headers = {}
 
-    response = requests.request(
-        "GET", METALOOKUP_RECORDS, headers=headers, data=payload
-    )
+    response = requests.request("GET", METALOOKUP_RECORDS, headers=headers, data=payload)
 
     try:
         records = json.loads(response.text)["records"]
     except TypeError as err:
-        print(
-            f"Exception when loading records with {err.args}.\nPotentially due to outdated record schema. "
-        )
+        print(f"Exception when loading records with {err.args}.\nPotentially due to outdated record schema. ")
         sys.exit(1)
 
-    print(
-        f"----------------- Total number of evaluated records so far: {len(records)}"
-    )
+    print(f"----------------- Total number of evaluated records so far: {len(records)}")
 
     session = ProfilerSession()
     for record in records:
@@ -88,16 +78,12 @@ def print_schemas():
 def get_total_time():
     database: Session = ProfilerSession()
 
-    time_until_complete = database.execute(
-        'SELECT time_until_complete FROM "Record"'
-    )
+    time_until_complete = database.execute('SELECT time_until_complete FROM "Record"')
 
     total_time = 0
     for time_value in time_until_complete:
         total_time += time_value[0]
-    print(
-        f"----------------- Total time used to evaluate all records so far: {round(total_time)}s."
-    )
+    print(f"----------------- Total time used to evaluate all records so far: {round(total_time)}s.")
 
 
 def convert_meta_string_to_dict(meta: str) -> dict:
@@ -124,9 +110,7 @@ def parse_meta():
             if key not in time_per_feature.keys():
                 time_per_feature.update({key: []})
             if value is not None:
-                time_per_feature[key].append(
-                    float(value["time_for_completion"])
-                )
+                time_per_feature[key].append(float(value["time_for_completion"]))
 
     print("----------------- Total evaluation time per feature:")
     for key, value in time_per_feature.items():
@@ -239,9 +223,7 @@ def print_exceptions(maximum_age_in_seconds: int):
 
         print_data[exception] += 1
 
-    print(
-        f"----------------- Found exceptions of the last {round(maximum_age_in_seconds / SECONDS_PER_DAY, 2)} days."
-    )
+    print(f"----------------- Found exceptions of the last {round(maximum_age_in_seconds / SECONDS_PER_DAY, 2)} days.")
     print(f"All urls which caused exceptions: {get_unique_list(failure_urls)}")
     print(f"Total number of found exceptions: {len(print_data.items())}")
     for exception, value in print_data.items():

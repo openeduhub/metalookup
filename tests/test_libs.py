@@ -14,15 +14,11 @@ def _build_and_run_docker():
         new_dir = current_dir.parents[0]
         while "tests" in str(new_dir):
             new_dir = new_dir.parent
-        print(
-            f"Changing working directory from '{current_dir}' to '{new_dir}'"
-        )
+        print(f"Changing working directory from '{current_dir}' to '{new_dir}'")
         os.chdir(new_dir)
 
     print("Exporting requirements")
-    process = subprocess.call(
-        ["poetry export -o requirements.txt"], shell=True
-    )
+    process = subprocess.call(["poetry export -o requirements.txt"], shell=True)
     print(f"process after exporting requirements: {process}")
 
     # stopping any old container of the same name prior to launch
@@ -42,9 +38,7 @@ def _build_and_run_docker():
 
     print("building docker")
     process = subprocess.call(
-        [
-            "docker build -t community.docker.edu-sharing.com/oeh-search-meta:latest ."
-        ],
+        ["docker build -t community.docker.edu-sharing.com/oeh-search-meta:latest ."],
         shell=True,
     )
 
@@ -60,9 +54,7 @@ def _build_and_run_docker():
 
     print(f"process after building lighthouse docker: {process}")
 
-    process = subprocess.Popen(
-        ["docker-compose -f docker-compose.yml up"], shell=True
-    )
+    process = subprocess.Popen(["docker-compose -f docker-compose.yml up"], shell=True)
     print(f"process after docker-compose: {process}")
 
     # time needed for docker to launch and start the REST interface
@@ -71,13 +63,9 @@ def _build_and_run_docker():
     start = time.perf_counter()
     while time.perf_counter() - start < maximum_wait_time:
         try:
-            subprocess.check_output(
-                "docker ps | grep 'oeh-search-meta_extractor_1'", shell=True
-            )
+            subprocess.check_output("docker ps | grep 'oeh-search-meta_extractor_1'", shell=True)
         except subprocess.CalledProcessError:
-            print(
-                f"Waited {time.perf_counter() - start}s for containers to launch."
-            )
+            print(f"Waited {time.perf_counter() - start}s for containers to launch.")
             time.sleep(0.1)
 
     os.chdir(current_dir)

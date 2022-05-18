@@ -48,9 +48,7 @@ def test_decide(
 ):
     accessibility = Accessibility()
 
-    decision, explanation = accessibility._decide(
-        website_data=mock.Mock(score=score)
-    )
+    decision, explanation = accessibility._decide(website_data=mock.Mock(score=score))
 
     assert decision == expected_decision
     assert explanation == expected_explanation
