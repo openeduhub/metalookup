@@ -47,9 +47,7 @@ class Manager:
     # =========== LOOP ============
     def _handle_content(self, request: dict) -> None:
 
-        self._logger.info(
-            f"Received request: {request}, Number of items: {len(request.keys())}"
-        )
+        self._logger.info(f"Received request: {request}, Number of items: {len(request.keys())}")
         for uuid, message in request.items():
             self._logger.debug(f"message: {message}")
 
@@ -63,17 +61,13 @@ class Manager:
                 self._logger.exception(exception)
                 response = {MESSAGE_EXCEPTION: exception}
 
-            self._logger.debug(
-                f"got response at {time.perf_counter() - global_start} since start"
-            )
+            self._logger.debug(f"got response at {time.perf_counter() - global_start} since start")
             if WANT_PROFILING:
                 profiler.disable()  # noqa
                 profiler.dump_stats("profile.log")  # noqa
                 profiler.enable()  # noqa
 
-            self._logger.debug(
-                f"return response at {time.perf_counter() - global_start} since start"
-            )
+            self._logger.debug(f"return response at {time.perf_counter() - global_start} since start")
             self.manager_to_api_queue.put({uuid: response})
 
     def _handle_api_request(self) -> None:
@@ -81,16 +75,12 @@ class Manager:
             request = self.api_to_manager_queue.get(block=True, timeout=None)
             if isinstance(request, dict):
                 now = time.perf_counter()
-                self._logger.debug(
-                    f"Handle content at {now - global_start} since start"
-                )
+                self._logger.debug(f"Handle content at {now - global_start} since start")
                 self._handle_content(request)
         except Empty:
             self._logger.debug("api_to_manager_queue was Empty.")
         except AttributeError:
-            self._logger.exception(
-                "Probably, api <-> manager queues are None."
-            )
+            self._logger.exception("Probably, api <-> manager queues are None.")
 
     def run(self) -> None:
         signal.signal(signal.SIGINT, self._graceful_shutdown)
@@ -121,9 +111,7 @@ class Manager:
         sys.exit(0)
 
 
-def launch_api_server(
-    queue: multiprocessing.Queue, return_queue: multiprocessing.Queue
-) -> None:
+def launch_api_server(queue: multiprocessing.Queue, return_queue: multiprocessing.Queue) -> None:
     app.communicator = QueueCommunicator(queue, return_queue)
     uvicorn.run(app, host="0.0.0.0", port=API_PORT, log_level="debug")
 

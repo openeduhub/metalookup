@@ -51,31 +51,19 @@ class WebsiteData:
             headers=SPLASH_HEADERS,
             params={},
         )
-        return SplashResponse.parse_obj(
-            json.loads(response.content.decode("UTF-8"))
-        )
+        return SplashResponse.parse_obj(json.loads(response.content.decode("UTF-8")))
 
     @classmethod
-    def from_message(
-        cls, message: Message, tld_extractor: TLDExtract, logger: Logger
-    ) -> "WebsiteData":
+    def from_message(cls, message: Message, tld_extractor: TLDExtract, logger: Logger) -> "WebsiteData":
         def top_level_domain(url: str) -> str:
-            host = tld_extractor(
-                url=url.replace("http://", "").replace("https://", "")
-            )
+            host = tld_extractor(url=url.replace("http://", "").replace("https://", ""))
             domain = [host.subdomain, host.domain, host.suffix]
             return ".".join([element for element in domain if element != ""])
 
-        def extract_raw_links(
-            soup: BeautifulSoup, image_links: list[str]
-        ) -> list[str]:
-            source_regex = re.compile(
-                r"src\=[\"|\']([\w\d\:\/\.\-\?\=]+)[\"|\']"
-            )
+        def extract_raw_links(soup: BeautifulSoup, image_links: list[str]) -> list[str]:
+            source_regex = re.compile(r"src\=[\"|\']([\w\d\:\/\.\-\?\=]+)[\"|\']")
             logger.debug("extracting raw links")
-            unique_tags = get_unique_list(
-                [tag.name for tag in soup.find_all()]
-            )
+            unique_tags = get_unique_list([tag.name for tag in soup.find_all()])
             logger.debug(f"unique_tags: {unique_tags}")
             if SCRIPT in unique_tags:
                 unique_tags.remove(SCRIPT)
@@ -104,14 +92,8 @@ class WebsiteData:
                 for attribute in attributes
                 if element.has_attr(attribute)
             ]
-            logger.debug(
-                f"Found links at {time.perf_counter() - global_start} since start: {len(links)}"
-            )
-            return get_unique_list(
-                links
-                + [el for el in image_links if el is not None]
-                + script_links
-            )
+            logger.debug(f"Found links at {time.perf_counter() - global_start} since start: {len(links)}")
+            return get_unique_list(links + [el for el in image_links if el is not None] + script_links)
 
         def extract_extensions(raw_links: list[str]) -> list[str]:
             def extension_from_link(link: str):
@@ -178,9 +160,7 @@ class Singleton:
         return self._instance
 
     def __call__(self) -> NoReturn:
-        raise TypeError(
-            "Singletons must only be accessed through `get_instance()`."
-        )
+        raise TypeError("Singletons must only be accessed through `get_instance()`.")
 
     def __instancecheck__(self, inst) -> bool:
         return isinstance(inst, self._class)

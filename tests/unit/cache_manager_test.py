@@ -5,22 +5,14 @@ import pytest
 
 from app.models import Explanation, StarCase
 from cache.cache_manager import CacheManager
-from lib.constants import (
-    ACCESSIBILITY,
-    EXPLANATION,
-    STAR_CASE,
-    TIMESTAMP,
-    VALUES,
-)
+from lib.constants import ACCESSIBILITY, EXPLANATION, STAR_CASE, TIMESTAMP, VALUES
 from lib.timing import get_utc_now
 
 
 @pytest.fixture
 def cache_manager(mocker):
     with mock.patch("cache.cache_manager.get_logger"):
-        with mock.patch(
-            "cache.cache_manager.CacheManager._class._prepare_cache_manager"
-        ):
+        with mock.patch("cache.cache_manager.CacheManager._class._prepare_cache_manager"):
             manager = CacheManager.get_instance()
 
     return manager
@@ -33,9 +25,7 @@ def cache_manager(mocker):
 
 def test_init(mocker):
     with mock.patch("cache.cache_manager.get_logger"):
-        with mock.patch(
-            "cache.cache_manager.CacheManager._class._prepare_cache_manager"
-        ) as prepare_cache_manager:
+        with mock.patch("cache.cache_manager.CacheManager._class._prepare_cache_manager") as prepare_cache_manager:
             manager = CacheManager.get_instance()
             assert manager._logger.debug.call_count == 1
             assert prepare_cache_manager.call_count == 1
@@ -63,22 +53,14 @@ def test_is_host_predefined(cache_manager: CacheManager):
 
 def test_is_enough_cached_data_present(cache_manager: CacheManager):
     cache_entries = [f'{{"timestamp": {get_utc_now()}}}'] * 1
-    with mock.patch(
-        "cache.cache_manager.read_cached_values_by_feature"
-    ) as read_cache:
+    with mock.patch("cache.cache_manager.read_cached_values_by_feature") as read_cache:
         read_cache.return_value = cache_entries
-        assert (
-            cache_manager.is_enough_cached_data_present(ACCESSIBILITY) is False
-        )
+        assert cache_manager.is_enough_cached_data_present(ACCESSIBILITY) is False
 
     cache_entries = [f'{{"timestamp": {get_utc_now()}}}'] * 5
-    with mock.patch(
-        "cache.cache_manager.read_cached_values_by_feature"
-    ) as read_cache:
+    with mock.patch("cache.cache_manager.read_cached_values_by_feature") as read_cache:
         read_cache.return_value = cache_entries
-        assert (
-            cache_manager.is_enough_cached_data_present(ACCESSIBILITY) is True
-        )
+        assert cache_manager.is_enough_cached_data_present(ACCESSIBILITY) is True
 
 
 """

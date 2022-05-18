@@ -43,9 +43,7 @@ class MetadataBase:
     comment_symbol: str = ""
     evaluate_header: bool = False
     decision_threshold: float = -1
-    probability_determination_method: ProbabilityDeterminationMethod = (
-        ProbabilityDeterminationMethod.SINGLE_OCCURRENCE
-    )
+    probability_determination_method: ProbabilityDeterminationMethod = ProbabilityDeterminationMethod.SINGLE_OCCURRENCE
     extraction_method: ExtractionMethod = ExtractionMethod.MATCH_DIRECTLY
     match_rules = None
 
@@ -82,9 +80,7 @@ class MetadataBase:
         """
 
         def decorator(cls: Type["MetadataBase"]) -> Type["MetadataBase"]:
-            cls.key = (
-                key or re.sub("" r"(?<!^)(?=[A-Z])", "_", cls.__name__).lower()
-            )
+            cls.key = key or re.sub("" r"(?<!^)(?=[A-Z])", "_", cls.__name__).lower()
             return cls
 
         return decorator
@@ -96,28 +92,19 @@ class MetadataBase:
         # self.setup()
 
     @staticmethod
-    def _get_ratio_of_elements(
-        website_data: WebsiteData,
-    ) -> tuple[float, list[Explanation]]:
+    def _get_ratio_of_elements(website_data: WebsiteData) -> tuple[float, list[Explanation]]:
         if website_data.values and len(website_data.raw_links) > 0:
-            ratio = round(
-                len(website_data.values) / len(website_data.raw_links), 2
-            )
+            ratio = round(len(website_data.values) / len(website_data.raw_links), 2)
             explanation = [Explanation.FoundListMatches]
         else:
             ratio = 0
             explanation = [Explanation.FoundNoListMatches]
         return ratio, explanation
 
-    def _calculate_probability_from_ratio(
-        self, decision_indicator: float
-    ) -> float:
+    def _calculate_probability_from_ratio(self, decision_indicator: float) -> float:
         return (
             round(
-                abs(
-                    (decision_indicator - self.decision_threshold)
-                    / (1 - self.decision_threshold)
-                ),
+                abs((decision_indicator - self.decision_threshold) / (1 - self.decision_threshold)),
                 2,
             )
             if self.decision_threshold != 1
@@ -142,55 +129,32 @@ class MetadataBase:
                 decision = StarCase.FIVE
         return decision
 
-    def _decide(
-        self, website_data: WebsiteData
-    ) -> tuple[StarCase, list[Explanation]]:
-        if (
-            self.probability_determination_method
-            == ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS
-        ):
-            decision_indicator, explanation = self._get_ratio_of_elements(
-                website_data=website_data
-            )
+    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, list[Explanation]]:
+        if self.probability_determination_method == ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS:
+            decision_indicator, explanation = self._get_ratio_of_elements(website_data=website_data)
             star_case = self._get_decision(decision_indicator)
-        elif (
-            self.probability_determination_method
-            == ProbabilityDeterminationMethod.SINGLE_OCCURRENCE
-        ):
+        elif self.probability_determination_method == ProbabilityDeterminationMethod.SINGLE_OCCURRENCE:
             (
                 star_case,
                 explanation,
             ) = self._decide_single_occurrence(website_data)
-        elif (
-            self.probability_determination_method
-            == ProbabilityDeterminationMethod.FALSE_LIST
-        ):
+        elif self.probability_determination_method == ProbabilityDeterminationMethod.FALSE_LIST:
             star_case, explanation = self._decide_false_list(website_data)
         else:
             star_case, explanation = self._get_default_decision()
 
         return star_case, explanation
 
-    def _decide_single_occurrence(
-        self, website_data: WebsiteData
-    ) -> tuple[StarCase, list[Explanation]]:
+    def _decide_single_occurrence(self, website_data: WebsiteData) -> tuple[StarCase, list[Explanation]]:
 
-        an_occurence_has_been_found: bool = (
-            website_data.values and len(website_data.values) > 0
-        )
+        an_occurence_has_been_found: bool = website_data.values and len(website_data.values) > 0
         explanation = (
-            [Explanation.FoundListMatches]
-            if an_occurence_has_been_found
-            else [Explanation.FoundNoListMatches]
+            [Explanation.FoundListMatches] if an_occurence_has_been_found else [Explanation.FoundNoListMatches]
         )
-        star_case = (
-            StarCase.ZERO if an_occurence_has_been_found else StarCase.FIVE
-        )
+        star_case = StarCase.ZERO if an_occurence_has_been_found else StarCase.FIVE
         return star_case, explanation
 
-    def _decide_false_list(
-        self, website_data: WebsiteData
-    ) -> tuple[StarCase, list[Explanation]]:
+    def _decide_false_list(self, website_data: WebsiteData) -> tuple[StarCase, list[Explanation]]:
         decision = StarCase.FIVE
         explanation = [Explanation.NoKnockoutMatchFound]
         for false_element in self.false_list:
@@ -207,9 +171,7 @@ class MetadataBase:
         explanation = [Explanation.none]
         return decision, explanation
 
-    async def start(
-        self, site: WebsiteData
-    ) -> tuple[float, list[str], StarCase, list[Explanation]]:
+    async def start(self, site: WebsiteData) -> tuple[float, list[str], StarCase, list[Explanation]]:
         self._logger.info(f"Starting {self.__class__.__name__}.")
         before = get_utc_now()
         values = await self._start(website_data=site)
@@ -243,18 +205,14 @@ class MetadataBase:
         values = [
             url
             for url in website_data.raw_links
-            if self.match_rules.should_block(
-                url=url, options=self.adblockparser_options
-            )
+            if self.match_rules.should_block(url=url, options=self.adblockparser_options)
         ]
         return values
 
     def _work_html_content(self, website_data: WebsiteData) -> list:
         values = []
 
-        self._logger.info(
-            f"Working on html content: {self.__class__.__name__},{len(self.tag_list)}"
-        )
+        self._logger.info(f"Working on html content: {self.__class__.__name__},{len(self.tag_list)}")
         if self.tag_list:
             if self.extraction_method == ExtractionMethod.MATCH_DIRECTLY:
                 html = "".join(website_data.html.lower())
@@ -264,20 +222,13 @@ class MetadataBase:
 
         return values
 
-    async def _download_multiple_tag_lists(
-        self, session: ClientSession
-    ) -> list[str]:
-        tasks = [
-            self._download_tag_list(url=url, session=session)
-            for url in self.urls
-        ]
+    async def _download_multiple_tag_lists(self, session: ClientSession) -> list[str]:
+        tasks = [self._download_tag_list(url=url, session=session) for url in self.urls]
         tag_lists = await asyncio.gather(*tasks)
         complete_list = list(tag for tag_list in tag_lists for tag in tag_list)
         return complete_list
 
-    async def _download_tag_list(
-        self, url: str, session: ClientSession
-    ) -> list[str]:
+    async def _download_tag_list(self, url: str, session: ClientSession) -> list[str]:
         taglist_path = "tag_lists/"
         if not os.path.isdir(taglist_path):
             os.makedirs(taglist_path, exist_ok=True)
@@ -295,19 +246,13 @@ class MetadataBase:
                     with open(taglist_path + filename, "w+") as file:
                         file.write(text)
             else:
-                self._logger.exception(
-                    f"Downloading tag list from '{url}' yielded status code '{result.status}'."
-                )
+                self._logger.exception(f"Downloading tag list from '{url}' yielded status code '{result.status}'.")
                 tag_list = []
         return tag_list
 
     def _extract_date_from_list(self) -> None:
-        expires_expression = re.compile(
-            r"[!#:]\sExpires[:=]\s?(\d+)\s?\w{0,4}"
-        )
-        last_modified_expression = re.compile(
-            r"[!#]\sLast modified:\s(\d\d\s\w{3}\s\d{4}\s\d\d:\d\d\s\w{3})"
-        )
+        expires_expression = re.compile(r"[!#:]\sExpires[:=]\s?(\d+)\s?\w{0,4}")
+        last_modified_expression = re.compile(r"[!#]\sLast modified:\s(\d\d\s\w{3}\s\d{4}\s\d\d:\d\d\s\w{3})")
         for line in self.tag_list[0:10]:
             match = last_modified_expression.match(line)
             if match:
@@ -317,21 +262,14 @@ class MetadataBase:
             if match:
                 self.tag_list_expires = int(match.group(1))
 
-            if (
-                self.tag_list_last_modified != ""
-                and self.tag_list_expires != 0
-            ):
+            if self.tag_list_last_modified != "" and self.tag_list_expires != 0:
                 break
 
     def _prepare_tag_list(self) -> None:
         tag_list = [
             el.lower()
             for el in self.tag_list
-            if el != ""
-            and (
-                self.comment_symbol == ""
-                or not el.startswith(self.comment_symbol)
-            )
+            if el != "" and (self.comment_symbol == "" or not el.startswith(self.comment_symbol))
         ]
 
         self.tag_list = list(OrderedDict.fromkeys(tag_list))
@@ -339,13 +277,9 @@ class MetadataBase:
     async def _setup_downloads(self) -> None:
         async with ClientSession() as session:
             if self.urls:
-                self.tag_list = await self._download_multiple_tag_lists(
-                    session=session
-                )
+                self.tag_list = await self._download_multiple_tag_lists(session=session)
             elif self.url != "":
-                self.tag_list = await self._download_tag_list(
-                    url=self.url, session=session
-                )
+                self.tag_list = await self._download_tag_list(url=self.url, session=session)
 
     async def setup(self) -> None:
         """Child function."""

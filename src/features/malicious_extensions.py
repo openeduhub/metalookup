@@ -191,13 +191,10 @@ class MaliciousExtensions(MetadataBase):
         return [
             extension
             for extension in website_data.extensions
-            if extension.replace(".", "")
-            in set(self.malicious_extensions + self.more_harmless_extensions)
+            if extension.replace(".", "") in set(self.malicious_extensions + self.more_harmless_extensions)
         ]
 
-    def _decide(
-        self, website_data: WebsiteData
-    ) -> tuple[StarCase, list[Explanation]]:
+    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, list[Explanation]]:
         decision = StarCase.ZERO
         explanation = Explanation.none
         if len(website_data.values) == 0:
@@ -206,9 +203,7 @@ class MaliciousExtensions(MetadataBase):
             for value in website_data.values:
                 if value.replace(".", "") in self.malicious_extensions:
                     decision = StarCase.ZERO
-                    explanation = (
-                        Explanation.PotentiallyMaliciousExtensionFound
-                    )
+                    explanation = Explanation.PotentiallyMaliciousExtensionFound
                     break
                 elif value.replace(".", "") in self.more_harmless_extensions:
                     decision = StarCase.FOUR

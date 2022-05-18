@@ -30,16 +30,12 @@ class Accessibility(MetadataBase):
         }
         container_url = f"{ACCESSIBILITY_URL}/{ACCESSIBILITY}"
 
-        response = await session.get(
-            url=container_url, timeout=ACCESSIBILITY_TIMEOUT, json=params
-        )
+        response = await session.get(url=container_url, timeout=ACCESSIBILITY_TIMEOUT, json=params)
 
         if response.status == 200:
             return json.loads(await response.text())["score"]
         else:
-            raise Exception(
-                f"Request to lighthouse failed with {response.status}: {await response.text()}"
-            )
+            raise Exception(f"Request to lighthouse failed with {response.status}: {await response.text()}")
 
     async def _start(self, website_data: WebsiteData) -> list[str]:
         async with ClientSession() as session:
@@ -58,9 +54,7 @@ class Accessibility(MetadataBase):
         website_data.score = (score[0] + score[1]) / 2
         return [str(website_data.score)]
 
-    def _decide(
-        self, website_data: WebsiteData
-    ) -> tuple[StarCase, list[Explanation]]:
+    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, list[Explanation]]:
         if score := getattr(website_data, "score", False):
             if score <= self.star_levels[0]:
                 return StarCase.ZERO, [Explanation.AccessibilityTooLow]

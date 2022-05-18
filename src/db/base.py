@@ -8,9 +8,7 @@ from lib.settings import NUMBER_OF_EXTRACTORS, STORAGE_HOST_NAME
 
 def create_database_engine(host_name: str, user_name: str, user_password: str):
     database_name = "storage"
-    sql_url = (
-        f"postgresql://{user_name}:{user_password}@{host_name}/{database_name}"
-    )
+    sql_url = f"postgresql://{user_name}:{user_password}@{host_name}/{database_name}"
     return create_engine(
         sql_url,
         pool_size=NUMBER_OF_EXTRACTORS,
@@ -18,9 +16,7 @@ def create_database_engine(host_name: str, user_name: str, user_password: str):
     )
 
 
-database_engine = create_database_engine(
-    STORAGE_HOST_NAME, "postgres", "postgres"
-)
+database_engine = create_database_engine(STORAGE_HOST_NAME, "postgres", "postgres")
 
 Base = declarative_base()
 

@@ -34,14 +34,7 @@ from features.javascript import Javascript
 from features.malicious_extensions import MaliciousExtensions
 from features.metatag_explorer import MetatagExplorer
 from features.security import Security
-from lib.constants import (
-    ACCESSIBILITY,
-    EXPLANATION,
-    STAR_CASE,
-    TIME_REQUIRED,
-    TIMESTAMP,
-    VALUES,
-)
+from lib.constants import ACCESSIBILITY, EXPLANATION, STAR_CASE, TIME_REQUIRED, TIMESTAMP, VALUES
 from lib.logger import get_logger
 from lib.timing import get_utc_now, global_start
 
@@ -57,17 +50,11 @@ class MetadataManager:
         self._setup_extractors()
         self.tld_extractor: TLDExtract = TLDExtract(cache_dir=None)
 
-    def _setup_extractor(
-        self, extractor_class: type(MetadataBase)
-    ) -> MetadataBase:
-        self._logger.debug(
-            f"Starting setup for {extractor_class} {get_utc_now()}"
-        )
+    def _setup_extractor(self, extractor_class: type(MetadataBase)) -> MetadataBase:
+        self._logger.debug(f"Starting setup for {extractor_class} {get_utc_now()}")
         extractor = extractor_class(self._logger)
         extractor.setup()
-        self._logger.debug(
-            f"Finished setup for {extractor_class} {get_utc_now()}"
-        )
+        self._logger.debug(f"Finished setup for {extractor_class} {get_utc_now()}")
         return extractor
 
     def _setup_extractors(self) -> None:
@@ -100,9 +87,7 @@ class MetadataManager:
             self._setup_extractor(extractor) for extractor in extractors
         ]
 
-    def is_feature_whitelisted_for_cache(
-        self, extractor: type(MetadataBase)
-    ) -> bool:
+    def is_feature_whitelisted_for_cache(self, extractor: type(MetadataBase)) -> bool:
         for feature in self.blacklisted_for_cache:
             if isinstance(extractor, feature):
                 return False
@@ -121,14 +106,10 @@ class MetadataManager:
         shared_status = shared_memory.ShareableList(name=shared_memory_name)
         shared_status[0] = 0
 
-        async def run_extractor_with_key(
-            key: str, extractor: MetadataBase, site: WebsiteData
-        ) -> tuple[str, dict]:
+        async def run_extractor_with_key(key: str, extractor: MetadataBase, site: WebsiteData) -> tuple[str, dict]:
             """Call the extractor and pack its results into a tuple containing also the key"""
             try:
-                duration, values, stars, explanation = await extractor.start(
-                    site=site
-                )
+                duration, values, stars, explanation = await extractor.start(site=site)
                 return key, {
                     VALUES: values,
                     TIME_REQUIRED: duration,
@@ -145,21 +126,13 @@ class MetadataManager:
                     not cache_manager.bypass
                     and self.is_feature_whitelisted_for_cache(extractor)
                     and cache_manager.is_host_predefined()
-                    and cache_manager.is_enough_cached_data_present(
-                        extractor.key
-                    )
+                    and cache_manager.is_enough_cached_data_present(extractor.key)
                 ):
-                    extracted_metadata: dict = (
-                        cache_manager.get_predefined_metadata(extractor.key)
-                    )
+                    extracted_metadata: dict = cache_manager.get_predefined_metadata(extractor.key)
                     data.update(extracted_metadata)
                     shared_status[0] += 1
                 else:
-                    tasks.append(
-                        run_extractor_with_key(
-                            key=extractor.key, extractor=extractor, site=site
-                        )
-                    )
+                    tasks.append(run_extractor_with_key(key=extractor.key, extractor=extractor, site=site))
 
         results: list[tuple[str, dict]] = await asyncio.gather(*tasks)
         shared_status[0] += len(tasks)
@@ -177,9 +150,7 @@ class MetadataManager:
         allow_list: list[str],
     ):
         for feature, meta_data in extracted_metadata.items():
-            if (
-                allow_list is None or feature in allow_list
-            ) and Explanation.Cached not in meta_data[EXPLANATION]:
+            if (allow_list is None or feature in allow_list) and Explanation.Cached not in meta_data[EXPLANATION]:
                 values = []
                 if feature == ACCESSIBILITY:
                     values = meta_data[VALUES]
@@ -199,14 +170,9 @@ class MetadataManager:
                 )
 
     def start(self, message: Message) -> dict:
+        self._logger.debug(f"Start metadata_manager at {time.perf_counter() - global_start} since start")
 
-        self._logger.debug(
-            f"Start metadata_manager at {time.perf_counter() - global_start} since start"
-        )
-
-        shared_status = shared_memory.ShareableList(
-            name=message._shared_memory_name
-        )
+        shared_status = shared_memory.ShareableList(name=message._shared_memory_name)
         url = message.url
         if len(url) > 1024:
             url = url[0:1024]
@@ -221,9 +187,7 @@ class MetadataManager:
             tld_extractor=self.tld_extractor,
         )
 
-        self._logger.debug(
-            f"WebsiteManager loaded at {time.perf_counter() - global_start} since start"
-        )
+        self._logger.debug(f"WebsiteManager loaded at {time.perf_counter() - global_start} since start")
         cache_manager = CacheManager.get_instance()
         cache_manager.update_to_current_domain(
             site.domain,
@@ -231,9 +195,7 @@ class MetadataManager:
         )
 
         now = time.perf_counter()
-        self._logger.debug(
-            f"starting_extraction at {now - global_start} since start"
-        )
+        self._logger.debug(f"starting_extraction at {now - global_start} since start")
         starting_extraction = get_utc_now()
         extracted_meta_data = asyncio.run(
             self._extract_meta_data(
@@ -249,9 +211,7 @@ class MetadataManager:
             allow_list=message.whitelist,
         )
 
-        self._logger.debug(
-            f"extracted_meta_data at {time.perf_counter() - global_start} since start"
-        )
+        self._logger.debug(f"extracted_meta_data at {time.perf_counter() - global_start} since start")
         extracted_meta_data.update(
             {
                 "time_for_extraction": get_utc_now() - starting_extraction,

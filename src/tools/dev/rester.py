@@ -6,13 +6,7 @@ from json.decoder import JSONDecodeError
 import requests
 from evaluator import RESULT_FILE_PATH
 
-from lib.constants import (
-    MESSAGE_ALLOW_LIST,
-    MESSAGE_HAR,
-    MESSAGE_HEADERS,
-    MESSAGE_HTML,
-    MESSAGE_URL,
-)
+from lib.constants import MESSAGE_ALLOW_LIST, MESSAGE_HAR, MESSAGE_HEADERS, MESSAGE_HTML, MESSAGE_URL
 from lib.timing import get_utc_now
 
 
@@ -21,11 +15,7 @@ def load_file_list():
     path = "/".join(dir_path.split("/")[:-3])
     data_path = path + "/scraped"
 
-    files = [
-        f
-        for f in os.listdir(data_path)
-        if os.path.isfile(os.path.join(data_path, f)) and ".log" in f
-    ]
+    files = [f for f in os.listdir(data_path) if os.path.isfile(os.path.join(data_path, f)) and ".log" in f]
     return files, data_path
 
 
@@ -92,9 +82,7 @@ def rester():
             MESSAGE_HAR: raw["har"],
             "debug": True,
         }
-        response = requests.request(
-            "POST", extractor_url, headers=headers, data=json.dumps(payload)
-        )
+        response = requests.request("POST", extractor_url, headers=headers, data=json.dumps(payload))
 
         try:
             output = json.loads(response.content)
@@ -102,9 +90,7 @@ def rester():
             print(response.content)
             print(f"Exception: {e}, {e.args}")
             output = {}
-        output.update(
-            {"time_for_extraction": get_utc_now() - starting_extraction}
-        )
+        output.update({"time_for_extraction": get_utc_now() - starting_extraction})
 
         result.update({raw["url"]: output})
 

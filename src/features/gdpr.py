@@ -38,10 +38,7 @@ class GDPR(MetadataBase):
     @staticmethod
     def _extract_sts(sts: list[str]) -> list[str]:
         normalized = {e.lower().strip() for e in sts}
-        return [
-            key if key in normalized else f"do_not_{key}"
-            for key in ["includesubdomains", "preload"]
-        ]
+        return [key if key in normalized else f"do_not_{key}" for key in ["includesubdomains", "preload"]]
 
     @staticmethod
     def _get_referrer_policy(website_data: WebsiteData) -> list[str]:
@@ -54,9 +51,7 @@ class GDPR(MetadataBase):
         regex = re.compile(r"<link rel=(.*?)href")
         matches = re.findall(regex, website_data.html.lower())
         if matches:
-            values += [
-                match.replace('"', "").replace(" ", "") for match in matches
-            ]
+            values += [match.replace('"', "").replace(" ", "") for match in matches]
         else:
             values += ["no_link_rel"]
         return values
@@ -131,9 +126,7 @@ class GDPR(MetadataBase):
 
         return list(set(values))
 
-    def _decide(
-        self, website_data: WebsiteData
-    ) -> tuple[StarCase, list[Explanation]]:
+    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, list[Explanation]]:
         probability = 0.5
 
         if (

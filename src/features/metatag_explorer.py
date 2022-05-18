@@ -15,9 +15,7 @@ class MetatagExplorer(MetadataBase):
 
         return matches
 
-    def _decide(
-        self, website_data: WebsiteData
-    ) -> tuple[StarCase, list[Explanation]]:
+    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, list[Explanation]]:
         decision = StarCase.ONE
         explanation = [Explanation.none]
 

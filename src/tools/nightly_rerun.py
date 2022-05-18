@@ -31,21 +31,15 @@ def main(maximum_age_in_seconds: int = SECONDS_PER_DAY):
     payload = {}
     headers = {}
 
-    response = requests.request(
-        "GET", METALOOKUP_RECORDS, headers=headers, data=payload
-    )
+    response = requests.request("GET", METALOOKUP_RECORDS, headers=headers, data=payload)
 
     try:
         records = json.loads(response.text)["records"]
     except TypeError as err:
-        print(
-            f"Exception when loading records with {err.args}.\nPotentially due to outdated record schema. "
-        )
+        print(f"Exception when loading records with {err.args}.\nPotentially due to outdated record schema. ")
         sys.exit(1)
 
-    print(
-        f"----------------- Total number of evaluated records so far: {len(records)}"
-    )
+    print(f"----------------- Total number of evaluated records so far: {len(records)}")
     if len(records) == 1:
         print(records)
         return
@@ -60,9 +54,7 @@ def main(maximum_age_in_seconds: int = SECONDS_PER_DAY):
             unique_urls.append(record[MESSAGE_URL])
 
     output = "\n".join(get_unique_list(unique_urls))
-    print(
-        f"----------------- Unique evaluated urls with splash error:\n{output}"
-    )
+    print(f"----------------- Unique evaluated urls with splash error:\n{output}")
 
     headers = {"Content-Type": "application/json"}
 
