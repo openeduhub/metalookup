@@ -231,13 +231,15 @@ class ExtractorTags(BaseModel):
 class Input(BaseModel):
     url: str = Field(..., description="The base url of the scraped website.")
     html: Optional[str] = Field(
-        default="", description="Everything scraped from the website as text."
+        default=None,
+        description="Everything scraped from the website as text.",
     )
     headers: Optional[str] = Field(
-        default="", description="The response header interpretable as dict."
+        default=None,
+        description="The response header originally received together with the content.",
     )
     har: Optional[str] = Field(
-        default="", description="The har object interpretable as json."
+        default=None, description="The har object interpretable as json."
     )
     allow_list: Optional[ListTags] = Field(
         default=ListTags(),

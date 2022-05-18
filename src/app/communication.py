@@ -1,9 +1,33 @@
 import multiprocessing
 import queue
-from typing import Optional
+from dataclasses import dataclass
+from typing import Any, Optional
 from uuid import UUID, uuid4
 
 from lib.settings import API_RETRIES
+
+
+@dataclass(frozen=True)
+class Message:
+    """
+    If a message is lacking any of the html, header, or har fields, then the URL will be
+    used to issue a request and fetch the content, headers, and har. I.e the response will
+    replace any potentially existing content, header, or har with the received response.
+    """
+
+    url: str
+    """The url of the content to analyze."""
+    html: Optional[str]
+    """The content to analyze."""
+    header: Optional[str]
+    """The headers received together with the content."""
+    har: Optional[dict[str, Any]]
+    """Optional dictionary resembling the HTTP Archive format (https://en.wikipedia.org/wiki/HAR_(file_format))"""
+    whitelist: Optional[list[str]]
+    """Which extractors (defined by their keys) to use. If none, then all extractors should be used."""
+    bypass_cache: bool
+    """Whether returning cached data is allowed."""
+    _shared_memory_name: str  # fixme: unclear
 
 
 class QueueCommunicator:
@@ -16,7 +40,7 @@ class QueueCommunicator:
         self._receive_queue = receive_queue
         self._request_queue = {}
 
-    def send_message(self, message: dict) -> Optional[UUID]:
+    def send_message(self, message: Message) -> Optional[UUID]:
         try:
             uuid = uuid4()
             self._send_queue.put({uuid: message}, block=True, timeout=1)

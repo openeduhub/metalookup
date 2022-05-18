@@ -1,13 +1,15 @@
 import asyncio
 import time
-import traceback
-from collections import ChainMap
 from multiprocessing import shared_memory
+from typing import Optional
 
+from tldextract import TLDExtract
+
+from app.communication import Message
 from app.models import Explanation
 from cache.cache_manager import CacheManager
 from core.metadata_base import MetadataBase
-from core.website_manager import Singleton, WebsiteManager
+from core.website_manager import Singleton, WebsiteData
 from db.db import create_cache_entry
 from features.accessibility import Accessibility
 from features.cookies import Cookies
@@ -35,12 +37,8 @@ from features.security import Security
 from lib.constants import (
     ACCESSIBILITY,
     EXPLANATION,
-    MESSAGE_ALLOW_LIST,
-    MESSAGE_BYPASS_CACHE,
-    MESSAGE_EXCEPTION,
-    MESSAGE_SHARED_MEMORY_NAME,
-    MESSAGE_URL,
     STAR_CASE,
+    TIME_REQUIRED,
     TIMESTAMP,
     VALUES,
 )
@@ -57,6 +55,7 @@ class MetadataManager:
     def __init__(self) -> None:
         self._logger = get_logger()
         self._setup_extractors()
+        self.tld_extractor: TLDExtract = TLDExtract(cache_dir=None)
 
     def _setup_extractor(
         self, extractor_class: type(MetadataBase)
@@ -111,7 +110,8 @@ class MetadataManager:
 
     async def _extract_meta_data(
         self,
-        allow_list: dict,
+        site: WebsiteData,
+        allow_list: Optional[list[str]],
         cache_manager: CacheManager,
         shared_memory_name: str,
     ) -> dict:
@@ -121,44 +121,65 @@ class MetadataManager:
         shared_status = shared_memory.ShareableList(name=shared_memory_name)
         shared_status[0] = 0
 
-        for metadata_extractor in self.metadata_extractors:
-            if allow_list[metadata_extractor.key]:
+        async def run_extractor_with_key(
+            key: str, extractor: MetadataBase, site: WebsiteData
+        ) -> tuple[str, dict]:
+            """Call the extractor and pack its results into a tuple containing also the key"""
+            try:
+                duration, values, stars, explanation = await extractor.start(
+                    site=site
+                )
+                return key, {
+                    VALUES: values,
+                    TIME_REQUIRED: duration,
+                    STAR_CASE: stars,
+                    EXPLANATION: explanation,
+                }
+            except Exception as e:
+                self._logger.exception(f"Failed to extract from {key}: {e}")
+                return key, {"exception": str(e)}
+
+        for extractor in self.metadata_extractors:
+            if allow_list is None or extractor.key in allow_list:
                 if (
                     not cache_manager.bypass
-                    and self.is_feature_whitelisted_for_cache(
-                        metadata_extractor
-                    )
+                    and self.is_feature_whitelisted_for_cache(extractor)
                     and cache_manager.is_host_predefined()
                     and cache_manager.is_enough_cached_data_present(
-                        metadata_extractor.key
+                        extractor.key
                     )
                 ):
                     extracted_metadata: dict = (
-                        cache_manager.get_predefined_metadata(
-                            metadata_extractor.key
-                        )
+                        cache_manager.get_predefined_metadata(extractor.key)
                     )
                     data.update(extracted_metadata)
                     shared_status[0] += 1
                 else:
-                    tasks.append(metadata_extractor.start())
+                    tasks.append(
+                        run_extractor_with_key(
+                            key=extractor.key, extractor=extractor, site=site
+                        )
+                    )
 
-        extracted_metadata: tuple[dict] = await asyncio.gather(*tasks)
+        results: list[tuple[str, dict]] = await asyncio.gather(*tasks)
         shared_status[0] += len(tasks)
-        data = {**data, **dict(ChainMap(*extracted_metadata))}
-        return data
+
+        # combine the cached results with the newly extracted data into the target dictionary structure
+        return {
+            **data,
+            **{k: d for k, d in results},
+        }
 
     def cache_data(
         self,
         extracted_metadata: dict,
         cache_manager: CacheManager,
-        allow_list: dict,
+        allow_list: list[str],
     ):
         for feature, meta_data in extracted_metadata.items():
             if (
-                allow_list[feature]
-                and Explanation.Cached not in meta_data[EXPLANATION]
-            ):
+                allow_list is None or feature in allow_list
+            ) and Explanation.Cached not in meta_data[EXPLANATION]:
                 values = []
                 if feature == ACCESSIBILITY:
                     values = meta_data[VALUES]
@@ -177,33 +198,36 @@ class MetadataManager:
                     self._logger,
                 )
 
-    def start(self, message: dict) -> dict:
+    def start(self, message: Message) -> dict:
 
         self._logger.debug(
             f"Start metadata_manager at {time.perf_counter() - global_start} since start"
         )
 
         shared_status = shared_memory.ShareableList(
-            name=message[MESSAGE_SHARED_MEMORY_NAME]
+            name=message._shared_memory_name
         )
-        url = message[MESSAGE_URL]
+        url = message.url
         if len(url) > 1024:
             url = url[0:1024]
         shared_status[1] = url
 
-        website_manager = WebsiteManager.get_instance()
-        self._logger.debug(
-            f"WebsiteManager initialized at {time.perf_counter() - global_start} since start"
+        # this will eventually load the content dynamically if not provided in the message
+        # hence it may fail with various different exceptions (ConnectionError, ...)
+        # those exceptions should be handled in the caller of this function.
+        site = WebsiteData.from_message(
+            message=message,
+            logger=self._logger,
+            tld_extractor=self.tld_extractor,
         )
-        website_manager.load_website_data(message=message)
 
         self._logger.debug(
             f"WebsiteManager loaded at {time.perf_counter() - global_start} since start"
         )
         cache_manager = CacheManager.get_instance()
         cache_manager.update_to_current_domain(
-            website_manager.website_data.domain,
-            bypass=message[MESSAGE_BYPASS_CACHE],
+            site.domain,
+            bypass=message.bypass_cache,
         )
 
         now = time.perf_counter()
@@ -211,40 +235,19 @@ class MetadataManager:
             f"starting_extraction at {now - global_start} since start"
         )
         starting_extraction = get_utc_now()
-        if website_manager.website_data.html == "":
-            exception = "Empty html. Potentially, splash failed."
-            extracted_meta_data = {MESSAGE_EXCEPTION: exception}
-        else:
-            try:
-                extracted_meta_data = asyncio.run(
-                    self._extract_meta_data(
-                        allow_list=message[MESSAGE_ALLOW_LIST],
-                        cache_manager=cache_manager,
-                        shared_memory_name=message[MESSAGE_SHARED_MEMORY_NAME],
-                    )
-                )
-                self.cache_data(
-                    extracted_meta_data,
-                    cache_manager,
-                    allow_list=message[MESSAGE_ALLOW_LIST],
-                )
-            except ConnectionError as e:
-                exception = f"Connection error extracting metadata: '{e.args}'"
-                self._logger.exception(
-                    exception,
-                    exc_info=True,
-                )
-                extracted_meta_data = {MESSAGE_EXCEPTION: exception}
-            except Exception as e:
-                exception = (
-                    f"Unknown exception from extracting metadata: '{e.args}'. "
-                    f"{''.join(traceback.format_exception(None, e, e.__traceback__))}"
-                )
-                self._logger.exception(
-                    exception,
-                    exc_info=True,
-                )
-                extracted_meta_data = {MESSAGE_EXCEPTION: exception}
+        extracted_meta_data = asyncio.run(
+            self._extract_meta_data(
+                site=site,
+                allow_list=message.whitelist,
+                cache_manager=cache_manager,
+                shared_memory_name=message._shared_memory_name,
+            )
+        )
+        self.cache_data(
+            extracted_meta_data,
+            cache_manager,
+            allow_list=message.whitelist,
+        )
 
         self._logger.debug(
             f"extracted_meta_data at {time.perf_counter() - global_start} since start"
@@ -252,15 +255,12 @@ class MetadataManager:
         extracted_meta_data.update(
             {
                 "time_for_extraction": get_utc_now() - starting_extraction,
-                **website_manager.get_website_data_to_log(),
+                "raw_links": site.raw_links,
+                "image_links": site.image_links,
+                "extensions": site.extensions,
             }
         )
 
-        website_manager.reset()
         cache_manager.reset()
         shared_status[1] = ""
-
-        self._logger.debug(
-            f"website_manager.reset() at {time.perf_counter() - global_start} since start"
-        )
         return extracted_meta_data

@@ -22,8 +22,6 @@ TIMESTAMP = "timestamp"
 
 ACCESSIBILITY = "accessibility"
 SPLASH = "splash"
-DESKTOP = "desktop"
-MOBILE = "mobile"
 SCORE = "score"
 SCRIPT = "script"
 

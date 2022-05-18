@@ -1,17 +1,13 @@
-import asyncio
-
 import pytest
 
 from app.models import StarCase
-from core.website_manager import WebsiteManager
 from features.malicious_extensions import MaliciousExtensions
-from lib.constants import STAR_CASE
-from lib.logger import get_logger
-from tests.integration.features_integration_test import _test_feature
+from tests.integration.features_integration_test import mock_website_data
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "values, input_html, expected_decision",
+    "expected_values, input_html, expected_decision",
     [
         (
             [".exe", ".pdf"],
@@ -37,41 +33,17 @@ from tests.integration.features_integration_test import _test_feature
         ),
     ],
 )
-def test_malicious_extensions(
+async def test_malicious_extensions(
     mocker,
-    values,
+    expected_values,
     input_html,
     expected_decision,
 ):
-    feature = MaliciousExtensions
-    html = {
-        "html": input_html,
-        "har": "",
-        "url": "",
-        "headers": "{}",
-    }
-    expected = {
-        feature.key: {
-            "values": values,
-            "star_case": expected_decision,
-            "excluded_values": [".6"],
-            "runs_within": 10,  # time the evaluation may take AT MAX -> acceptance test}
-        }
-    }
+    feature = MaliciousExtensions()
+    await feature.setup()
+    site = mock_website_data(html=input_html)
 
-    are_values_correct, runs_fast_enough = _test_feature(
-        feature_class=feature, html=html, expectation=expected
-    )
-    assert are_values_correct and runs_fast_enough
-
-    feature = feature(get_logger())
-
-    feature.setup()
-
-    website_manager: WebsiteManager = WebsiteManager.get_instance()
-
-    website_manager.load_website_data(html)
-
-    data = asyncio.run(feature.start())
-    assert data["malicious_extensions"][STAR_CASE] == expected_decision
-    website_manager.reset()
+    duration, values, stars, explanation = await feature.start(site)
+    assert duration < 10
+    assert set(values) == set(expected_values)
+    assert stars == expected_decision

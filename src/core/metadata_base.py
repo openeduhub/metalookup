@@ -12,8 +12,8 @@ from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 
 from app.models import Explanation, StarCase
-from core.website_manager import WebsiteData, WebsiteManager
-from lib.constants import EXPLANATION, STAR_CASE, TIME_REQUIRED, VALUES
+from core.website_manager import WebsiteData
+from lib.logger import get_logger
 from lib.settings import USE_LOCAL_IF_POSSIBLE
 from lib.timing import get_utc_now
 
@@ -89,8 +89,11 @@ class MetadataBase:
 
         return decorator
 
-    def __init__(self, logger: Logger) -> None:
-        self._logger = logger
+    def __init__(self, logger: Optional[Logger] = None):
+        self._logger = logger or get_logger()
+        # todo: change class setupt to factory pattern to avoid having to manually calling setup after construction
+        #       see https://stackoverflow.com/a/33134213/2160256
+        # self.setup()
 
     @staticmethod
     def _get_ratio_of_elements(
@@ -204,47 +207,15 @@ class MetadataBase:
         explanation = [Explanation.none]
         return decision, explanation
 
-    @staticmethod
-    def _prepare_website_data() -> WebsiteData:
-        website_manager = WebsiteManager.get_instance()
-        return website_manager.website_data
-
-    def _processing_values(
-        self, values: list[str], website_data: WebsiteData, before: float
-    ) -> dict:
-        website_data.values = values
-
-        star_case, explanation = self._decide(website_data=website_data)
-
-        data = {
-            self.key: {
-                TIME_REQUIRED: get_utc_now() - before,
-                VALUES: values,
-                STAR_CASE: star_case,
-                EXPLANATION: explanation,
-            }
-        }
-        if self.tag_list_last_modified != "":
-            data[self.key].update(
-                {
-                    "tag_list_last_modified": self.tag_list_last_modified,
-                    "tag_list_expires": self.tag_list_expires,
-                }
-            )
-        return data
-
-    def _prepare_start(self) -> tuple[float, WebsiteData]:
+    async def start(
+        self, site: WebsiteData
+    ) -> tuple[float, list[str], StarCase, list[Explanation]]:
         self._logger.info(f"Starting {self.__class__.__name__}.")
         before = get_utc_now()
-        website_data = self._prepare_website_data()
-        return before, website_data
-
-    async def start(self) -> dict:
-        before, website_data = self._prepare_start()
-        values = await self._start(website_data=website_data)
-        return self._processing_values(
-            values=values, website_data=website_data, before=before
-        )
+        values = await self._start(website_data=site)
+        site.values = values
+        star_case, explanation = self._decide(website_data=site)
+        return get_utc_now() - before, values, star_case, explanation
 
     async def _start(self, website_data: WebsiteData) -> list[str]:
         if self.evaluate_header:
@@ -376,9 +347,9 @@ class MetadataBase:
                     url=self.url, session=session
                 )
 
-    def setup(self) -> None:
+    async def setup(self) -> None:
         """Child function."""
-        asyncio.run(self._setup_downloads())
+        await self._setup_downloads()
         if self.tag_list:
             self._extract_date_from_list()
             self._prepare_tag_list()

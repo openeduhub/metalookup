@@ -7,13 +7,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.exc import OperationalError
 
 import db.base
-from app.communication import QueueCommunicator
+from app.communication import Message, QueueCommunicator
 from app.models import (
     DeleteCacheInput,
     DeleteCacheOutput,
     ExtractorTags,
     Input,
-    ListTags,
     MetadataTags,
     Output,
     Ping,
@@ -30,13 +29,7 @@ from db.db import (
 )
 from lib.constants import (
     EXPLANATION,
-    MESSAGE_ALLOW_LIST,
-    MESSAGE_BYPASS_CACHE,
     MESSAGE_EXCEPTION,
-    MESSAGE_HAR,
-    MESSAGE_HEADERS,
-    MESSAGE_HTML,
-    MESSAGE_SHARED_MEMORY_NAME,
     MESSAGE_URL,
     METADATA_EXTRACTOR,
     STAR_CASE,
@@ -85,10 +78,6 @@ def _convert_dict_to_output_model(
     return extractor_tags
 
 
-def _convert_allow_list_to_dict(allow_list: ListTags) -> dict:
-    return json.loads(allow_list.json())
-
-
 @app.post(
     "/extract_meta",
     response_model=Output,
@@ -97,7 +86,7 @@ def _convert_allow_list_to_dict(allow_list: ListTags) -> dict:
 def extract_meta(input_data: Input):
     starting_extraction = get_utc_now()
 
-    allowance = _convert_allow_list_to_dict(input_data.allow_list)
+    allowance = json.loads(input_data.allow_list.json())
 
     database_exception = ""
     try:
@@ -110,17 +99,27 @@ def extract_meta(input_data: Input):
             + str(err.args)
             + "".join(traceback.format_exception(None, err, err.__traceback__))
         )
-
+    har = {} if input_data.har is None else json.loads(input_data.har)
+    extractors = (
+        None
+        if input_data.allow_list.fields is None
+        else [k for k, v in allowance.items() if v]
+    )
+    bypass_cache = (
+        False if input_data.bypass_cache is None else input_data.bypass_cache
+    )
     uuid = app.communicator.send_message(
-        {
-            MESSAGE_URL: input_data.url,
-            MESSAGE_HTML: input_data.html,
-            MESSAGE_HEADERS: input_data.headers,
-            MESSAGE_HAR: input_data.har,
-            MESSAGE_ALLOW_LIST: allowance,
-            MESSAGE_SHARED_MEMORY_NAME: shared_status.shm.name,
-            MESSAGE_BYPASS_CACHE: input_data.bypass_cache,
-        }
+        message=Message(
+            url=input_data.url,
+            html=input_data.html,
+            header=input_data.headers,
+            # todo return a Bad Request (400) if the provided har is not a valid json or HAR document?!
+            har=har,
+            # build a list of extractors that are set to True
+            extractors=extractors,
+            _shared_memory_name=shared_status.shm.name,  # fixme: eventually remove?
+            bypass_cache=bypass_cache,
+        )
     )
 
     meta_data: dict = app.communicator.get_message(uuid)

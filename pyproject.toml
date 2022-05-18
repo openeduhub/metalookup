@@ -39,6 +39,7 @@ pip-licenses = "^3.3.0"
 wily = "^1.19.0"
 vulture = "^2.3"
 pyinstrument = "^3.3.0"
+pytest-asyncio = "^0.18.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -57,9 +58,10 @@ line_length = 79
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-log_cli = "false"
-log_level = "INFO"
-log_format = "%(asctime)s %(levelname)s %(message)s"
+asyncio_mode = "auto"
+log_cli = "true"
+log_level = "DEBUG"
+log_format = "%(asctime)s %(levelname)s %(name)s %(message)s"
 log_date_format = "%Y-%m-%d %H:%M:%S"
 testpaths = [
     "tests",
