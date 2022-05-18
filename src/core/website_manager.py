@@ -62,7 +62,7 @@ class WebsiteData:
             html=data["html"],
             header=data["har"]["log"]["entries"][0]["response"]["headers"],
             har=data["har"],
-            extractors=message.extractors,
+            whitelist=message.whitelist,
             bypass_cache=message.bypass_cache,
             _shared_memory_name=message._shared_memory_name,
         )

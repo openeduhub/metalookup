@@ -238,7 +238,7 @@ class MetadataManager:
         extracted_meta_data = asyncio.run(
             self._extract_meta_data(
                 site=site,
-                allow_list=message.extractors,
+                allow_list=message.whitelist,
                 cache_manager=cache_manager,
                 shared_memory_name=message._shared_memory_name,
             )
@@ -246,7 +246,7 @@ class MetadataManager:
         self.cache_data(
             extracted_meta_data,
             cache_manager,
-            allow_list=message.extractors,
+            allow_list=message.whitelist,
         )
 
         self._logger.debug(

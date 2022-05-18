@@ -52,7 +52,7 @@ def mock_website_data(
             har=har or {},
             header=header or "",
             bypass_cache=False,
-            extractors=None,
+            whitelist=None,
             _shared_memory_name="",
         ),
         tld_extractor=mock_extractor

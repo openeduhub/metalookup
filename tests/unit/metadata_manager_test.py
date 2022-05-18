@@ -187,7 +187,7 @@ def test_start(metadata_manager: MetadataManager):
     cache_manager.domain = "google.com"
 
     message = Message(
-        extractors=None,
+        whitelist=None,
         bypass_cache=False,
         html=None,
         header=None,

@@ -23,7 +23,7 @@ class Message:
     """The headers received together with the content."""
     har: Optional[dict[str, Any]]
     """Optional dictionary resembling the HTTP Archive format (https://en.wikipedia.org/wiki/HAR_(file_format))"""
-    extractors: Optional[list[str]]
+    whitelist: Optional[list[str]]
     """Which extractors (defined by their keys) to use. If none, then all extractors should be used."""
     bypass_cache: bool
     """Whether returning cached data is allowed."""
