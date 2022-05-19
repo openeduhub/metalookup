@@ -4,6 +4,7 @@ import os
 from logging import Logger
 from pathlib import Path
 from unittest import mock
+from unittest.mock import patch
 
 import pytest
 
@@ -21,8 +22,7 @@ from tests.integration.features_integration_test import mock_website_data
 
 @pytest.fixture
 def metadata_manager():
-    manager = MetadataManager.get_instance()
-    return manager
+    return MetadataManager()
 
 
 """
@@ -51,12 +51,6 @@ def test_is_feature_whitelisted_for_cache(mocker, metadata_manager: MetadataMana
 """
 
 
-def get_cache_manager():
-    with mock.patch("cache.cache_manager.get_logger"):
-        with mock.patch("cache.cache_manager.CacheManager._class._prepare_cache_manager"):
-            return CacheManager.get_instance()
-
-
 def test_cache_data(metadata_manager: MetadataManager):
     meta_data = {
         ACCESSIBILITY: {
@@ -65,11 +59,9 @@ def test_cache_data(metadata_manager: MetadataManager):
             STAR_CASE: StarCase.ONE,
         }
     }
-    allow_list = {ACCESSIBILITY: True}
-    cache_manager = get_cache_manager()
 
     with mock.patch("core.metadata_manager.create_cache_entry") as create_cache_entry:
-        metadata_manager.cache_data(meta_data, cache_manager, allow_list)
+        metadata_manager.cache_data(meta_data, allow_list=[ACCESSIBILITY])
         assert create_cache_entry.call_args[0][2][VALUES] == []
         assert create_cache_entry.call_count == 1
 
@@ -86,7 +78,7 @@ def test_cache_data(metadata_manager: MetadataManager):
 def test_extract_meta_data(metadata_manager: MetadataManager):
     paywall = "paywall"
     allow_list = ["accessibility", "paywall"]
-    cache_manager = get_cache_manager()
+    cache_manager = metadata_manager.cache_manager
 
     extractor_backup = metadata_manager.metadata_extractors
     metadata_manager.metadata_extractors = [
@@ -147,7 +139,7 @@ def test_extract_meta_data(metadata_manager: MetadataManager):
 
 
 def test_start(metadata_manager: MetadataManager):
-    cache_manager = get_cache_manager()
+    cache_manager = metadata_manager.cache_manager
 
     cache_manager._hosts = []
     cache_manager.domain = "google.com"
@@ -167,8 +159,8 @@ def test_start(metadata_manager: MetadataManager):
         return 0.98
 
     with mock.patch("core.metadata_manager.shared_memory.ShareableList") as shareable_list:
-        with mock.patch("cache.cache_manager.CacheManager._class.update_to_current_domain"):
-            with mock.patch("core.metadata_manager.MetadataManager._class.cache_data"):
+        with patch.object(cache_manager, "update_to_current_domain", return_value=None):
+            with patch.object(metadata_manager, "cache_data", return_value=None):
                 # intercept the request to the non-running splash
                 # container and lighthouse container
                 # and instead use the checked in response json and a hardcoded

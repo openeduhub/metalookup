@@ -219,6 +219,6 @@ if not is_production_environment():
         response_model=DeleteCacheOutput,
     )
     def delete_cache(reset_input: DeleteCacheInput):
-        cache_manager = CacheManager.get_instance()
+        cache_manager = CacheManager()
         row_count = cache_manager.reset_cache(reset_input.domain)
         return {"deleted_rows": row_count}

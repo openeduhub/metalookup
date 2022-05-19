@@ -27,7 +27,7 @@ class Manager:
 
         self._create_api()
 
-        self.metadata_manager = MetadataManager.get_instance()
+        self.metadata_manager = MetadataManager()
 
         self.run_loop = True
 

@@ -146,21 +146,3 @@ class WebsiteData:
             extensions=extract_extensions(raw_links=raw_links),
             values=[],
         )
-
-
-class Singleton:
-    _instance = None
-
-    def __init__(self, cls) -> None:
-        self._class = cls
-
-    def get_instance(self):
-        if self._instance is None:
-            self._instance = self._class()
-        return self._instance
-
-    def __call__(self) -> NoReturn:
-        raise TypeError("Singletons must only be accessed through `get_instance()`.")
-
-    def __instancecheck__(self, inst) -> bool:
-        return isinstance(inst, self._class)
