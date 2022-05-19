@@ -22,8 +22,7 @@ from tests.integration.features_integration_test import mock_website_data
 
 @pytest.fixture
 def metadata_manager():
-    manager = MetadataManager.get_instance()
-    return manager
+    return MetadataManager()
 
 
 """

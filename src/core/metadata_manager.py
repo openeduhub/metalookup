@@ -9,7 +9,7 @@ from app.communication import Message
 from app.models import Explanation
 from cache.cache_manager import CacheManager
 from core.metadata_base import MetadataBase
-from core.website_manager import Singleton, WebsiteData
+from core.website_manager import WebsiteData
 from db.db import create_cache_entry
 from features.accessibility import Accessibility
 from features.cookies import Cookies
@@ -39,7 +39,6 @@ from lib.logger import get_logger
 from lib.timing import get_utc_now, global_start
 
 
-@Singleton
 class MetadataManager:
     def __init__(self) -> None:
         self._logger = get_logger()
