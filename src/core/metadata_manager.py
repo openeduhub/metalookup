@@ -48,6 +48,7 @@ class MetadataManager:
         ]
         self.tld_extractor: TLDExtract = TLDExtract(cache_dir=None)
         self.blacklisted_for_cache = [MaliciousExtensions, ExtractFromFiles, Javascript]
+        self.cache_manager = CacheManager()
 
     def _setup_extractor(self, extractor_class: type(MetadataBase)) -> MetadataBase:
         self._logger.debug(f"Starting setup for {extractor_class} {get_utc_now()}")
@@ -92,7 +93,6 @@ class MetadataManager:
         self,
         site: WebsiteData,
         allow_list: Optional[list[str]],
-        cache_manager: CacheManager,
         shared_memory_name: str,
     ) -> dict:
         data = {}
@@ -118,12 +118,12 @@ class MetadataManager:
         for extractor in self.metadata_extractors:
             if allow_list is None or extractor.key in allow_list:
                 if (
-                    not cache_manager.bypass
+                    not self.cache_manager.bypass
                     and self.is_feature_whitelisted_for_cache(extractor)
-                    and cache_manager.is_host_predefined()
-                    and cache_manager.is_enough_cached_data_present(extractor.key)
+                    and self.cache_manager.is_host_predefined()
+                    and self.cache_manager.is_enough_cached_data_present(extractor.key)
                 ):
-                    extracted_metadata: dict = cache_manager.get_predefined_metadata(extractor.key)
+                    extracted_metadata: dict = self.cache_manager.get_predefined_metadata(extractor.key)
                     data.update(extracted_metadata)
                     shared_status[0] += 1
                 else:
@@ -141,7 +141,6 @@ class MetadataManager:
     def cache_data(
         self,
         extracted_metadata: dict,
-        cache_manager: CacheManager,
         allow_list: list[str],
     ):
         for feature, meta_data in extracted_metadata.items():
@@ -158,7 +157,7 @@ class MetadataManager:
                 }
 
                 create_cache_entry(
-                    cache_manager.get_domain(),
+                    self.cache_manager.get_domain(),
                     feature,
                     data_to_be_cached,
                     self._logger,
@@ -183,8 +182,8 @@ class MetadataManager:
         )
 
         self._logger.debug(f"WebsiteManager loaded at {time.perf_counter() - global_start} since start")
-        cache_manager = CacheManager.get_instance()
-        cache_manager.update_to_current_domain(
+
+        self.cache_manager.update_to_current_domain(
             site.domain,
             bypass=message.bypass_cache,
         )
@@ -196,13 +195,11 @@ class MetadataManager:
             self._extract_meta_data(
                 site=site,
                 allow_list=message.whitelist,
-                cache_manager=cache_manager,
                 shared_memory_name=message._shared_memory_name,
             )
         )
         self.cache_data(
             extracted_meta_data,
-            cache_manager,
             allow_list=message.whitelist,
         )
 
@@ -216,6 +213,6 @@ class MetadataManager:
             }
         )
 
-        cache_manager.reset()
+        self.cache_manager.reset()
         shared_status[1] = ""
         return extracted_meta_data

@@ -3,7 +3,6 @@ import logging
 import time
 
 from app.models import Explanation, StarCase
-from core.website_manager import Singleton
 from db.db import get_top_level_domains, read_cached_values_by_feature, reset_cache
 from lib.constants import ACCESSIBILITY, EXPLANATION, SECONDS_PER_DAY, STAR_CASE, TIME_REQUIRED, TIMESTAMP, VALUES
 from lib.logger import get_logger
@@ -12,7 +11,6 @@ from lib.timing import get_utc_now, global_start
 from lib.tools import get_mean, get_unique_list
 
 
-@Singleton
 class CacheManager:
     _logger: logging.Logger
     _domain: str
