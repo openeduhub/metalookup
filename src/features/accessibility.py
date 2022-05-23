@@ -33,7 +33,8 @@ class Accessibility(MetadataBase):
         response = await session.get(url=container_url, timeout=ACCESSIBILITY_TIMEOUT, json=params)
 
         if response.status == 200:
-            return json.loads(await response.text())["score"]
+            # expected result looks like {"score": [0.123]}
+            return float(json.loads(await response.text())["score"][0])
         else:
             raise Exception(f"Request to lighthouse failed with {response.status}: {await response.text()}")
 
