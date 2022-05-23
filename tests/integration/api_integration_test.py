@@ -1,98 +1,41 @@
 import json
-import multiprocessing
-import os
-import threading
-import time
-from unittest import mock
+from pathlib import Path
 
 import pytest
-import requests
-import uvicorn
+from fastapi.testclient import TestClient
 
 from app.api import Input, app
 from app.models import Output
-from lib.settings import API_PORT
-from tests.test_libs import DOCKER_TEST_HEADERS, DOCKER_TEST_URL
-
-"""
---------------------------------------------------------------------------------
-"""
+from app.splash_models import SplashResponse
 
 
-def _start_api(send_message, get_message):
-    app.communicator = mock.MagicMock()
-    app.communicator.send_message = send_message
-    app.communicator.get_message = get_message
-    uvicorn.run(app, host="0.0.0.0", port=API_PORT, log_level="info")
+@pytest.fixture()
+def client() -> TestClient:
+    with TestClient(app) as client:
+        yield client
 
 
-def test_ping_container():
-    api_to_manager_queue = multiprocessing.Queue()
-    manager_to_api_queue = multiprocessing.Queue()
-
-    with mock.patch("app.api.create_request_record"):
-        with mock.patch("app.api.create_response_record"):
-            api_process = multiprocessing.Process(
-                target=_start_api,
-                args=(api_to_manager_queue, manager_to_api_queue),
-            )
-            api_process.start()
-            time.sleep(0.1)
-
-            response = requests.request(
-                "GET",
-                DOCKER_TEST_URL + "_ping",
-                headers=DOCKER_TEST_HEADERS,
-                timeout=1,
-            )
-            api_process.terminate()
-            api_process.join()
-
-    data = json.loads(response.text)
-    is_ok = data["status"] == "ok"
-    assert is_ok
+def test_ping_endpoint(client):
+    response = client.get("/_ping")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
 
 
-"""
---------------------------------------------------------------------------------
-"""
+def test_extract_endpoint(client):
+    path = Path(__file__).parent.parent / "splash-response-google.json"
+    with open(path, "r") as f:
+        splash = SplashResponse.parse_obj(json.load(f))
+    input = Input(url="https://google.com", splash_response=splash)
+    response = client.post("/extract_meta", data=input.json(), timeout=10)
 
+    import pprint
 
-@pytest.mark.skipif(
-    True,
-    reason="Causes problems in the CI and might not be necessary in the future",
-)
-def test_extract_meta_container(mocker):
-    send_message = mocker.MagicMock()
-    send_message.return_value = 3
-    get_message = mocker.MagicMock()
-    get_message.return_value = {"meta": "empty"}
+    pprint.pprint(response.json())
 
-    with mock.patch("app.api.create_request_record"):
-        with mock.patch("app.api.create_response_record"):
+    assert response.status_code == 200
 
-            api_process = multiprocessing.Process(
-                target=_start_api,
-                args=(send_message, get_message),
-            )
-            api_process.start()
-            time.sleep(0.1)
-
-            input_data = Input(url="https://google.com")
-
-            response = requests.request(
-                "POST",
-                DOCKER_TEST_URL + "extract_meta",
-                data=json.dumps(input_data.json()),
-                headers=DOCKER_TEST_HEADERS,
-                timeout=3,
-            )
-            api_process.terminate()
-            api_process.join()
-
-    assert response.ok, f"Received response {response} is not OK. {response.text}"
     # make sure, that our result actually complies with the promised open api spec.
-    data = Output.parse_obj(json.loads(response.text))
-    print(data)
-
-    assert data.url == input_data.url
+    output = Output.parse_obj(json.loads(response.text))
+    assert output.url == input.url
+    # This should not be present, as the request to the accessibility container will fail
+    assert output.meta.accessibility is None, "received accessibility result but container should not be running"
