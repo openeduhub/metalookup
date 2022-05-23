@@ -5,15 +5,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.communication import Message
-from app.models import (
-    DeleteCacheInput,
-    DeleteCacheOutput,
-    ExtractorTags,
-    Input,
-    MetadataTags,
-    Output,
-    Ping,
-)
+from app.models import DeleteCacheInput, DeleteCacheOutput, ExtractorTags, Input, MetadataTags, Output, Ping
 from app.schemas import CacheOutput
 from core.metadata_manager import MetadataManager
 from lib.constants import (
@@ -25,7 +17,8 @@ from lib.constants import (
     TIME_REQUIRED,
     VALUES,
 )
-from lib.settings import NUMBER_OF_EXTRACTORS, VERSION
+from lib.logger import create_logger
+from lib.settings import VERSION
 from lib.timing import get_utc_now
 from lib.tools import is_production_environment
 
@@ -37,11 +30,13 @@ app.add_middleware(
     allow_methods=["POST", "GET", "OPTIONS", "PUT", "DELETE"],
     allow_headers=["*"],
 )
-# noinspection PyTypeHints
-app.communicator: QueueCommunicator
 
-shared_status = shared_memory.ShareableList([0, " " * 1024])
-db.base.create_metadata(db.base.database_engine)
+
+@app.on_event("startup")
+async def initialize():
+    logger: logging.Logger = create_logger()
+    logger.info("Startup")
+    app.manager = await MetadataManager.create()
 
 
 def _convert_dict_to_output_model(meta: dict, debug: bool = False) -> ExtractorTags:

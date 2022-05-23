@@ -30,25 +30,32 @@ from features.javascript import Javascript
 from features.malicious_extensions import MaliciousExtensions
 from features.metatag_explorer import MetatagExplorer
 from features.security import Security
-from lib.constants import ACCESSIBILITY, EXPLANATION, STAR_CASE, TIME_REQUIRED, TIMESTAMP, VALUES
+from lib.constants import EXPLANATION, STAR_CASE, TIME_REQUIRED, VALUES
 from lib.logger import get_logger
 from lib.timing import get_utc_now, global_start
 
 
 class MetadataManager:
-    def __init__(self) -> None:
+    def __init__(self, extractors: list[MetadataBase]) -> None:
         self._logger = get_logger()
-        self.metadata_extractors: list[MetadataBase] = [
-            self._setup_extractor(extractor) for extractor in self._extractors()
-        ]
+        self.metadata_extractors = extractors
         self.tld_extractor: TLDExtract = TLDExtract(cache_dir=None)
         self.blacklisted_for_cache = [MaliciousExtensions, ExtractFromFiles, Javascript]
 
-    def _setup_extractor(self, extractor_class: type(MetadataBase)) -> MetadataBase:
-        self._logger.debug(f"Starting setup for {extractor_class} {get_utc_now()}")
-        extractor = extractor_class(self._logger)
-        asyncio.run(extractor.setup())
-        self._logger.debug(f"Finished setup for {extractor_class} {get_utc_now()}")
+    @staticmethod
+    async def create() -> "MetadataManager":
+        extractors = [
+            await MetadataManager._setup_extractor(get_logger(), extractor)
+            for extractor in MetadataManager._extractors()
+        ]
+        return MetadataManager(extractors=extractors)
+
+    @staticmethod
+    async def _setup_extractor(logger, extractor_class: type(MetadataBase)) -> MetadataBase:
+        logger.debug(f"Starting setup for {extractor_class} {get_utc_now()}")
+        extractor = extractor_class(logger)
+        await extractor.setup()
+        logger.debug(f"Finished setup for {extractor_class} {get_utc_now()}")
         return extractor
 
     @classmethod
@@ -134,12 +141,7 @@ class MetadataManager:
         now = time.perf_counter()
         self._logger.debug(f"starting_extraction at {now - global_start} since start")
         starting_extraction = get_utc_now()
-        extracted_meta_data = asyncio.run(
-            self._extract_meta_data(
-                site=site,
-                allow_list=message.whitelist
-            )
-        )
+        extracted_meta_data = await self._extract_meta_data(site=site, allow_list=message.whitelist)
 
         self._logger.debug(f"extracted_meta_data at {time.perf_counter() - global_start} since start")
         extracted_meta_data.update(
