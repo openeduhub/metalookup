@@ -1,13 +1,10 @@
 import json
-import traceback
-from multiprocessing import shared_memory
+import logging
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.exc import OperationalError
 
-import db.base
-from app.communication import Message, QueueCommunicator
+from app.communication import Message
 from app.models import (
     DeleteCacheInput,
     DeleteCacheOutput,
@@ -16,12 +13,11 @@ from app.models import (
     MetadataTags,
     Output,
     Ping,
-    ProgressInput,
-    ProgressOutput,
 )
-from app.schemas import CacheOutput, RecordSchema, RecordsOutput
+from app.schemas import CacheOutput
 from cache.cache_manager import CacheManager
-from db.db import create_request_record, create_response_record, load_cache, load_records
+from core.metadata_manager import MetadataManager
+from db.db import load_cache
 from lib.constants import (
     EXPLANATION,
     MESSAGE_EXCEPTION,
@@ -81,13 +77,6 @@ async def extract_meta(input_data: Input):
 
     allowance = json.loads(input_data.allow_list.json())
 
-    database_exception = ""
-    try:
-        create_request_record(starting_extraction, input_data=input_data, allowance=allowance)
-    except OperationalError as err:
-        database_exception += (
-            "\nDatabase exception: " + str(err.args) + "".join(traceback.format_exception(None, err, err.__traceback__))
-        )
     # build a list of extractors that are set to True
     whitelist = None if input_data.allow_list is None else [k for k, v in allowance.items() if v]
     bypass_cache = False if input_data.bypass_cache is None else input_data.bypass_cache
@@ -116,22 +105,9 @@ async def extract_meta(input_data: Input):
     out = Output(
         url=input_data.url,
         meta=extractor_tags,
-        exception=exception + database_exception,
+        exception=exception,
         time_until_complete=end_time - starting_extraction,
     )
-    try:
-        create_response_record(
-            starting_extraction,
-            end_time,
-            input_data=input_data,
-            allowance=allowance,
-            output=out,
-        )
-    except OperationalError as err:
-        database_exception += (
-            "\nDatabase exception: " + str(err.args) + "".join(traceback.format_exception(None, err, err.__traceback__))
-        )
-        out.exception += database_exception
 
     if exception != "":
         raise HTTPException(
@@ -159,34 +135,6 @@ def ping():
 
 # Developer endpoints
 if not is_production_environment():
-
-    @app.get(
-        "/records",
-        response_model=RecordsOutput,
-        description="Get all urls and their processed metadata.",
-    )
-    def show_records():
-        records = load_records()
-        out = []
-        for record in records:
-            out.append(
-                RecordSchema(
-                    id=record.id,
-                    timestamp=record.timestamp,
-                    start_time=record.start_time,
-                    action=record.action,
-                    allow_list=record.allow_list,
-                    meta=record.meta,
-                    url=record.url,
-                    html=record.html,
-                    headers=record.headers,
-                    har=record.har,
-                    debug=record.debug,
-                    exception=record.exception,
-                    time_until_complete=record.time_until_complete,
-                )
-            )
-        return {"records": out}
 
     @app.get(
         "/cache",
