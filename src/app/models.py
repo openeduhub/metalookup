@@ -267,14 +267,6 @@ class Ping(BaseModel):
     )
 
 
-class ProgressOutput(BaseModel):
-    progress: float = Field(default=0.0, description="Progress of evaluation.")
-
-
-class ProgressInput(BaseModel):
-    url: str = Field(..., description="The base url of the scraped website.")
-
-
 class DeleteCacheOutput(BaseModel):
     deleted_rows: int = Field(
         default=-1,
