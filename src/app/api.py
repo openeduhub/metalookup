@@ -15,9 +15,7 @@ from app.models import (
     Ping,
 )
 from app.schemas import CacheOutput
-from cache.cache_manager import CacheManager
 from core.metadata_manager import MetadataManager
-from db.db import load_cache
 from lib.constants import (
     EXPLANATION,
     MESSAGE_EXCEPTION,
@@ -142,7 +140,7 @@ if not is_production_environment():
         description="Developer endpoint to receive cache content.",
     )
     def get_cache():
-        return {"cache": load_cache()}
+        return CacheOutput()  # fixme
 
     @app.delete(
         "/cache",
@@ -150,6 +148,4 @@ if not is_production_environment():
         response_model=DeleteCacheOutput,
     )
     def delete_cache(reset_input: DeleteCacheInput):
-        cache_manager = CacheManager()
-        row_count = cache_manager.reset_cache(reset_input.domain)
-        return {"deleted_rows": row_count}
+        return DeleteCacheOutput()  # fixme:

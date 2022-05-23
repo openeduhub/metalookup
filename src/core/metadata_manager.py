@@ -5,11 +5,8 @@ from typing import Optional, Type
 from tldextract import TLDExtract
 
 from app.communication import Message
-from app.models import Explanation
-from cache.cache_manager import CacheManager
 from core.metadata_base import MetadataBase
 from core.website_manager import WebsiteData
-from db.db import create_cache_entry
 from features.accessibility import Accessibility
 from features.cookies import Cookies
 from features.extract_from_files import ExtractFromFiles
@@ -46,7 +43,6 @@ class MetadataManager:
         ]
         self.tld_extractor: TLDExtract = TLDExtract(cache_dir=None)
         self.blacklisted_for_cache = [MaliciousExtensions, ExtractFromFiles, Javascript]
-        self.cache_manager = CacheManager()
 
     def _setup_extractor(self, extractor_class: type(MetadataBase)) -> MetadataBase:
         self._logger.debug(f"Starting setup for {extractor_class} {get_utc_now()}")
@@ -111,16 +107,7 @@ class MetadataManager:
 
         for extractor in self.metadata_extractors:
             if allow_list is None or extractor.key in allow_list:
-                if (
-                    not self.cache_manager.bypass
-                    and self.is_feature_whitelisted_for_cache(extractor)
-                    and self.cache_manager.is_host_predefined()
-                    and self.cache_manager.is_enough_cached_data_present(extractor.key)
-                ):
-                    extracted_metadata: dict = self.cache_manager.get_predefined_metadata(extractor.key)
-                    data.update(extracted_metadata)
-                else:
-                    tasks.append(run_extractor_with_key(key=extractor.key, extractor=extractor, site=site))
+                tasks.append(run_extractor_with_key(key=extractor.key, extractor=extractor, site=site))
 
         results: list[tuple[str, dict]] = await asyncio.gather(*tasks)
 
@@ -130,32 +117,7 @@ class MetadataManager:
             **{k: d for k, d in results},
         }
 
-    def cache_data(
-        self,
-        extracted_metadata: dict,
-        allow_list: list[str],
-    ):
-        for feature, meta_data in extracted_metadata.items():
-            if (allow_list is None or feature in allow_list) and Explanation.Cached not in meta_data[EXPLANATION]:
-                values = []
-                if feature == ACCESSIBILITY:
-                    values = meta_data[VALUES]
-
-                data_to_be_cached = {
-                    VALUES: values,
-                    STAR_CASE: meta_data[STAR_CASE],
-                    TIMESTAMP: get_utc_now(),
-                    EXPLANATION: meta_data[EXPLANATION],
-                }
-
-                create_cache_entry(
-                    self.cache_manager.get_domain(),
-                    feature,
-                    data_to_be_cached,
-                    self._logger,
-                )
-
-    def start(self, message: Message) -> dict:
+    async def start(self, message: Message) -> dict:
         self._logger.debug(f"Start metadata_manager at {time.perf_counter() - global_start} since start")
 
         # this will eventually load the content dynamically if not provided in the message
@@ -169,11 +131,6 @@ class MetadataManager:
 
         self._logger.debug(f"WebsiteManager loaded at {time.perf_counter() - global_start} since start")
 
-        self.cache_manager.update_to_current_domain(
-            site.domain,
-            bypass=message.bypass_cache,
-        )
-
         now = time.perf_counter()
         self._logger.debug(f"starting_extraction at {now - global_start} since start")
         starting_extraction = get_utc_now()
@@ -182,10 +139,6 @@ class MetadataManager:
                 site=site,
                 allow_list=message.whitelist
             )
-        )
-        self.cache_data(
-            extracted_meta_data,
-            allow_list=message.whitelist,
         )
 
         self._logger.debug(f"extracted_meta_data at {time.perf_counter() - global_start} since start")
@@ -198,5 +151,4 @@ class MetadataManager:
             }
         )
 
-        self.cache_manager.reset()
         return extracted_meta_data
