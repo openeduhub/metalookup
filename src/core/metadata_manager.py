@@ -1,6 +1,5 @@
 import asyncio
 import time
-from multiprocessing import shared_memory
 from typing import Optional, Type
 
 from tldextract import TLDExtract
@@ -92,13 +91,9 @@ class MetadataManager:
         self,
         site: WebsiteData,
         allow_list: Optional[list[str]],
-        shared_memory_name: str,
     ) -> dict:
         data = {}
         tasks = []
-
-        shared_status = shared_memory.ShareableList(name=shared_memory_name)
-        shared_status[0] = 0
 
         async def run_extractor_with_key(key: str, extractor: MetadataBase, site: WebsiteData) -> tuple[str, dict]:
             """Call the extractor and pack its results into a tuple containing also the key"""
@@ -124,12 +119,10 @@ class MetadataManager:
                 ):
                     extracted_metadata: dict = self.cache_manager.get_predefined_metadata(extractor.key)
                     data.update(extracted_metadata)
-                    shared_status[0] += 1
                 else:
                     tasks.append(run_extractor_with_key(key=extractor.key, extractor=extractor, site=site))
 
         results: list[tuple[str, dict]] = await asyncio.gather(*tasks)
-        shared_status[0] += len(tasks)
 
         # combine the cached results with the newly extracted data into the target dictionary structure
         return {
@@ -165,12 +158,6 @@ class MetadataManager:
     def start(self, message: Message) -> dict:
         self._logger.debug(f"Start metadata_manager at {time.perf_counter() - global_start} since start")
 
-        shared_status = shared_memory.ShareableList(name=message._shared_memory_name)
-        url = message.url
-        if len(url) > 1024:
-            url = url[0:1024]
-        shared_status[1] = url
-
         # this will eventually load the content dynamically if not provided in the message
         # hence it may fail with various different exceptions (ConnectionError, ...)
         # those exceptions should be handled in the caller of this function.
@@ -193,8 +180,7 @@ class MetadataManager:
         extracted_meta_data = asyncio.run(
             self._extract_meta_data(
                 site=site,
-                allow_list=message.whitelist,
-                shared_memory_name=message._shared_memory_name,
+                allow_list=message.whitelist
             )
         )
         self.cache_data(
@@ -213,5 +199,4 @@ class MetadataManager:
         )
 
         self.cache_manager.reset()
-        shared_status[1] = ""
         return extracted_meta_data

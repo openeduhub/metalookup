@@ -76,7 +76,7 @@ def _convert_dict_to_output_model(meta: dict, debug: bool = False) -> ExtractorT
     response_model=Output,
     description="The main endpoint for metadata extraction.",
 )
-def extract_meta(input_data: Input):
+async def extract_meta(input_data: Input):
     starting_extraction = get_utc_now()
 
     allowance = json.loads(input_data.allow_list.json())
@@ -91,17 +91,15 @@ def extract_meta(input_data: Input):
     # build a list of extractors that are set to True
     whitelist = None if input_data.allow_list is None else [k for k, v in allowance.items() if v]
     bypass_cache = False if input_data.bypass_cache is None else input_data.bypass_cache
-    uuid = app.communicator.send_message(
+    meta_data: dict = await app.manager.start(
         message=Message(
             url=input_data.url,
             splash_response=input_data.splash_response,
             whitelist=whitelist,
-            _shared_memory_name=shared_status.shm.name,  # fixme: eventually remove?
             bypass_cache=bypass_cache,
         )
     )
 
-    meta_data: dict = app.communicator.get_message(uuid)
     if meta_data:
         extractor_tags = _convert_dict_to_output_model(meta_data, input_data.debug)
 
@@ -157,21 +155,6 @@ def extract_meta(input_data: Input):
 def ping():
     # TODO: Have this check manager health, too
     return {"status": "ok"}
-
-
-@app.get(
-    "/get_progress",
-    description="Returns progress of the metadata extraction. From 0 to 1 (=100%).",
-    response_model=ProgressOutput,
-)
-def get_progress(progress_input: ProgressInput):
-    if progress_input.url != "" and shared_status[1] != "" and shared_status[1] in progress_input.url:
-        progress = round(shared_status[0] / NUMBER_OF_EXTRACTORS, 2)
-    else:
-        progress = -1
-    return {
-        "progress": progress,
-    }
 
 
 # Developer endpoints
