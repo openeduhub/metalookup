@@ -6,11 +6,11 @@ from dataclasses import dataclass
 from logging import Logger
 from urllib.parse import urlparse
 
-import requests
+from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 from tldextract.tldextract import TLDExtract
 
-from app.communication import Message
+from app.models import Input
 from app.splash_models import HAR, SplashResponse
 from lib.constants import SCRIPT
 from lib.settings import SPLASH_HEADERS, SPLASH_TIMEOUT, SPLASH_URL
@@ -32,9 +32,8 @@ class WebsiteData:
     image_links: list[str]
     extensions: list[str]
 
-    # fixme: make this async
     @classmethod
-    def fetch_content(cls, url: str) -> SplashResponse:
+    async def fetch_content(cls, url: str) -> SplashResponse:
         """
         Build a new message from url in given message where html content, headers and har are populated.
         Uses splash, so the splash docker container must be running an reachable.
@@ -45,15 +44,13 @@ class WebsiteData:
             f"{SPLASH_URL}/render.json?url={url}&html={1}&iframes={1}"
             f"&har={1}&response_body={1}&wait={10}&render_all={1}&script={1}&timeout={SPLASH_TIMEOUT}"
         )
-        response = requests.get(
-            url=splash_url,
-            headers=SPLASH_HEADERS,
-            params={},
-        )
-        return SplashResponse.parse_obj(json.loads(response.content.decode("UTF-8")))
+        async with ClientSession() as session:
+            response = await session.get(url=splash_url, headers=SPLASH_HEADERS)
+            text = await response.text(encoding="UTF-8")
+            return SplashResponse.parse_obj(json.loads(text))
 
     @classmethod
-    def from_message(cls, message: Message, tld_extractor: TLDExtract, logger: Logger) -> "WebsiteData":
+    async def from_input(cls, input: Input, tld_extractor: TLDExtract, logger: Logger) -> "WebsiteData":
         def top_level_domain(url: str) -> str:
             host = tld_extractor(url=url.replace("http://", "").replace("https://", ""))
             domain = [host.subdomain, host.domain, host.suffix]
@@ -101,11 +98,11 @@ class WebsiteData:
             file_extensions = [extension_from_link(link) for link in raw_links]
             return [x for x in get_unique_list(file_extensions) if x != ""]
 
-        if message.splash_response is None:
-            logger.debug(f"Missing har -> fetching {message.url}")
-            splash_response = cls.fetch_content(message.url)
+        if input.splash_response is None:
+            logger.debug(f"Missing har -> fetching {input.url}")
+            splash_response = await cls.fetch_content(input.url)
         else:
-            splash_response = message.splash_response
+            splash_response = input.splash_response
 
         def headers_from_splash(splash: SplashResponse) -> dict[str, str]:
             """
@@ -134,9 +131,9 @@ class WebsiteData:
         raw_links = extract_raw_links(soup=soup, image_links=image_links)
 
         return WebsiteData(
-            url=message.url,
+            url=input.url,
             html=splash_response.html,
-            domain=top_level_domain(url=message.url),
+            domain=top_level_domain(url=input.url),
             soup=soup,
             har=splash_response.har,
             image_links=image_links,

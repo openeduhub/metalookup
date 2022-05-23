@@ -1,10 +1,10 @@
 import asyncio
-import time
-from typing import Optional, Type
+import logging
+from typing import Type, Union
 
 from tldextract import TLDExtract
 
-from app.communication import Message
+from app.models import Error, Input, MetadataTags, Output
 from core.metadata_base import MetadataBase
 from core.website_manager import WebsiteData
 from features.accessibility import Accessibility
@@ -30,37 +30,18 @@ from features.javascript import Javascript
 from features.malicious_extensions import MaliciousExtensions
 from features.metatag_explorer import MetatagExplorer
 from features.security import Security
-from lib.constants import EXPLANATION, STAR_CASE, TIME_REQUIRED, VALUES
 from lib.logger import get_logger
-from lib.timing import get_utc_now, global_start
 
 
 class MetadataManager:
-    def __init__(self, extractors: list[MetadataBase]) -> None:
-        self._logger = get_logger()
-        self.metadata_extractors = extractors
+    def __init__(self, extractors: list[MetadataBase]):
+        self.logger = get_logger()
+        self.extractors = extractors
         self.tld_extractor: TLDExtract = TLDExtract(cache_dir=None)
-        self.blacklisted_for_cache = [MaliciousExtensions, ExtractFromFiles, Javascript]
-
-    @staticmethod
-    async def create() -> "MetadataManager":
-        extractors = [
-            await MetadataManager._setup_extractor(get_logger(), extractor)
-            for extractor in MetadataManager._extractors()
-        ]
-        return MetadataManager(extractors=extractors)
-
-    @staticmethod
-    async def _setup_extractor(logger, extractor_class: type(MetadataBase)) -> MetadataBase:
-        logger.debug(f"Starting setup for {extractor_class} {get_utc_now()}")
-        extractor = extractor_class(logger)
-        await extractor.setup()
-        logger.debug(f"Finished setup for {extractor_class} {get_utc_now()}")
-        return extractor
 
     @classmethod
-    def _extractors(cls) -> list[Type[MetadataBase]]:
-        return [
+    async def create(cls) -> "MetadataManager":
+        types = [
             Advertisement,
             EasyPrivacy,
             MaliciousExtensions,
@@ -84,73 +65,48 @@ class MetadataManager:
             Accessibility,
         ]
 
-    def is_feature_whitelisted_for_cache(self, extractor: type(MetadataBase)) -> bool:
-        for feature in self.blacklisted_for_cache:
-            if isinstance(extractor, feature):
-                return False
-        return True
+        async def create_extractor(Extractor: Type[MetadataBase]) -> MetadataBase:  # noqa
+            instance = Extractor()
+            await instance.setup()
+            return instance
 
-    async def _extract_meta_data(
-        self,
-        site: WebsiteData,
-        allow_list: Optional[list[str]],
-    ) -> dict:
-        data = {}
-        tasks = []
+        logging.info("Initializing extractors")
+        extractors: tuple[MetadataBase, ...] = await asyncio.gather(
+            *[create_extractor(extractor) for extractor in types]
+        )
+        logging.info("Creating MetadataManager")
+        return MetadataManager(extractors=list(extractors))
 
-        async def run_extractor_with_key(key: str, extractor: MetadataBase, site: WebsiteData) -> tuple[str, dict]:
-            """Call the extractor and pack its results into a tuple containing also the key"""
-            try:
-                duration, values, stars, explanation = await extractor.start(site=site)
-                return key, {
-                    VALUES: values,
-                    TIME_REQUIRED: duration,
-                    STAR_CASE: stars,
-                    EXPLANATION: explanation,
-                }
-            except Exception as e:
-                self._logger.exception(f"Failed to extract from {key}: {e}")
-                return key, {"exception": str(e)}
-
-        for extractor in self.metadata_extractors:
-            if allow_list is None or extractor.key in allow_list:
-                tasks.append(run_extractor_with_key(key=extractor.key, extractor=extractor, site=site))
-
-        results: list[tuple[str, dict]] = await asyncio.gather(*tasks)
-
-        # combine the cached results with the newly extracted data into the target dictionary structure
-        return {
-            **data,
-            **{k: d for k, d in results},
-        }
-
-    async def start(self, message: Message) -> dict:
-        self._logger.debug(f"Start metadata_manager at {time.perf_counter() - global_start} since start")
+    async def extract(self, message: Input) -> Output:
+        self.logger.debug("Calling extractors from manager")
 
         # this will eventually load the content dynamically if not provided in the message
         # hence it may fail with various different exceptions (ConnectionError, ...)
         # those exceptions should be handled in the caller of this function.
-        site = WebsiteData.from_message(
-            message=message,
-            logger=self._logger,
+        site = await WebsiteData.from_input(
+            input=message,
+            logger=self.logger,
             tld_extractor=self.tld_extractor,
         )
 
-        self._logger.debug(f"WebsiteManager loaded at {time.perf_counter() - global_start} since start")
+        self.logger.debug("Build website data object.")
 
-        now = time.perf_counter()
-        self._logger.debug(f"starting_extraction at {now - global_start} since start")
-        starting_extraction = get_utc_now()
-        extracted_meta_data = await self._extract_meta_data(site=site, allow_list=message.whitelist)
+        async def run_extractor(extractor: MetadataBase) -> Union[MetadataTags, Error]:
+            """Call the extractor and transform its result into the expected output format"""
+            try:
+                _, _, stars, explanation = await extractor.start(site=site)
+                return MetadataTags(stars=stars, explanation=explanation)
+            except Exception as e:
+                return Error(error=str(e))
 
-        self._logger.debug(f"extracted_meta_data at {time.perf_counter() - global_start} since start")
-        extracted_meta_data.update(
-            {
-                "time_for_extraction": get_utc_now() - starting_extraction,
-                "raw_links": site.raw_links,
-                "image_links": site.image_links,
-                "extensions": site.extensions,
-            }
+        self.logger.debug("Dispatching extractor calls.")
+
+        # The call to gather (with return_exceptions=False) fails if any of the submitted tasks raise an exception.
+        # This is what we want, as we have to respond with an all or nothing result. I.e. we have metadata extracted
+        # for all fields or none of them.
+        results: tuple[Union[MetadataTags, Error], ...] = await asyncio.gather(
+            *[run_extractor(extractor=extractor) for extractor in self.extractors]
         )
+        self.logger.debug("Received all extractor results.")
 
-        return extracted_meta_data
+        return Output(url=message.url, **{e.key: v for e, v in zip(self.extractors, results)})

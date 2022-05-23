@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.api import Input, app
-from app.models import Output
+from app.models import Error, Output
 from app.splash_models import SplashResponse
 
 
@@ -38,4 +38,4 @@ def test_extract_endpoint(client):
     output = Output.parse_obj(json.loads(response.text))
     assert output.url == input.url
     # This should not be present, as the request to the accessibility container will fail
-    assert output.meta.accessibility is None, "received accessibility result but container should not be running"
+    assert isinstance(output.accessibility, Error), "received accessibility result but container should not be running"
