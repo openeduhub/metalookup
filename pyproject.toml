@@ -24,9 +24,8 @@ tldextract = "^3.0.2"
 "pdfminer.six" = "^20201018"
 PyPDF2 = "^1.27.12"
 aiohttp = "^3.8"
-psycopg2 = "^2.9"
-SQLAlchemy = "^1.4.21"
 beautifulsoup4 = "^4.10.0"
+databases = { extras = ["postgresql","sqlite"], version = "^0.5.1" }
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.6.0"

@@ -18,4 +18,5 @@ Pipfile
 src/logs/*
 *.csv
 /tests/tag_lists
+/tests/test.db
 /tag_lists

@@ -73,7 +73,7 @@ def cache(expire: int, key: KeyBuilder, backend: Backend):
                 logger.debug("Caching not supported for request")
                 return await func(*args, **kwargs)
 
-            ttl, ret = await backend.get_with_ttl(cache_key)
+            age, ret = await backend.get_with_ttl(cache_key)
 
             if ret is None and only_if_cached:
                 logger.debug("Request cannot be served from cache")
@@ -85,7 +85,7 @@ def cache(expire: int, key: KeyBuilder, backend: Backend):
             if ret is None:
                 logger.debug("Request cannot be served from cache. Evaluating function and populating cache")
                 ret = await func(*args, **kwargs)
-                response.headers.append("Cache-Control", f"max-age={expire}")
+                response.headers.append("Age", "0")
                 logger.debug("Populating cache")
                 # store the result in cache, no need to wait for
                 # it to complete before we send out the response
@@ -93,7 +93,8 @@ def cache(expire: int, key: KeyBuilder, backend: Backend):
                     asyncio.create_task(backend.set(cache_key, ret.json(), expire))
                 return ret
             else:
-                response.headers["Cache-Control"] = f"max-age={ttl}"
+                response.headers.append("Age", str(age))
+
                 return json.loads(ret)
 
         return inner
