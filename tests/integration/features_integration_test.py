@@ -69,7 +69,6 @@ def mock_website_data(
             splash_response=splash_response,
             bypass_cache=False,
             whitelist=None,
-            _shared_memory_name="",
         ),
         tld_extractor=mock_extractor if url is None else TLDExtract(cache_dir=None),
         logger=get_logger(),
