@@ -8,10 +8,10 @@ services:
       - "5057:5057"
     links:
       - splash
-      - accessibility
-      - db
+      - lighthouse
+      - postgres
     depends_on:
-      - db
+      - postgres
     restart: always
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:5057/_ping" ]
@@ -27,6 +27,7 @@ services:
       options:
         max-size: "1m"
         max-file: "1"
+
   splash:
     dns: 8.8.8.8
     image: scrapinghub/splash:latest
@@ -46,7 +47,8 @@ services:
       options:
         max-size: "1m"
         max-file: "1"
-  accessibility:
+
+  lighthouse:
     dns: 8.8.8.8
     image: docker.edu-sharing.com/projects/oeh-redaktion/edusharing-projects-oeh-redaktion-metalookup-lighthouse:latest
     restart: always
@@ -64,16 +66,16 @@ services:
       options:
         max-size: "1m"
         max-file: "1"
-  db:
+
+  postgres:
     image: postgres
-    container_name: oeh-search-meta_db_volume
     ports:
       - "5432:5432"
     restart: always
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=storage
+      # by default this will then also use metalookup db
+      - POSTGRES_USER=metalookup
+      - POSTGRES_PASSWORD=metalookup
     volumes:
       - db_volume:/var/lib/postgresql/data
     networks:
