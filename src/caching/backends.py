@@ -32,6 +32,7 @@ class Backend:
 
     @abc.abstractmethod
     async def clear(self, key: str = None):
+        """If no key is provided, truncate the whole cache, otherwise remove only the entry with given key."""
         pass
 
 
@@ -136,7 +137,10 @@ class DatabaseBackend(Backend):
         )
 
     async def clear(self, key: str = None):
-        await self.database.execute(
-            query="DELETE FROM metadata_cache WHERE key = :key",
-            values={"key": key},
-        )
+        if key is None:
+            await self.database.execute(query="DELETE FROM metadata_cache;")
+        else:
+            await self.database.execute(
+                query="DELETE FROM metadata_cache WHERE key = :key",
+                values={"key": key},
+            )
