@@ -1,7 +1,11 @@
 import asyncio
 import logging
+from datetime import datetime
 from typing import Type, Union
 
+from aiohttp import ClientConnectorError
+from fastapi import HTTPException
+from pydantic import ValidationError
 from tldextract import TLDExtract
 
 from app.models import Error, Input, MetadataTags, Output
@@ -80,18 +84,27 @@ class MetadataManager:
         # this will eventually load the content dynamically if not provided in the message
         # hence it may fail with various different exceptions (ConnectionError, ...)
         # those exceptions should be handled in the caller of this function.
-        site = await WebsiteData.from_input(
-            input=message,
-            logger=self.logger,
-            tld_extractor=self.tld_extractor,
-        )
+        try:
+            site = await WebsiteData.from_input(
+                input=message,
+                logger=self.logger,
+                tld_extractor=self.tld_extractor,
+            )
+        except ClientConnectorError as e:
+            raise HTTPException(status_code=502, detail=f"Could not get HAR from splash: {e}")
+        except ValidationError as e:
+            raise HTTPException(status_code=500, detail=f"Received unexpected HAR from splash: {e}")
 
         self.logger.debug("Build website data object.")
 
         async def run_extractor(extractor: MetadataBase) -> Union[MetadataTags, Error]:
             """Call the extractor and transform its result into the expected output format"""
             try:
+                self.logger.debug(f"Extracting {extractor.__class__.__name__}.")
+                before = datetime.utcnow().timestamp()
                 _, _, stars, explanation = await extractor.start(site=site)
+                after = datetime.utcnow().timestamp()
+                self.logger.info(f"Extracted {extractor.__class__.__name__} in {after-before:5.2f}s.")
                 return MetadataTags(stars=stars, explanation=explanation)
             except Exception as e:
                 return Error(error=str(e))
