@@ -7,7 +7,7 @@ from app.models import Explanation, StarCase
 from core.metadata_base import MetadataBase
 from core.website_manager import WebsiteData
 from lib.constants import ACCESSIBILITY
-from lib.settings import ACCESSIBILITY_TIMEOUT, ACCESSIBILITY_URL
+from lib.settings import LIGHTHOUSE_TIMEOUT, LIGHTHOUSE_URL
 
 _DESKTOP = "desktop"
 _MOBILE = "mobile"
@@ -28,9 +28,9 @@ class Accessibility(MetadataBase):
             "category": ACCESSIBILITY,
             "strategy": strategy,
         }
-        container_url = f"{ACCESSIBILITY_URL}/{ACCESSIBILITY}"
+        container_url = f"{LIGHTHOUSE_URL}/{ACCESSIBILITY}"
 
-        response = await session.get(url=container_url, timeout=ACCESSIBILITY_TIMEOUT, json=params)
+        response = await session.get(url=container_url, timeout=LIGHTHOUSE_TIMEOUT, json=params)
 
         if response.status == 200:
             # expected result looks like {"score": [0.123]}

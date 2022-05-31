@@ -74,7 +74,7 @@ async def ping():
 
 
 # Developer endpoints
-if not is_production_environment():
+if lib.settings.ENABLE_CACHE_CONTROL_ENDPOINTS:
 
     @app.get(
         "/cache",

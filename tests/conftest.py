@@ -1,5 +1,7 @@
 import logging
 
+from dotenv import load_dotenv
+
 
 def pytest_configure(config):
     """Disable noisy upstream loggers."""
@@ -7,4 +9,7 @@ def pytest_configure(config):
     disabled_loggers = {"pdfminer"}
     for name in disabled_loggers:
         logger = logging.getLogger(name)
-        logger.setLevel("WARN")
+        logger.setLevel("WARN")  #
+
+    # load test settings
+    load_dotenv()
