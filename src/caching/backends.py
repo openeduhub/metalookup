@@ -2,6 +2,7 @@
 # Unfortunately, this library does not support caching of post requests (yet),
 # hence we use a slightly modified own version.
 import abc
+import logging
 import time
 from asyncio import Lock
 from dataclasses import dataclass
@@ -9,9 +10,7 @@ from typing import Dict, Optional, Tuple
 
 from databases import Database
 
-from lib.logger import create_logger
-
-logger = create_logger()
+logger = logging.getLogger(__name__)
 
 
 class Backend:

@@ -32,7 +32,6 @@ from features.html_based import (
 )
 from features.javascript import Javascript
 from features.metatag_explorer import MetatagExplorer
-from lib.logger import get_logger
 
 
 async def mock_website_data(
@@ -66,7 +65,7 @@ async def mock_website_data(
     return await WebsiteData.from_input(
         Input(url=url, splash_response=splash_response),
         tld_extractor=mock_extractor if url is None else TLDExtract(cache_dir=None),
-        logger=get_logger(),
+        logger=logging.getLogger(),
     )
 
 
@@ -188,9 +187,7 @@ async def _test_extract_from_files_start_wrapper(self, site: WebsiteData):
 
 @pytest.mark.asyncio
 async def test_extract_from_files():
-    logger = get_logger()
-    logger.setLevel(logging.INFO)  # logging takes quite some time for this
-    feature = ExtractFromFiles(logger)
+    feature = ExtractFromFiles()
 
     await feature.setup()
     feature.start = _test_extract_from_files_start_wrapper.__get__(feature, ExtractFromFiles)

@@ -1,15 +1,19 @@
+import logging
 import time
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
+import lib.settings
 from app.models import DeleteCacheInput, DeleteCacheOutput, Input, MetadataTags, Output, Ping
-from app.schemas import CacheOutput
-from caching.backends import InMemoryBackend
+from caching.backends import DatabaseBackend
 from caching.cache import cache
 from core.metadata_manager import MetadataManager
-from lib.logger import create_logger
-from lib.tools import is_production_environment
+from lib.logger import setup_logging
+
+setup_logging(level=lib.settings.LOG_LEVEL, path=lib.settings.LOG_PATH)
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="meta-lookup", version="v1")
 app.add_middleware(
@@ -19,15 +23,16 @@ app.add_middleware(
     allow_methods=["POST", "GET", "OPTIONS", "PUT", "DELETE"],
     allow_headers=["*"],
 )
-app.cache_backend = InMemoryBackend()
+
+manager = MetadataManager()
+cache_backend = DatabaseBackend(url=lib.settings.CACHE_DATABASE_URL) if lib.settings.ENABLE_CACHE else None
 
 
 @app.on_event("startup")
 async def initialize():
-    app.logger = create_logger()
-    app.logger.info("Startup")
-    app.manager = await MetadataManager.create()
-    # await app.cache_backend.setup()
+    await manager.setup()
+    if cache_backend is not None:
+        await cache_backend.setup()
 
 
 @app.middleware("http")
@@ -47,17 +52,17 @@ async def caching_and_response_time(request: Request, call_next):
 @cache(
     expire=24 * 60 * 60 * 28,
     key=lambda input, request, response: str(input.url) if input.splash_response is None else None,
-    backend=app.cache_backend,
+    backend=cache_backend,
 )
 # request and response arguments are needed for the cache wrapper.
 async def extract_meta(input: Input, request: Request, response: Response):
     """The extract endpoint"""
-    app.logger.info(f"Received request for {input.url}")
+    logger.info(f"Received request for {input.url}")
 
-    result = await app.manager.extract(input)
+    result = await manager.extract(input)
 
     # prevent caching of responses that do not contain a full set of metadata information.
-    if any(not isinstance(getattr(result, extractor.key), MetadataTags) for extractor in app.manager.extractors):
+    if any(not isinstance(getattr(result, extractor.key), MetadataTags) for extractor in manager.extractors):
         response.headers.append("Cache-Control", "no-cache")
         response.headers.append("Cache-Control", "no-store")
     return result

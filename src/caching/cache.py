@@ -3,15 +3,15 @@
 # hence we use a slightly modified own version.
 import asyncio
 import json
+import logging
 from functools import wraps
 from typing import Optional, Protocol
 
 from fastapi import HTTPException, Request, Response
 
 from caching.backends import Backend
-from lib.logger import create_logger
 
-logger = create_logger()
+logger = logging.getLogger(__name__)
 
 
 class KeyBuilder(Protocol):
@@ -19,12 +19,13 @@ class KeyBuilder(Protocol):
         """Should return none if the request is not suitable for caching."""
 
 
-def cache(expire: int, key: KeyBuilder, backend: Backend):
+def cache(expire: int, key: KeyBuilder, backend: Optional[Backend]):
     """
     Eventually cache the response of a request and handle future incoming requests by simply loading the
     response from cache.
     :param expire: How long (seconds) a stored cache entry will be valid.
-    :param backend: The cache storage engine to be used.
+    :param backend: The cache storage engine to be used. If None, then no caching will be performed and the decorator
+                    will have no effect.
     :param key: A function that defines whether an incoming request can be cached and under which key it will be cached.
                 It will take the same arguments as the decorated function and should return a string key if the request
                 can be cached, or None otherwise.
@@ -42,6 +43,10 @@ def cache(expire: int, key: KeyBuilder, backend: Backend):
         # which requires variadic args and kwargs.
         # While it might be possible to do some magical signature transformations to work around this issue,
         # it is far easier to simply force usage of the request and response arguments in the wrapped function.
+        if backend is None:
+            logger.info(f"No cache backend provided. Caching disabled for {func}")
+            return func
+
         @wraps(func)
         async def inner(
             *args,

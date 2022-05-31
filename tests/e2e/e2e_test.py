@@ -1,15 +1,15 @@
 import json
+import os
 from json import JSONDecodeError
 
 import pytest
 import requests
 
-from lib.settings import SKIP_E2E_TESTS
 from tests.test_libs import DOCKER_TEST_HEADERS, DOCKER_TEST_URL, _build_and_run_docker
 
 
 @pytest.mark.skipif(
-    SKIP_E2E_TESTS,
+    os.environ.get("SKIP_E2E_TESTS", True),
     reason="""
     This test takes a lot of time, depending on payload etc - 90s are possible (on 20210105
     Furthermore, it is not idempotent, because it depends on internet resources.
