@@ -73,34 +73,37 @@ def cache(expire: int, key: KeyBuilder, backend: Optional[Backend]):
                 logger.debug("Request cannot be served from cache")
                 # todo: discuss: This is somewhat questionable. If the user requests a response served
                 #       from cache, but the response is not cached - and can never be, what should we do?
-                raise HTTPException(status_code=400, detail="Request never be served from cache.")
+                raise HTTPException(
+                    status_code=400,
+                    detail="Request can never be served from cache, but 'only-if-cached' request header was set.",
+                )
             elif cache_key is None:
                 logger.debug("Caching not supported for request")
                 return await func(*args, **kwargs)
 
-            age, ret = await backend.get_with_ttl(cache_key)
+            age, result = await backend.get_with_ttl(cache_key)
 
-            if ret is None and only_if_cached:
+            if result is None and only_if_cached:
                 logger.debug("Request cannot be served from cache")
                 # todo: discuss: This is somewhat questionable. If the user requests a response served
                 #       from cache, but the response is not cached, what should we do? Other servers use 50x
                 #       response codes to indicate that no such answer can be delivered from the cache.
                 raise HTTPException(status_code=404, detail="Request cannot be served from cache.")
 
-            if ret is None:
+            if result is None:
                 logger.debug("Request cannot be served from cache. Evaluating function and populating cache")
-                ret = await func(*args, **kwargs)
+                result = await func(*args, **kwargs)
                 response.headers.append("Age", "0")
                 logger.debug("Populating cache")
                 # store the result in cache, no need to wait for
                 # it to complete before we send out the response
                 if "no-store" not in response.headers.getlist("Cache-Control"):
-                    asyncio.create_task(backend.set(cache_key, ret.json(), expire))
-                return ret
+                    asyncio.create_task(backend.set(cache_key, result.json(), expire))
+                return result
             else:
                 response.headers.append("Age", str(age))
 
-                return json.loads(ret)
+                return json.loads(result)
 
         return inner
 
