@@ -30,17 +30,15 @@ from features.javascript import Javascript
 from features.malicious_extensions import MaliciousExtensions
 from features.metatag_explorer import MetatagExplorer
 from features.security import Security
-from lib.logger import get_logger
 
 
 class MetadataManager:
-    def __init__(self, extractors: list[MetadataBase]):
-        self.logger = get_logger()
-        self.extractors = extractors
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        self.extractors: list[MetadataBase] = []  # will be initialized in setup call
         self.tld_extractor: TLDExtract = TLDExtract(cache_dir=None)
 
-    @classmethod
-    async def create(cls) -> "MetadataManager":
+    async def setup(self):
         types = [
             Advertisement,
             EasyPrivacy,
@@ -65,17 +63,16 @@ class MetadataManager:
             Accessibility,
         ]
 
-        async def create_extractor(Extractor: Type[MetadataBase]) -> MetadataBase:  # noqa
-            instance = Extractor()
+        async def create_extractor(extractor: Type[MetadataBase]) -> MetadataBase:
+            instance = extractor()
             await instance.setup()
             return instance
 
         logging.info("Initializing extractors")
-        extractors: tuple[MetadataBase, ...] = await asyncio.gather(
+        self.extractors: tuple[MetadataBase, ...] = await asyncio.gather(
             *[create_extractor(extractor) for extractor in types]
         )
-        logging.info("Creating MetadataManager")
-        return MetadataManager(extractors=list(extractors))
+        logging.info("Done initializing extractors")
 
     async def extract(self, message: Input) -> Output:
         self.logger.debug("Calling extractors from manager")

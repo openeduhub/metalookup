@@ -12,7 +12,9 @@ from core.metadata_manager import MetadataManager
 
 @pytest.fixture
 async def manager() -> MetadataManager:
-    return await MetadataManager.create()
+    manager = MetadataManager()
+    await manager.setup()
+    return manager
 
 
 @pytest.mark.asyncio
