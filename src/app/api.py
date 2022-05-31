@@ -78,11 +78,11 @@ if not is_production_environment():
 
     @app.get(
         "/cache",
-        response_model=CacheOutput,
+        response_model=list[Output],
         description="Developer endpoint to receive cache content.",
     )
     def get_cache():
-        return CacheOutput()  # fixme
+        return []  # fixme
 
     @app.delete(
         "/cache",
