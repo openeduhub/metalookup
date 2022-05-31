@@ -30,7 +30,7 @@ def test_extract_endpoint(client):
         splash = SplashResponse.parse_obj(json.load(f))
 
     input = Input(url="https://google.com", splash_response=splash)
-    response = client.post("/extract_meta", data=input.json(), timeout=10, headers={"Cache-Control": "no-cache"})
+    response = client.post("/extract", data=input.json(), timeout=10, headers={"Cache-Control": "no-cache"})
 
     pprint.pprint(response.json())
 
@@ -50,7 +50,7 @@ def test_extract_endpoint_cache(client):
         splash = SplashResponse.parse_obj(json.load(f))
 
     response = client.post(
-        "/extract_meta",
+        "/extract",
         data=Input(url="https://google.com", splash_response=splash).json(),
         timeout=10,
         headers={"Cache-Control": "only-if-cached"},
@@ -59,7 +59,7 @@ def test_extract_endpoint_cache(client):
 
     with mock.patch("core.website_manager.WebsiteData.fetch_content", new=AsyncMock(side_effect=lambda _: splash)):
         response = client.post(
-            "/extract_meta",
+            "/extract",
             data=Input(url="https://google.com").json(),
             timeout=10,
             headers={"Cache-Control": "only-if-cached"},
@@ -67,7 +67,7 @@ def test_extract_endpoint_cache(client):
         assert response.status_code == 404, "response can be cached but is not present in cache."
 
         response = client.post(
-            "/extract_meta",
+            "/extract",
             data=Input(url="https://google.com").json(),
             timeout=10,
             headers={"Cache-Control": "max-age=5000"},
@@ -89,7 +89,7 @@ def test_extract_endpoint_cache(client):
             # now we should get a fully populated result (now Errors within the individual extractors)
             # which should also get cached.
             response = client.post(
-                "/extract_meta",
+                "/extract",
                 data=Input(url="https://google.com").json(),
                 timeout=10,
             )

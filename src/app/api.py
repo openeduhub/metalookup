@@ -45,7 +45,7 @@ async def caching_and_response_time(request: Request, call_next):
 
 
 @app.post(
-    "/extract_meta",
+    "/extract",
     response_model=Output,
     description="The main endpoint for metadata extraction.",
 )
@@ -55,7 +55,7 @@ async def caching_and_response_time(request: Request, call_next):
     backend=cache_backend,
 )
 # request and response arguments are needed for the cache wrapper.
-async def extract_meta(input: Input, request: Request, response: Response):
+async def extract(input: Input, request: Request, response: Response):
     """The extract endpoint"""
     logger.info(f"Received request for {input.url}")
 
