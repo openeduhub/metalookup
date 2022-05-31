@@ -1,5 +1,4 @@
 import logging
-import time
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,6 +9,7 @@ from caching.backends import DatabaseBackend
 from caching.cache import cache
 from core.metadata_manager import MetadataManager
 from lib.logger import setup_logging
+from lib.tools import runtime
 
 setup_logging(level=lib.settings.LOG_LEVEL, path=lib.settings.LOG_PATH)
 
@@ -37,10 +37,9 @@ async def initialize():
 
 @app.middleware("http")
 async def caching_and_response_time(request: Request, call_next):
-    start_time = time.time()
-    response = await call_next(request)
-    process_time = time.time() - start_time
-    response.headers["X-Process-Time"] = str(round(process_time * 1000, 2) / 1000)
+    with runtime() as t:
+        response = await call_next(request)
+    response.headers["X-Process-Time"] = f"{t():5.2f}"
     return response
 
 

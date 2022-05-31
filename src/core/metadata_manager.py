@@ -34,6 +34,7 @@ from features.javascript import Javascript
 from features.malicious_extensions import MaliciousExtensions
 from features.metatag_explorer import MetatagExplorer
 from features.security import Security
+from lib.tools import runtime
 
 
 class MetadataManager:
@@ -101,12 +102,12 @@ class MetadataManager:
             """Call the extractor and transform its result into the expected output format"""
             try:
                 self.logger.debug(f"Extracting {extractor.__class__.__name__}.")
-                before = datetime.utcnow().timestamp()
-                _, _, stars, explanation = await extractor.start(site=site)
-                after = datetime.utcnow().timestamp()
-                self.logger.info(f"Extracted {extractor.__class__.__name__} in {after-before:5.2f}s.")
+                with runtime() as t:
+                    _, _, stars, explanation = await extractor.start(site=site)
+                self.logger.info(f"Extracted {extractor.__class__.__name__} in {t():5.2f}s.")
                 return MetadataTags(stars=stars, explanation=explanation)
             except Exception as e:
+                self.logger.exception(f"Failed to extract {extractor.key}")
                 return Error(error=str(e))
 
         self.logger.debug("Dispatching extractor calls.")

@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 from app.models import Explanation, StarCase
 from core.website_manager import WebsiteData
 from lib.settings import USE_LOCAL_IF_POSSIBLE
-from lib.timing import get_utc_now
+from lib.tools import runtime
 
 
 class ProbabilityDeterminationMethod(Enum):
@@ -172,11 +172,11 @@ class MetadataBase:
         return decision, explanation
 
     async def start(self, site: WebsiteData) -> tuple[float, list[str], StarCase, list[Explanation]]:
-        before = get_utc_now()
-        values = await self._start(website_data=site)
-        site.values = values
-        star_case, explanation = self._decide(website_data=site)
-        return get_utc_now() - before, values, star_case, explanation
+        with runtime() as t:
+            values = await self._start(website_data=site)
+            site.values = values
+            star_case, explanation = self._decide(website_data=site)
+        return t(), values, star_case, explanation
 
     async def _start(self, website_data: WebsiteData) -> list[str]:
         if self.evaluate_header:
