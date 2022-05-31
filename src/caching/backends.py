@@ -116,6 +116,8 @@ class DatabaseBackend(Backend):
 
     async def get_with_ttl(self, key: str) -> tuple[int, Optional[str]]:
         r = await self.database.fetch_one(query="SELECT * FROM metadata_cache WHERE key = :key", values={"key": key})
+        if r is None:
+            return -1, None
         value, ttl = r["value"], r["ttl"]
         return ttl - self.now(), value
 
