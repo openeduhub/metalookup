@@ -18,7 +18,7 @@ from tests.test_libs import DOCKER_TEST_HEADERS, DOCKER_TEST_URL, _build_and_run
     """,
 )
 def test_e2e():
-    url = DOCKER_TEST_URL + "extract_meta"
+    url = DOCKER_TEST_URL + "extract"
 
     payload = '{"url": "https://canyoublockit.com/extreme-test/"}'
 
