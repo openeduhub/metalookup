@@ -1,8 +1,8 @@
 import json
 import os
 import re
-import time
 from dataclasses import dataclass
+from datetime import datetime
 from logging import Logger
 from urllib.parse import urlparse
 
@@ -14,8 +14,7 @@ from app.models import Input
 from app.splash_models import HAR, SplashResponse
 from lib.constants import SCRIPT
 from lib.settings import SPLASH_HEADERS, SPLASH_TIMEOUT, SPLASH_URL
-from lib.timing import global_start
-from lib.tools import get_unique_list
+from lib.tools import get_unique_list, runtime
 
 
 @dataclass  # fixme: make frozen
@@ -88,7 +87,7 @@ class WebsiteData:
                 for attribute in attributes
                 if element.has_attr(attribute)
             ]
-            logger.debug(f"Found links at {time.perf_counter() - global_start} since start: {len(links)}")
+            logger.debug(f"Found {len(links)} links")
             return get_unique_list(links + [el for el in image_links if el is not None] + script_links)
 
         def extract_extensions(raw_links: list[str]) -> list[str]:
@@ -100,7 +99,10 @@ class WebsiteData:
 
         if input.splash_response is None:
             logger.debug(f"Missing har -> fetching {input.url}")
-            splash_response = await cls.fetch_content(input.url)
+
+            with runtime() as t:
+                splash_response = await cls.fetch_content(input.url)
+            logger.debug(f"Fetched har from splash within {t():5.2f}s")
         else:
             splash_response = input.splash_response
 
