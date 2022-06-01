@@ -27,6 +27,7 @@ def get_utc_now() -> float:
     return datetime.datetime.utcnow().timestamp()
 
 
+# fixme: eventually integrate this into meta-lookup to be run internally on a regular basis
 def main(maximum_age_in_seconds: int = SECONDS_PER_DAY):
     payload = {}
     headers = {}

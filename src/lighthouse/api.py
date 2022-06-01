@@ -6,10 +6,13 @@ import uvicorn as uvicorn
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
-from lib.constants import ACCESSIBILITY, DESKTOP, LIGHTHOUSE_EXTRACTOR, MOBILE, SCORE
-from lib.settings import ACCESSIBILITY_TIMEOUT, LIGHTHOUSE_API_PORT, VERSION
+from lib.constants import ACCESSIBILITY, LIGHTHOUSE_EXTRACTOR, SCORE
+from lib.settings import LIGHTHOUSE_API_PORT, LIGHTHOUSE_TIMEOUT
 
-app = FastAPI(title=LIGHTHOUSE_EXTRACTOR, version=str(VERSION))
+DESKTOP = "desktop"
+MOBILE = "mobile"
+
+app = FastAPI(title=LIGHTHOUSE_EXTRACTOR, version="1.0")
 
 
 class Output(BaseModel):
@@ -39,7 +42,7 @@ def accessibility(input_data: Input):
         "--enable-error-reporting",
         "--chrome-flags='--headless --no-sandbox --disable-gpu'",
         f"--formFactor={input_data.strategy}",
-        f"--max-wait-for-load={ACCESSIBILITY_TIMEOUT*1000}",
+        f"--max-wait-for-load={LIGHTHOUSE_TIMEOUT * 1000}",
         f"--only-categories={input_data.category}",
         "--output=json",
         "--quiet",
