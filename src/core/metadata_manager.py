@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from datetime import datetime
+from concurrent.futures import ProcessPoolExecutor
 from typing import Type, Union
 
 from aiohttp import ClientConnectorError
@@ -9,7 +9,7 @@ from pydantic import ValidationError
 from tldextract import TLDExtract
 
 from app.models import Error, Input, MetadataTags, Output
-from core.metadata_base import MetadataBase
+from core.extractor import Extractor
 from core.website_manager import WebsiteData
 from features.accessibility import Accessibility
 from features.cookies import Cookies
@@ -40,8 +40,13 @@ from lib.tools import runtime
 class MetadataManager:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.extractors: list[MetadataBase] = []  # will be initialized in setup call
+        # will be initialized in setup call - use None here so that extraction
+        # fails if setup method was not called as required
+        self.extractors: list[Extractor] = None  # noqa
         self.tld_extractor: TLDExtract = TLDExtract(cache_dir=None)
+
+        # fixme: eventually we may want to shut down the process pool upon termination
+        self.process_pool: ProcessPoolExecutor = ProcessPoolExecutor(max_workers=4)
 
     async def setup(self):
         types = [
@@ -68,13 +73,13 @@ class MetadataManager:
             Accessibility,
         ]
 
-        async def create_extractor(extractor: Type[MetadataBase]) -> MetadataBase:
+        async def create_extractor(extractor: Type[Extractor]) -> Extractor:
             instance = extractor()
             await instance.setup()
             return instance
 
         logging.info("Initializing extractors")
-        self.extractors: tuple[MetadataBase, ...] = await asyncio.gather(
+        self.extractors: tuple[Extractor, ...] = await asyncio.gather(
             *[create_extractor(extractor) for extractor in types]
         )
         logging.info("Done initializing extractors")
@@ -98,12 +103,12 @@ class MetadataManager:
 
         self.logger.debug("Build website data object.")
 
-        async def run_extractor(extractor: MetadataBase) -> Union[MetadataTags, Error]:
+        async def run_extractor(extractor: Extractor) -> Union[MetadataTags, Error]:
             """Call the extractor and transform its result into the expected output format"""
             try:
                 self.logger.debug(f"Extracting {extractor.__class__.__name__}.")
                 with runtime() as t:
-                    _, _, stars, explanation = await extractor.start(site=site)
+                    stars, explanation, _extra = await extractor.extract(site=site, executor=self.process_pool)
                 self.logger.info(f"Extracted {extractor.__class__.__name__} in {t():5.2f}s.")
                 return MetadataTags(stars=stars, explanation=explanation)
             except Exception as e:
