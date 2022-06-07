@@ -1,83 +1,81 @@
+import asyncio
 import json
+import os
 import subprocess
 from typing import List
 
 import uvicorn as uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from lib.constants import ACCESSIBILITY, LIGHTHOUSE_EXTRACTOR, SCORE
-from lib.settings import LIGHTHOUSE_API_PORT, LIGHTHOUSE_TIMEOUT
+# the timeout that lighthouse internally uses when loading the website
+LOAD_TIMEOUT = int(os.environ.get("LOAD_TIMEOUT", 120))
 
-DESKTOP = "desktop"
-MOBILE = "mobile"
+_DESKTOP = "desktop"
+_MOBILE = "mobile"
+_ACCESSIBILITY = "accessibility"
 
-app = FastAPI(title=LIGHTHOUSE_EXTRACTOR, version="1.0")
+app = FastAPI(title="Lighthouse Accessibility Extractor", version="1.0")
 
 
 class Output(BaseModel):
     score: List[float] = Field(
         default=[-1.0],
-        description=f"The {ACCESSIBILITY} score.",
+        description=f"The {_ACCESSIBILITY} score.",
     )
 
 
 class Input(BaseModel):
     url: str = Field(..., description="The base url of the scraped website.")
     strategy: str = Field(
-        default=DESKTOP,
-        description=f"Whether to use {MOBILE} or {DESKTOP}.",
+        default=_DESKTOP,
+        description=f"Whether to use {_MOBILE} or {_DESKTOP}.",
     )
     category: str = Field(
-        default=ACCESSIBILITY,
+        default=_ACCESSIBILITY,
         description="Which category to evaluate. Only one for now",
     )
 
 
-@app.get(f"/{ACCESSIBILITY}", response_model=Output)
-def accessibility(input_data: Input):
-    lighthouse_command = [
-        "lighthouse",
+@app.get("/accessibility", response_model=Output)
+async def accessibility(input_data: Input):
+    args = [
         input_data.url,
         "--enable-error-reporting",
-        "--chrome-flags='--headless --no-sandbox --disable-gpu'",
+        # See https://github.com/GoogleChrome/lighthouse/issues/6512 for discussion about timeouts
+        "--chrome-flags='--headless --no-sandbox --disable-gpu --disable-dev-shm-usage'",
         f"--formFactor={input_data.strategy}",
-        f"--max-wait-for-load={LIGHTHOUSE_TIMEOUT * 1000}",
+        f"--max-wait-for-load={LOAD_TIMEOUT * 1000}",
         f"--only-categories={input_data.category}",
         "--output=json",
         "--quiet",
-        f"{'--screenEmulation.mobile=true' if input_data.strategy == MOBILE else '--no-screenEmulation.mobile'}",
+        f"{'--screenEmulation.mobile=true' if input_data.strategy == _MOBILE else '--no-screenEmulation.mobile'}",
     ]
 
-    lighthouse_process = subprocess.Popen(
-        lighthouse_command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-    )
+    process = await asyncio.create_subprocess_exec("lighthouse", *args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
-    lighthouse_output = "".join([line.decode() for line in iter(lighthouse_process.stdout.readline, b"")])
+    stdout, stderr = await process.communicate()
+
+    if process.returncode != 0:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Lighthouse process exited with code {process.returncode}. Standard Error: {stderr.decode()}",
+        )
+
     try:
-        lighthouse_output = json.loads(lighthouse_output)
+        output = json.loads(stdout.decode())
+        return Output(score=[output["categories"][input_data.category]["score"]])
     except json.decoder.JSONDecodeError as e:
-        lighthouse_output = {"runtimeError": e.args}
-
-    output = Output()
-    output.score = [-1.0]
-    try:
-        if "runtimeError" not in lighthouse_output.keys():
-            output.score = lighthouse_output["categories"][input_data.category][SCORE]
-            if isinstance(output.score, float):
-                output.score = [output.score]
-    except KeyError:
-        pass
-
-    return output
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to deserialize lighthouse standard output: {e}. Standard Output: {stdout.decode()}",
+        )
 
 
 @app.get("/_ping")
-def ping():
+async def ping():
     return {"status": "ok"}
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=LIGHTHOUSE_API_PORT, log_level="info")
+    uvicorn.run(app, host="0.0.0.0", port=5058, log_level="info")
