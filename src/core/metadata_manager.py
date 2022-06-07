@@ -84,7 +84,13 @@ class MetadataManager:
         )
         logging.info("Done initializing extractors")
 
-    async def extract(self, message: Input) -> Output:
+    async def extract(self, message: Input, extra: bool) -> Output:
+        """
+        Call the different registered extractors concurrently with given input.
+        :param message: The message holding URL and or HAR (splash response) to analyse. If no splash response
+                        is contained the splash container will be queried before invoking the extractors.
+        :param extra: If set to true, additional extractor specific information will be added to the output.
+        """
         self.logger.debug("Calling extractors from manager")
 
         # this will eventually load the content dynamically if not provided in the message
@@ -108,9 +114,11 @@ class MetadataManager:
             try:
                 self.logger.debug(f"Extracting {extractor.__class__.__name__}.")
                 with runtime() as t:
-                    stars, explanation, _extra = await extractor.extract(site=site, executor=self.process_pool)
+                    stars, explanation, extra_data = await extractor.extract(site=site, executor=self.process_pool)
                 self.logger.info(f"Extracted {extractor.__class__.__name__} in {t():5.2f}s.")
-                return MetadataTags(stars=stars, explanation=explanation)
+                if extra:
+                    return MetadataTags(stars=stars, explanation=explanation, extra=extra_data)
+                return MetadataTags(stars=stars, explanation=explanation, extra=None)
             except Exception as e:
                 self.logger.exception(f"Failed to extract {extractor.key}")
                 return Error(error=str(e))

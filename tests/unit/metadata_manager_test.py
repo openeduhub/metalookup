@@ -36,7 +36,7 @@ async def test_extract(manager: MetadataManager):
         "features.accessibility.Accessibility._execute_api_call",
         accessibility_api_call_mock,
     ):
-        output = await manager.extract(input)
+        output = await manager.extract(input, extra=True)
 
         print("Extraction result from manager:")
         pprint.pprint(output.dict())
