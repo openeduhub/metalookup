@@ -4,7 +4,7 @@ import json
 from aiohttp import ClientSession
 
 from app.models import Explanation, StarCase
-from core.metadata_base import MetadataBase
+from core.extractor import NO_EXPLANATION, MetadataBase
 from core.website_manager import WebsiteData
 from lib.constants import ACCESSIBILITY
 from lib.settings import LIGHTHOUSE_TIMEOUT, LIGHTHOUSE_URL
@@ -12,9 +12,13 @@ from lib.settings import LIGHTHOUSE_TIMEOUT, LIGHTHOUSE_URL
 _DESKTOP = "desktop"
 _MOBILE = "mobile"
 
+_LIGHTHOUSE_SCORE_SUITABLE = "Lighthouse accessibility score is suitable"
+_LIGHTHOUSE_SCORE_TOO_LOW = "Lighthouse accessibility score is too low"
+
 
 @MetadataBase.with_key()
 class Accessibility(MetadataBase):
+
     star_levels = [0.7, 0.8, 0.85, 0.9, 0.95, 1]
 
     async def _execute_api_call(
@@ -55,19 +59,19 @@ class Accessibility(MetadataBase):
         website_data.score = (score[0] + score[1]) / 2
         return [str(website_data.score)]
 
-    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, list[Explanation]]:
+    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, Explanation]:
         if score := getattr(website_data, "score", False):
             if score <= self.star_levels[0]:
-                return StarCase.ZERO, [Explanation.AccessibilityTooLow]
+                return StarCase.ZERO, _LIGHTHOUSE_SCORE_TOO_LOW
             elif score <= self.star_levels[1]:
-                return StarCase.ONE, [Explanation.AccessibilityTooLow]
+                return StarCase.ONE, _LIGHTHOUSE_SCORE_TOO_LOW
             elif score <= self.star_levels[2]:
-                return StarCase.TWO, [Explanation.AccessibilityTooLow]
+                return StarCase.TWO, _LIGHTHOUSE_SCORE_TOO_LOW
             elif score <= self.star_levels[3]:
-                return StarCase.THREE, [Explanation.AccessibilityTooLow]
+                return StarCase.THREE, _LIGHTHOUSE_SCORE_TOO_LOW
             elif score <= self.star_levels[4]:
-                return StarCase.FOUR, [Explanation.AccessibilitySuitable]
+                return StarCase.FOUR, _LIGHTHOUSE_SCORE_SUITABLE
             elif score > self.star_levels[4]:
-                return StarCase.FIVE, [Explanation.AccessibilitySuitable]
+                return StarCase.FIVE, _LIGHTHOUSE_SCORE_SUITABLE
         else:
-            return StarCase.ZERO, [Explanation.none]
+            return StarCase.ZERO, NO_EXPLANATION

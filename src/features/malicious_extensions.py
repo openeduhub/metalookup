@@ -1,6 +1,9 @@
 from app.models import Explanation, StarCase
-from core.metadata_base import MetadataBase
+from core.extractor import NO_EXPLANATION, MetadataBase
 from core.website_manager import WebsiteData
+
+FOUND_POTENTIALLY_MALICIOUS_EXTENSION = "Found potentially malicious extension"
+FOUND_SLIGHTLY_MALICIOUS_EXTENSION = "Found slightly malicious extension"
 
 
 @MetadataBase.with_key()
@@ -194,18 +197,18 @@ class MaliciousExtensions(MetadataBase):
             if extension.replace(".", "") in set(self.malicious_extensions + self.more_harmless_extensions)
         ]
 
-    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, list[Explanation]]:
+    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, Explanation]:
         decision = StarCase.ZERO
-        explanation = Explanation.none
+        explanation = NO_EXPLANATION
         if len(website_data.values) == 0:
             decision = StarCase.FIVE
         else:
             for value in website_data.values:
                 if value.replace(".", "") in self.malicious_extensions:
                     decision = StarCase.ZERO
-                    explanation = Explanation.PotentiallyMaliciousExtensionFound
+                    explanation = FOUND_POTENTIALLY_MALICIOUS_EXTENSION
                     break
                 elif value.replace(".", "") in self.more_harmless_extensions:
                     decision = StarCase.FOUR
-                    explanation = Explanation.SlightlyMaliciousExtensionFound
-        return decision, [explanation]
+                    explanation = FOUND_SLIGHTLY_MALICIOUS_EXTENSION
+        return decision, explanation
