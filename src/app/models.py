@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from pydantic import BaseModel, Field, HttpUrl
 
@@ -28,6 +28,10 @@ class MetadataTags(BaseModel):
     explanation: Explanation = Field(
         description="A brief explanation to be displayed in the frontend what"
         " reasons the code had for its decision.",
+    )
+    extra: Optional[Any] = Field(
+        description="Extra information provided by the meta data extractor about how it came to its conclusion."
+        " Use the .../extract?extra=true query parameter in the endpoint to get this populated."
     )
 
 
