@@ -14,15 +14,22 @@ import adblockparser
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 
-from app.models import Explanation as _Explanation
-from app.models import StarCase
+from app.models import Explanation, StarCase
 from core.website_manager import WebsiteData
 from lib.settings import USE_LOCAL_IF_POSSIBLE
 from lib.tools import runtime
 
-Explanation = str
-
 T = TypeVar("T")
+
+
+# Explanation strings
+# fixme: Eventually migrate those to the respective extractors.
+FOUND_LIST_MATCHES = "Found list matches"
+FOUND_NO_LIST_MATCHES = "Found no list matches"
+EMPTY_EXPLANATION = ""  # todo remove
+NO_KOCKOUT_MATCH_FOUND = "No knockout match found"
+KOCKOUT_MATCH_FOUND = "Found knockout match"
+NO_EXPLANATION = "No explanation"  # todo remove
 
 
 class Extractor(Generic[T]):
@@ -118,19 +125,18 @@ class MetadataBase(Extractor[list[str]]):
         #       see https://stackoverflow.com/a/33134213/2160256
         # self.setup()
 
-    @abc.abstractmethod
-    async def extract(self, site: WebsiteData, executor: Executor) -> tuple[StarCase, Explanation, list[str]]:
+    async def extract(self, site: WebsiteData, executor: Executor) -> tuple[StarCase, Explanation, T]:
         _, values, stars, explanation = await self.start(site)
-        return stars, " ".join(explanation), values
+        return stars, explanation, values
 
     @staticmethod
-    def _get_ratio_of_elements(website_data: WebsiteData) -> tuple[float, list[_Explanation]]:
+    def _get_ratio_of_elements(website_data: WebsiteData) -> tuple[float, Explanation]:
         if website_data.values and len(website_data.raw_links) > 0:
             ratio = round(len(website_data.values) / len(website_data.raw_links), 2)
-            explanation = [_Explanation.FoundListMatches]
+            explanation = FOUND_LIST_MATCHES
         else:
             ratio = 0
-            explanation = [_Explanation.FoundNoListMatches]
+            explanation = FOUND_NO_LIST_MATCHES
         return ratio, explanation
 
     def _calculate_probability_from_ratio(self, decision_indicator: float) -> float:
@@ -161,7 +167,7 @@ class MetadataBase(Extractor[list[str]]):
                 decision = StarCase.FIVE
         return decision
 
-    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, list[_Explanation]]:
+    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, Explanation]:
         if self.probability_determination_method == ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS:
             decision_indicator, explanation = self._get_ratio_of_elements(website_data=website_data)
             star_case = self._get_decision(decision_indicator)
@@ -177,33 +183,31 @@ class MetadataBase(Extractor[list[str]]):
 
         return star_case, explanation
 
-    def _decide_single_occurrence(self, website_data: WebsiteData) -> tuple[StarCase, list[_Explanation]]:
+    def _decide_single_occurrence(self, website_data: WebsiteData) -> tuple[StarCase, Explanation]:
 
         an_occurence_has_been_found: bool = website_data.values and len(website_data.values) > 0
-        explanation = (
-            [_Explanation.FoundListMatches] if an_occurence_has_been_found else [_Explanation.FoundNoListMatches]
-        )
+        explanation = FOUND_LIST_MATCHES if an_occurence_has_been_found else FOUND_NO_LIST_MATCHES
         star_case = StarCase.ZERO if an_occurence_has_been_found else StarCase.FIVE
         return star_case, explanation
 
-    def _decide_false_list(self, website_data: WebsiteData) -> tuple[StarCase, list[_Explanation]]:
+    def _decide_false_list(self, website_data: WebsiteData) -> tuple[StarCase, Explanation]:
         decision = StarCase.FIVE
-        explanation = [_Explanation.NoKnockoutMatchFound]
+        explanation = NO_KOCKOUT_MATCH_FOUND
         for false_element in self.false_list:
             if false_element in website_data.values:
                 decision = StarCase.ZERO
-                explanation = [_Explanation.KnockoutMatchFound]
+                explanation = KOCKOUT_MATCH_FOUND
                 break
 
         return decision, explanation
 
     @staticmethod
-    def _get_default_decision() -> tuple[StarCase, list[_Explanation]]:
+    def _get_default_decision() -> tuple[StarCase, Explanation]:
         decision = StarCase.ZERO
-        explanation = [_Explanation.none]
+        explanation = EMPTY_EXPLANATION
         return decision, explanation
 
-    async def start(self, site: WebsiteData) -> tuple[float, list[str], StarCase, list[_Explanation]]:
+    async def start(self, site: WebsiteData) -> tuple[float, list[str], StarCase, Explanation]:
         with runtime() as t:
             values = await self._start(website_data=site)
             site.values = values

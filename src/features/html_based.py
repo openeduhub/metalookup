@@ -1,4 +1,4 @@
-from core.metadata_base import ExtractionMethod, MetadataBase, ProbabilityDeterminationMethod
+from core.extractor import ExtractionMethod, MetadataBase, ProbabilityDeterminationMethod
 
 
 @MetadataBase.with_key()

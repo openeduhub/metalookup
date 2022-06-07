@@ -1,8 +1,8 @@
 import adblockparser
 import pytest
 
-from app.models import Explanation, StarCase
-from core.metadata_base import MetadataBase, ProbabilityDeterminationMethod
+from app.models import StarCase
+from core.extractor import MetadataBase, ProbabilityDeterminationMethod
 from tests.integration.features_integration_test import mock_website_data
 
 
@@ -161,34 +161,18 @@ def test_easylist_filter():
 
 
 @pytest.mark.parametrize(
-    "values, decision_threshold, expected_decision, expected_explanation",
+    "values, decision_threshold, expected_decision",
     [
-        ([], -1, StarCase.FIVE, [Explanation.FoundNoListMatches]),
-        (
-            [0.5],
-            -1,
-            StarCase.ZERO,
-            [Explanation.FoundListMatches],
-        ),
-        (
-            [0.5, 1],
-            -1,
-            StarCase.ZERO,
-            [Explanation.FoundListMatches],
-        ),
-        ([0.5], 0.5, StarCase.ZERO, [Explanation.FoundListMatches]),
-        ([0.5], 1, StarCase.ZERO, [Explanation.FoundListMatches]),
-        ([], 1, StarCase.FIVE, [Explanation.FoundNoListMatches]),
+        ([], -1, StarCase.FIVE),  # ,[Explanation.FoundNoListMatches]),
+        ([0.5], -1, StarCase.ZERO),  # [Explanation.FoundListMatches],
+        ([0.5, 1], -1, StarCase.ZERO),  # ,[Explanation.FoundListMatches],
+        ([0.5], 0.5, StarCase.ZERO),  # ,[Explanation.FoundListMatches]),
+        ([0.5], 1, StarCase.ZERO),  # ,[Explanation.FoundListMatches]),
+        ([], 1, StarCase.FIVE),  # , [Explanation.FoundNoListMatches]),
     ],
 )
 @pytest.mark.asyncio
-async def test_decide_single(
-    metadatabase: MetadataBase,
-    values,
-    decision_threshold,
-    expected_decision,
-    expected_explanation,
-):
+async def test_decide_single(metadatabase: MetadataBase, values, decision_threshold, expected_decision):
     website_data = await mock_website_data()
 
     website_data.values = values
@@ -197,7 +181,6 @@ async def test_decide_single(
     decision, explanation = metadatabase._decide(website_data=website_data)
 
     assert decision == expected_decision
-    assert explanation == expected_explanation
 
 
 """
@@ -206,36 +189,12 @@ async def test_decide_single(
 
 
 @pytest.mark.parametrize(
-    "values, decision_threshold, expected_decision, raw_links, expected_explanation",
+    "values, decision_threshold, expected_decision, raw_links",
     [
-        (
-            [0.5],
-            0.01,
-            StarCase.FIVE,
-            [],
-            [Explanation.FoundNoListMatches],
-        ),
-        (
-            [0.5, 1, 1, 1],
-            0,
-            StarCase.ZERO,
-            [1, 1, 1, 1],
-            [Explanation.FoundListMatches],
-        ),
-        (
-            [0.5],
-            0,
-            StarCase.ZERO,
-            [1, 1, 1, 1],
-            [Explanation.FoundListMatches],
-        ),
-        (
-            [0.5],
-            0.5,
-            StarCase.FIVE,
-            [1, 1, 1, 1],
-            [Explanation.FoundListMatches],
-        ),
+        ([0.5], 0.01, StarCase.FIVE, []),
+        ([0.5, 1, 1, 1], 0, StarCase.ZERO, [1, 1, 1, 1]),
+        ([0.5], 0, StarCase.ZERO, [1, 1, 1, 1]),
+        ([0.5], 0.5, StarCase.FIVE, [1, 1, 1, 1]),
     ],
 )
 @pytest.mark.asyncio
@@ -245,7 +204,6 @@ async def test_decide_number_of_elements(
     decision_threshold,
     expected_decision,
     raw_links,
-    expected_explanation,
 ):
     website_data = await mock_website_data()
 
@@ -256,7 +214,6 @@ async def test_decide_number_of_elements(
     decision, explanation = metadatabase._decide(website_data=website_data)
 
     assert decision == expected_decision
-    assert explanation == expected_explanation
 
 
 """
@@ -265,50 +222,14 @@ async def test_decide_number_of_elements(
 
 
 @pytest.mark.parametrize(
-    "values, decision_threshold, expected_decision,  false_list, expected_explanation",
+    "values, decision_threshold, expected_decision,  false_list",
     [
-        (
-            [0.5],
-            1,
-            StarCase.FIVE,
-            [0],
-            [Explanation.NoKnockoutMatchFound],
-        ),
-        (
-            [0.5],
-            1,
-            StarCase.ZERO,
-            [0.5],
-            [Explanation.KnockoutMatchFound],
-        ),
-        (
-            [0.5, 0.1, 0, "hello"],
-            1,
-            StarCase.ZERO,
-            ["hello"],
-            [Explanation.KnockoutMatchFound],
-        ),
-        (
-            [0.5, 0.1, 0, "hello"],
-            1,
-            StarCase.FIVE,
-            ["hell"],
-            [Explanation.NoKnockoutMatchFound],
-        ),
-        (
-            [0.5, 0.1, 0, "hello"],
-            1,
-            StarCase.FIVE,
-            ["0"],
-            [Explanation.NoKnockoutMatchFound],
-        ),
-        (
-            [0.5, 0.1, 0, "hello"],
-            1,
-            StarCase.ZERO,
-            ["0", "hello"],
-            [Explanation.KnockoutMatchFound],
-        ),
+        ([0.5], 1, StarCase.FIVE, [0]),
+        ([0.5], 1, StarCase.ZERO, [0.5]),
+        ([0.5, 0.1, 0, "hello"], 1, StarCase.ZERO, ["hello"]),
+        ([0.5, 0.1, 0, "hello"], 1, StarCase.FIVE, ["hell"]),
+        ([0.5, 0.1, 0, "hello"], 1, StarCase.FIVE, ["0"]),
+        ([0.5, 0.1, 0, "hello"], 1, StarCase.ZERO, ["0", "hello"]),
     ],
 )
 @pytest.mark.asyncio
@@ -318,7 +239,6 @@ async def test_false_list(
     decision_threshold,
     expected_decision,
     false_list,
-    expected_explanation,
 ):
     website_data = await mock_website_data()
 
@@ -329,4 +249,3 @@ async def test_false_list(
     decision, explanation = metadatabase._decide(website_data=website_data)
 
     assert decision == expected_decision
-    assert explanation == expected_explanation
