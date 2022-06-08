@@ -39,7 +39,7 @@ async def initialize():
 async def caching_and_response_time(request: Request, call_next):
     with runtime() as t:
         response = await call_next(request)
-    response.headers["X-Process-Time"] = f"{t():5.2f}"
+    response.headers["X-Process-Time"] = str(round(t(), 2))
     return response
 
 
