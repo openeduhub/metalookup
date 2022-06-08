@@ -19,7 +19,7 @@ async def manager() -> MetadataManager:
 
 @pytest.mark.asyncio
 async def test_extract(manager: MetadataManager):
-    with open(Path(__file__).parent.parent / "splash-response-google.json", "r") as f:
+    with open(Path(__file__).parent.parent / "resources" / "splash-response-google.json", "r") as f:
         splash_response = SplashResponse.parse_obj(json.load(f))
 
     input = Input(

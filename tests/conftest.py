@@ -1,6 +1,14 @@
+import json
 import logging
+import os
+from concurrent.futures import ProcessPoolExecutor
+from pathlib import Path
+from unittest import mock
 
-from dotenv import load_dotenv
+import pytest
+
+from app.splash_models import SplashResponse
+from core.website_manager import WebsiteData
 
 
 def pytest_configure(config):
@@ -11,5 +19,9 @@ def pytest_configure(config):
         logger = logging.getLogger(name)
         logger.setLevel("WARN")  #
 
-    # load test settings
-    load_dotenv()
+
+@pytest.fixture(scope="session")
+def executor():
+    # use as generator to make sure pool is clearly terminated after tests
+    with ProcessPoolExecutor(max_workers=4) as pool:
+        yield pool
