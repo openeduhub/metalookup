@@ -160,6 +160,11 @@ class Output(BaseModel):
         "Probability = "
         "Ratio fo javascript files versus all files.",
     )
+    licence: Union[MetadataTags, Error] = Field(
+        default=None,
+        description="Information about the potential licence of the content. Determined by scanning the content for"
+        " common licence names.",
+    )
 
 
 class Input(BaseModel):
