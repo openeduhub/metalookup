@@ -31,6 +31,7 @@ from features.html_based import (
     RegWall,
 )
 from features.javascript import Javascript
+from features.licence import LicenceExtractor
 from features.malicious_extensions import MaliciousExtensions
 from features.metatag_explorer import MetatagExplorer
 from features.security import Security
@@ -71,6 +72,7 @@ class MetadataManager:
             Javascript,
             MetatagExplorer,
             Accessibility,
+            LicenceExtractor,
         ]
 
         async def create_extractor(extractor: Type[Extractor]) -> Extractor:

@@ -112,7 +112,7 @@ async def test_extract_endpoint_cache(client):
             # now we should get a fully populated result (now Errors within the individual extractors)
             # which should also get cached.
             response = await client.post(
-                "/extract",
+                "/extract?extra=true",
                 json=Input(url="https://google.com").dict(),
                 timeout=10,
             )
@@ -128,6 +128,9 @@ async def test_extract_endpoint_cache(client):
             ), "should be cached, as it was a complete result"
 
             assert output.url == "https://google.com"
+            assert isinstance(output.licence.extra, dict)
+            # should be possible to deserialize the extra data
+            print(DetectedLicences.parse_obj(output.licence.extra))
             assert isinstance(output.security, MetadataTags), "did not receive data for security extactor"
             # This should not be present, as the request to the accessibility container will fail
             assert isinstance(
