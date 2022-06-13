@@ -2,8 +2,6 @@ import json
 import os
 import pprint
 from pathlib import Path
-from unittest import mock
-from unittest.mock import AsyncMock
 
 import pytest
 from httpx import AsyncClient
@@ -12,6 +10,7 @@ from app.api import Input, app, cache_backend, manager
 from app.models import Error, MetadataTags, Output
 from app.splash_models import SplashResponse
 from features.licence import DetectedLicences
+from tests.conftest import lighthouse_mock, splash_mock
 
 
 @pytest.fixture()
@@ -73,16 +72,16 @@ async def test_extract_endpoint_cache(client):
 
     response = await client.post(
         "/extract",
-        json=Input(url="https://google.com", splash_response=splash).dict(),
+        json=Input(url="https://www.google.com", splash_response=splash).dict(),
         timeout=10,
         headers={"Cache-Control": "only-if-cached"},
     )
     assert response.status_code == 400, "response cannot be cached, as the whole har body is part of the request."
 
-    with mock.patch("core.website_manager.WebsiteData.fetch_content", new=AsyncMock(side_effect=lambda _: splash)):
+    with splash_mock():
         response = await client.post(
             "/extract",
-            json=Input(url="https://google.com").dict(),
+            json=Input(url="https://www.google.com").dict(),
             timeout=10,
             headers={"Cache-Control": "only-if-cached"},
         )
@@ -90,30 +89,27 @@ async def test_extract_endpoint_cache(client):
 
         response = await client.post(
             "/extract",
-            json=Input(url="https://google.com").dict(),
+            json=Input(url="https://www.google.com").dict(),
             timeout=10,
             headers={"Cache-Control": "max-age=5000"},
         )
         assert response.status_code == 200
 
         output = Output.parse_obj(json.loads(response.text))
-        assert output.url == "https://google.com"
+        assert output.url == "https://www.google.com"
         assert isinstance(output.security, MetadataTags), "did not receive data for security extractor"
         assert isinstance(output.accessibility, Error), "did not receive an error for accessibility"
 
         assert (
-            await cache_backend.get(key="https://google.com") is None
+            await cache_backend.get(key="https://www.google.com") is None
         ), "should not be cached, as it was not a complete result"
 
-        with mock.patch(
-            "features.accessibility.Accessibility._execute_api_call",
-            new=AsyncMock(side_effect=lambda website_data, session, strategy: 0.1337),
-        ):
+        with lighthouse_mock():
             # now we should get a fully populated result (now Errors within the individual extractors)
             # which should also get cached.
             response = await client.post(
                 "/extract?extra=true",
-                json=Input(url="https://google.com").dict(),
+                json=Input(url="https://www.google.com").dict(),
                 timeout=10,
             )
 
@@ -124,10 +120,10 @@ async def test_extract_endpoint_cache(client):
 
             assert response.status_code == 200, response.text
             assert (
-                cache_backend.get(key="https://google.com") is not None
+                cache_backend.get(key="https://www.google.com") is not None
             ), "should be cached, as it was a complete result"
 
-            assert output.url == "https://google.com"
+            assert output.url == "https://www.google.com"
             assert isinstance(output.licence.extra, dict)
             # should be possible to deserialize the extra data
             print(DetectedLicences.parse_obj(output.licence.extra))
