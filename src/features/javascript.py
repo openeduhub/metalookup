@@ -1,4 +1,4 @@
-from core.metadata_base import MetadataBase
+from core.extractor import MetadataBase
 from core.website_manager import WebsiteData
 
 

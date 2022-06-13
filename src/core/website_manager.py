@@ -2,7 +2,6 @@ import json
 import os
 import re
 from dataclasses import dataclass
-from datetime import datetime
 from logging import Logger
 from urllib.parse import urlparse
 

@@ -2,7 +2,7 @@ from unittest import mock
 
 import pytest
 
-from app.models import Explanation, StarCase
+from app.models import StarCase
 from features.security import Security
 
 
@@ -52,7 +52,6 @@ async def test_decide():
     )
 
     assert stars == StarCase.FIVE
-    assert explanation == [Explanation.MinimumSecurityRequirementsCovered]
 
     duration, values, stars, explanation = await feature.start(
         site=mock.Mock(
@@ -70,4 +69,3 @@ async def test_decide():
     )
 
     assert stars == StarCase.ZERO
-    assert explanation == [Explanation.IndicatorsForInsufficientSecurityFound]

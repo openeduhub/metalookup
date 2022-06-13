@@ -1,11 +1,13 @@
+import abc
 import asyncio
 import logging
 import os
 import re
 from collections import OrderedDict
+from concurrent.futures import Executor
 from enum import Enum
 from logging import Logger
-from typing import Optional, Type
+from typing import Generic, Optional, Type, TypeVar
 from urllib.parse import urlparse
 
 import adblockparser
@@ -16,6 +18,38 @@ from app.models import Explanation, StarCase
 from core.website_manager import WebsiteData
 from lib.settings import USE_LOCAL_IF_POSSIBLE
 from lib.tools import runtime
+
+T = TypeVar("T")
+
+
+# Explanation strings
+# fixme: Eventually migrate those to the respective extractors.
+FOUND_LIST_MATCHES = "Found list matches"
+FOUND_NO_LIST_MATCHES = "Found no list matches"
+EMPTY_EXPLANATION = ""  # todo remove
+NO_KOCKOUT_MATCH_FOUND = "No knockout match found"
+KOCKOUT_MATCH_FOUND = "Found knockout match"
+NO_EXPLANATION = "No explanation"  # todo remove
+
+
+class Extractor(Generic[T]):
+    key: str  # The name of the extracted metadatum
+
+    @abc.abstractmethod
+    async def setup(self):
+        """
+        Finish initialization of the extractor e.g. by downloading tag lists or other online resources.
+        This method must be called for every newly created extractor to fully initialize it.
+        """
+
+    @abc.abstractmethod
+    async def extract(self, site: WebsiteData, executor: Executor) -> tuple[StarCase, Explanation, T]:
+        """
+        Extract information from the website returning its star rating, an explanation and additional extractor specific
+        information.
+        :param site: The content to be analysed.
+        :param executor: An executor to which CPU bound processing should be dispatched.
+        """
 
 
 class ProbabilityDeterminationMethod(Enum):
@@ -29,7 +63,7 @@ class ExtractionMethod(Enum):
     USE_ADBLOCK_PARSER = 2
 
 
-class MetadataBase:
+class MetadataBase(Extractor[list[str]]):
     """
     Base class for features to be extracted.
     """
@@ -91,14 +125,18 @@ class MetadataBase:
         #       see https://stackoverflow.com/a/33134213/2160256
         # self.setup()
 
+    async def extract(self, site: WebsiteData, executor: Executor) -> tuple[StarCase, Explanation, T]:
+        _, values, stars, explanation = await self.start(site)
+        return stars, explanation, values
+
     @staticmethod
-    def _get_ratio_of_elements(website_data: WebsiteData) -> tuple[float, list[Explanation]]:
+    def _get_ratio_of_elements(website_data: WebsiteData) -> tuple[float, Explanation]:
         if website_data.values and len(website_data.raw_links) > 0:
             ratio = round(len(website_data.values) / len(website_data.raw_links), 2)
-            explanation = [Explanation.FoundListMatches]
+            explanation = FOUND_LIST_MATCHES
         else:
             ratio = 0
-            explanation = [Explanation.FoundNoListMatches]
+            explanation = FOUND_NO_LIST_MATCHES
         return ratio, explanation
 
     def _calculate_probability_from_ratio(self, decision_indicator: float) -> float:
@@ -129,7 +167,7 @@ class MetadataBase:
                 decision = StarCase.FIVE
         return decision
 
-    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, list[Explanation]]:
+    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, Explanation]:
         if self.probability_determination_method == ProbabilityDeterminationMethod.NUMBER_OF_ELEMENTS:
             decision_indicator, explanation = self._get_ratio_of_elements(website_data=website_data)
             star_case = self._get_decision(decision_indicator)
@@ -145,33 +183,31 @@ class MetadataBase:
 
         return star_case, explanation
 
-    def _decide_single_occurrence(self, website_data: WebsiteData) -> tuple[StarCase, list[Explanation]]:
+    def _decide_single_occurrence(self, website_data: WebsiteData) -> tuple[StarCase, Explanation]:
 
         an_occurence_has_been_found: bool = website_data.values and len(website_data.values) > 0
-        explanation = (
-            [Explanation.FoundListMatches] if an_occurence_has_been_found else [Explanation.FoundNoListMatches]
-        )
+        explanation = FOUND_LIST_MATCHES if an_occurence_has_been_found else FOUND_NO_LIST_MATCHES
         star_case = StarCase.ZERO if an_occurence_has_been_found else StarCase.FIVE
         return star_case, explanation
 
-    def _decide_false_list(self, website_data: WebsiteData) -> tuple[StarCase, list[Explanation]]:
+    def _decide_false_list(self, website_data: WebsiteData) -> tuple[StarCase, Explanation]:
         decision = StarCase.FIVE
-        explanation = [Explanation.NoKnockoutMatchFound]
+        explanation = NO_KOCKOUT_MATCH_FOUND
         for false_element in self.false_list:
             if false_element in website_data.values:
                 decision = StarCase.ZERO
-                explanation = [Explanation.KnockoutMatchFound]
+                explanation = KOCKOUT_MATCH_FOUND
                 break
 
         return decision, explanation
 
     @staticmethod
-    def _get_default_decision() -> tuple[StarCase, list[Explanation]]:
+    def _get_default_decision() -> tuple[StarCase, Explanation]:
         decision = StarCase.ZERO
-        explanation = [Explanation.none]
+        explanation = EMPTY_EXPLANATION
         return decision, explanation
 
-    async def start(self, site: WebsiteData) -> tuple[float, list[str], StarCase, list[Explanation]]:
+    async def start(self, site: WebsiteData) -> tuple[float, list[str], StarCase, Explanation]:
         with runtime() as t:
             values = await self._start(website_data=site)
             site.values = values

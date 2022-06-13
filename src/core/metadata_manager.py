@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from datetime import datetime
+from concurrent.futures import ProcessPoolExecutor
 from typing import Type, Union
 
 from aiohttp import ClientConnectorError
@@ -9,7 +9,7 @@ from pydantic import ValidationError
 from tldextract import TLDExtract
 
 from app.models import Error, Input, MetadataTags, Output
-from core.metadata_base import MetadataBase
+from core.extractor import Extractor
 from core.website_manager import WebsiteData
 from features.accessibility import Accessibility
 from features.cookies import Cookies
@@ -31,6 +31,7 @@ from features.html_based import (
     RegWall,
 )
 from features.javascript import Javascript
+from features.licence import LicenceExtractor
 from features.malicious_extensions import MaliciousExtensions
 from features.metatag_explorer import MetatagExplorer
 from features.security import Security
@@ -40,8 +41,13 @@ from lib.tools import runtime
 class MetadataManager:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.extractors: list[MetadataBase] = []  # will be initialized in setup call
+        # will be initialized in setup call - use None here so that extraction
+        # fails if setup method was not called as required
+        self.extractors: list[Extractor] = None  # noqa
         self.tld_extractor: TLDExtract = TLDExtract(cache_dir=None)
+
+        # fixme: eventually we may want to shut down the process pool upon termination
+        self.process_pool: ProcessPoolExecutor = ProcessPoolExecutor(max_workers=4)
 
     async def setup(self):
         types = [
@@ -66,20 +72,27 @@ class MetadataManager:
             Javascript,
             MetatagExplorer,
             Accessibility,
+            LicenceExtractor,
         ]
 
-        async def create_extractor(extractor: Type[MetadataBase]) -> MetadataBase:
+        async def create_extractor(extractor: Type[Extractor]) -> Extractor:
             instance = extractor()
             await instance.setup()
             return instance
 
         logging.info("Initializing extractors")
-        self.extractors: tuple[MetadataBase, ...] = await asyncio.gather(
+        self.extractors: tuple[Extractor, ...] = await asyncio.gather(
             *[create_extractor(extractor) for extractor in types]
         )
         logging.info("Done initializing extractors")
 
-    async def extract(self, message: Input) -> Output:
+    async def extract(self, message: Input, extra: bool) -> Output:
+        """
+        Call the different registered extractors concurrently with given input.
+        :param message: The message holding URL and or HAR (splash response) to analyse. If no splash response
+                        is contained the splash container will be queried before invoking the extractors.
+        :param extra: If set to true, additional extractor specific information will be added to the output.
+        """
         self.logger.debug("Calling extractors from manager")
 
         # this will eventually load the content dynamically if not provided in the message
@@ -98,14 +111,16 @@ class MetadataManager:
 
         self.logger.debug("Build website data object.")
 
-        async def run_extractor(extractor: MetadataBase) -> Union[MetadataTags, Error]:
+        async def run_extractor(extractor: Extractor) -> Union[MetadataTags, Error]:
             """Call the extractor and transform its result into the expected output format"""
             try:
                 self.logger.debug(f"Extracting {extractor.__class__.__name__}.")
                 with runtime() as t:
-                    _, _, stars, explanation = await extractor.start(site=site)
+                    stars, explanation, extra_data = await extractor.extract(site=site, executor=self.process_pool)
                 self.logger.info(f"Extracted {extractor.__class__.__name__} in {t():5.2f}s.")
-                return MetadataTags(stars=stars, explanation=explanation)
+                if extra:
+                    return MetadataTags(stars=stars, explanation=explanation, extra=extra_data)
+                return MetadataTags(stars=stars, explanation=explanation, extra=None)
             except Exception as e:
                 self.logger.exception(f"Failed to extract {extractor.key}")
                 return Error(error=str(e))

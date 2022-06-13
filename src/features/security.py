@@ -1,8 +1,11 @@
 from typing import Callable
 
 from app.models import Explanation, StarCase
-from core.metadata_base import MetadataBase
+from core.extractor import MetadataBase
 from core.website_manager import WebsiteData
+
+_MINIMUM_SECURITY_REQUIREMENTS_COVERED = "Minimum security requirements covered"
+_INDICATORS_FOR_INSUFFICIENT_SECURITY_FOUND = "Indicators for insufficient security found"
 
 
 @MetadataBase.with_key()
@@ -36,7 +39,7 @@ class Security(MetadataBase):
             if field in website_data.headers and check(website_data.headers[field])
         ]
 
-    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, list[Explanation]]:
+    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, Explanation]:
         # fixme: Currently copy pasted from _start.
         passed = [
             field
@@ -45,10 +48,10 @@ class Security(MetadataBase):
         ]
 
         return (
-            (StarCase.FIVE, [Explanation.MinimumSecurityRequirementsCovered])
+            (StarCase.FIVE, _MINIMUM_SECURITY_REQUIREMENTS_COVERED)
             if len(passed) == len(self.header_checks)
             else (
                 StarCase.ZERO,
-                [Explanation.IndicatorsForInsufficientSecurityFound],
+                _INDICATORS_FOR_INSUFFICIENT_SECURITY_FOUND,
             )
         )

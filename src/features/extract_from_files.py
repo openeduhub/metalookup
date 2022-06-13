@@ -11,9 +11,12 @@ from pdfminer.high_level import extract_text
 from PyPDF2.utils import PdfReadError
 
 from app.models import Explanation, StarCase
-from core.metadata_base import MetadataBase
+from core.extractor import MetadataBase
 from core.website_manager import WebsiteData
 from lib.settings import RETURN_IMAGES_IN_METADATA
+
+_FOUND_EXTRACTABLE_FILES = "Found extractable files"
+_FOUND_NO_EXTRACTABLE_FILES = "Found no extractable files"
 
 
 @MetadataBase.with_key()
@@ -171,16 +174,12 @@ class ExtractFromFiles(MetadataBase):
         extractable_files = self._get_extractable_files(website_data)
         return await self._work_files(files=extractable_files)
 
-    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, list[Explanation]]:
+    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, Explanation]:
         probability = 0
         extractable_files = self._get_extractable_files(website_data)
 
         if website_data.values:
             probability = len(extractable_files) / len(website_data.values)
         decision = self._get_inverted_decision(probability)
-        explanation = (
-            [Explanation.ExtractableFilesFound]
-            if decision == StarCase.FIVE
-            else [Explanation.InsufficientlyExtractableFilesFound]
-        )
+        explanation = _FOUND_EXTRACTABLE_FILES if decision == StarCase.FIVE else _FOUND_NO_EXTRACTABLE_FILES
         return decision, explanation

@@ -5,7 +5,7 @@ from locust import HttpUser, between, task
 
 
 def load_urls():
-    with open(Path(__file__).parent / "urls.txt", "r") as f:
+    with open(Path(__file__).parent.parent / "resources" / "urls.txt", "r") as f:
         urls = f.readlines()
         print(f"Loaded {len(urls)}. sample: {urls[0:10]}")
         return urls

@@ -1,3 +1,4 @@
+import logging
 import os
 
 from dotenv import load_dotenv
@@ -8,7 +9,7 @@ load_dotenv()  # take environment variables from .env.
 API_PORT = int(os.environ.get("PORT", 5057))
 
 # Logging
-LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
+LOG_LEVEL = getattr(logging, os.environ.get("LOG_LEVEL", "INFO"))
 LOG_PATH = os.environ.get("LOG_PATH", None)
 
 # Caching

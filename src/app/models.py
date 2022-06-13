@@ -1,34 +1,11 @@
 from enum import Enum
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from pydantic import BaseModel, Field, HttpUrl
 
 from app.splash_models import SplashResponse
 
-
-class Explanation(str, Enum):
-    none = "NoExplanation"
-    AccessibilityTooLow = "AccessibilityTooLow"
-    AccessibilitySuitable = "AccessibilitySuitable"
-    AccessibilityServiceReturnedFailure = "AccessibilityServiceReturnedFailure"
-    FoundListMatches = "FoundListMatches"
-    FoundNoListMatches = "FoundNoListMatches"
-    Cached = "Cached"
-    KnockoutMatchFound = "KnockoutMatchFound"
-    NoKnockoutMatchFound = "NoKnockoutMatchFound"
-    NoCookiesFound = "NoCookiesFound"
-    CookiesFound = "CookiesFound"
-    ExtractableFilesFound = "ExtractableFilesFound"
-    InsufficientlyExtractableFilesFound = "InsufficientlyExtractableFilesFound"
-    PotentiallyInsufficientGDPRFound = "PotentiallyInsufficientGDPRFound"
-    MinimumGDPRRequirementsCovered = "MinimumGDPRRequirementsCovered"
-    IndicatorsForInsufficientSecurityFound = "IndicatorsForInsufficientSecurityFound"
-    MinimumSecurityRequirementsCovered = "MinimumSecurityRequirementsCovered"
-    PotentiallyMaliciousExtensionFound = "PotentiallyMaliciousExtensionFound"
-    SlightlyMaliciousExtensionFound = "SlightlyMaliciousExtensionFound"
-
-    def __repr__(self):
-        return str(self.value)
+Explanation = str
 
 
 class StarCase(int, Enum):
@@ -48,9 +25,13 @@ class MetadataTags(BaseModel):
         description="A user friendly decision whether or not the happy case is fulfilled"
         " or whether everything is unclear",
     )
-    explanation: list[Explanation] = Field(
+    explanation: Explanation = Field(
         description="A brief explanation to be displayed in the frontend what"
-        " reasons the code had for its isHappyCase.",
+        " reasons the code had for its decision.",
+    )
+    extra: Optional[Any] = Field(
+        description="Extra information provided by the meta data extractor about how it came to its conclusion."
+        " Use the .../extract?extra=true query parameter in the endpoint to get this populated."
     )
 
 
@@ -178,6 +159,11 @@ class Output(BaseModel):
         description="Alpha. Store meta tags to explore for interesting data"
         "Probability = "
         "Ratio fo javascript files versus all files.",
+    )
+    licence: Union[MetadataTags, Error] = Field(
+        default=None,
+        description="Information about the potential licence of the content. Determined by scanning the content for"
+        " common licence names.",
     )
 
 
