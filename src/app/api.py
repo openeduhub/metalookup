@@ -1,10 +1,15 @@
+import asyncio
 import logging
+import multiprocessing
+from multiprocessing import Process
+from typing import Optional
 
+from aiohttp import ClientSession
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 import lib.settings
-from app.models import DeleteCacheInput, DeleteCacheOutput, Input, MetadataTags, Output, Ping
+from app.models import Input, MetadataTags, Output, Ping
 from caching.backends import DatabaseBackend
 from caching.cache import cache
 from core.metadata_manager import MetadataManager
@@ -78,19 +83,45 @@ async def ping():
 
 # Developer endpoints
 if lib.settings.ENABLE_CACHE_CONTROL_ENDPOINTS:
+    # fixme: Not sure if this would work if the service is running with multiple uvicorn replications.
+    """If there is a background task already running, then this variable should be not None"""
+    process: Optional[Process] = None
 
-    @app.get(
-        "/cache",
-        response_model=list[Output],
-        description="Developer endpoint to receive cache content.",
-    )
-    def get_cache():
-        return []  # fixme
+    # Note: needs to be in global context to be pickleable in order to be transferable to other process.
+    def _loop_urls(urls: list[str]):
+        async def loop():
+            logging.info(f"Starting cache warmup with {len(urls)} urls")
+            async with ClientSession() as session:
+                for url in urls:
+                    logging.info(f"Warming up {url}")
+                    await session.post(
+                        url=f"http://localhost:{lib.settings.API_PORT}/extract?extra=true",
+                        json=Input(url=url).dict(),
+                    )
+            logging.info(f"Finished cache warmup with {len(urls)} urls")
 
-    @app.delete(
-        "/cache",
-        description="Endpoint to delete the cache",
-        response_model=DeleteCacheOutput,
+        asyncio.run(loop())
+
+    @app.post(
+        "/cache/warmup",
+        description="""
+        Accepts a simple json list of urls for which the cache will be warmed up in the background.
+        Once the background task is started, the request will return with a 202 (Accepted). While the background task
+        is running, other requests to this endpoint will be answered with a 429 (Too many requests).
+        """,
     )
-    def delete_cache(reset_input: DeleteCacheInput):
-        return DeleteCacheOutput()  # fixme:
+    async def warmup(urls: list[str], response: Response):
+        global process
+        logger.info("Received cache-warmup request - dispatching background process")
+
+        if process is None or not process.is_alive():
+            # use spawn context to not pull in all the resources from the running service and instead start a "clean"
+            # python interpreter: https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
+            ctx = multiprocessing.get_context("spawn")
+
+            process = ctx.Process(target=_loop_urls, args=(urls,), daemon=True)
+            process.start()
+            # we cannot join here (or in a background task) as that would block the request (or the entire service)
+            response.status_code = 202  # "Accepted"
+        else:
+            response.status_code = 429  # "Too many requests"

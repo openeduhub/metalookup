@@ -25,7 +25,6 @@ class WebsiteData:
     headers: dict[str, str]
     values: list[str]  # fixme: remove
     raw_links: list[str]
-    image_links: list[str]
 
     @classmethod
     async def fetch_content(cls, url: str) -> SplashResponse:
@@ -127,7 +126,6 @@ class WebsiteData:
             domain=top_level_domain(url=input.url),
             soup=soup,
             har=splash_response.har,
-            image_links=image_links,
             raw_links=raw_links,
             headers=headers_from_splash(splash_response),
             values=[],
