@@ -1,20 +1,21 @@
+import asyncio
 from concurrent.futures import Executor
 
 from app.models import Explanation, StarCase
 from app.splash_models import Cookie, Entry
-from core.extractor import ExtractionMethod, MetadataBase
 from core.website_manager import WebsiteData
+from features.addblock_based import AdBlockBasedExtractor
 
-_COOKIES_FOUND = "Found Cookies"
-_NO_COOKIES_FOUND = "Found no Cookies"
+_COOKIES_FOUND = "Found potentially insecure Cookies"
+_NO_COOKIES_FOUND = "Found no potentially insecure Cookies"
 
 
-# fixme: we still need the MetadataBase inheritance for now, as it contains the setup code for the tag lists
-@MetadataBase.with_key()
-class Cookies(MetadataBase):
+class Cookies(AdBlockBasedExtractor):
     """
-    The returned extra data is a list of strings with the detected critical cookie names.
+    The returned extra data is a set of potentially malicious cookie names.
     """
+
+    key = "cookies"
 
     urls = [
         "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_general_block.txt",
@@ -26,22 +27,28 @@ class Cookies(MetadataBase):
         "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_thirdparty.txt",
     ]
 
-    # fixme: still needed because it modifies the setup call...
-    extraction_method = ExtractionMethod.USE_ADBLOCK_PARSER
-
-    async def extract(self, site: WebsiteData, executor: Executor) -> tuple[StarCase, Explanation, list[str]]:
+    async def extract(self, site: WebsiteData, executor: Executor) -> tuple[StarCase, Explanation, set[str]]:
+        # Note: we derive from AdBlockBasedExtractor, but fully reimplement the extract function, as we don't want
+        #       to apply the ad-block rules on links, but the detected cookies instead.
         entries: list[Entry] = site.har.log.entries
-
-        cookies_in_html = self._parse_adblock_rules(website_data=site)
 
         insecure_cookies: list[Cookie] = [
             cookie
             for entry in entries
             for cookies in (entry.response.cookies, entry.request.cookies)
             for cookie in cookies
+            if not cookie.secure or not cookie.httpOnly
         ]
 
-        stars = StarCase.ZERO if insecure_cookies or cookies_in_html else StarCase.FIVE
+        loop = asyncio.get_running_loop()
+
+        # validate the detected insecure cookies against the above adblock rules.
+        duration, matches = await loop.run_in_executor(
+            executor, self.apply_rules, site.domain, [cookie.name for cookie in insecure_cookies]
+        )
+        self.logger.info(f"Found {len(matches)} potentially malicious cookies in {duration:5.2}s")
+
+        found_match = len(matches) > 0
+        stars = StarCase.ZERO if found_match else StarCase.FIVE
         explanation = _COOKIES_FOUND if stars == StarCase.ZERO else _NO_COOKIES_FOUND
-        extra = cookies_in_html + [f"{c.name}={c.value}" for c in insecure_cookies]
-        return stars, explanation, extra
+        return stars, explanation, matches
