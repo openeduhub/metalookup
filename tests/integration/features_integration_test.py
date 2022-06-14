@@ -11,7 +11,6 @@ from core.website_manager import WebsiteData
 from features.gdpr import GDPR
 from features.html_based import IFrameEmbeddable, LogInOut, Paywalls, PopUp, RegWall
 from features.javascript import Javascript
-from features.metatag_explorer import MetatagExplorer
 
 
 async def mock_website_data(
@@ -202,43 +201,3 @@ async def test_javascript():
     duration, values, stars, explanation = await feature.start(site)
     assert duration < 2
     assert values == ["/xlayer/layer.php?uid="]
-
-
-"""
---------------------------------------------------------------------------------
-"""
-
-
-@pytest.mark.asyncio
-async def test_metatag_explorer():
-    feature = MetatagExplorer()
-    await feature.setup()
-
-    html = """
-            <html lang="en-GB"><head>
-            <meta charset="utf-8">
-            <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
-            <meta name="description" content="Organmething is in a process.">
-            <meta name="viewport" content="maximum-scale=1,width=device-width,initial-scale=1,user-scalable=0">
-            <meta name="apple-itunes-app" content="app-id=461504587"><meta name="slack-app-id" content="A074YH40Z">
-            <meta name="robots" content="noarchive">
-            <meta name="referrer" content="origin-when-cross-origin">
-            </head></html>
-            """
-    site = await mock_website_data(html=html)
-    duration, values, stars, explanation = await feature.start(site)
-    assert duration < 2
-    assert values == [
-        "description",
-        "Organmething is in a process.",
-        "viewport",
-        "maximum-scale=1,width=device-width,initial-scale=1,user-scalable=0",
-        "apple-itunes-app",
-        "app-id=461504587",
-        "slack-app-id",
-        "A074YH40Z",
-        "robots",
-        "noarchive",
-        "referrer",
-        "origin-when-cross-origin",
-    ]

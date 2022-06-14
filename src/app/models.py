@@ -154,12 +154,6 @@ class Output(BaseModel):
         default=None,
         description="Alpha. Is there javascript among the files of this website?" "Always False for now",
     )
-    metatag_explorer: Union[MetadataTags, Error] = Field(
-        default=None,
-        description="Alpha. Store meta tags to explore for interesting data"
-        "Probability = "
-        "Ratio fo javascript files versus all files.",
-    )
     licence: Union[MetadataTags, Error] = Field(
         default=None,
         description="Information about the potential licence of the content. Determined by scanning the content for"

@@ -29,7 +29,6 @@ from features.html_based import IFrameEmbeddable, LogInOut, Paywalls, PopUp, Reg
 from features.javascript import Javascript
 from features.licence import LicenceExtractor
 from features.malicious_extensions import MaliciousExtensions
-from features.metatag_explorer import MetatagExplorer
 from features.security import Security
 from lib.tools import runtime
 
@@ -66,7 +65,6 @@ class MetadataManager:
             Cookies,
             GDPR,
             Javascript,
-            MetatagExplorer,
             Accessibility,
             LicenceExtractor,
         ]
