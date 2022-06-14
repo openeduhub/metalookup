@@ -1,19 +1,13 @@
-import json
 import logging
-import os
-import time
 from typing import Optional
 from unittest import mock
-from urllib.parse import urlparse
 
 import pytest
 from tldextract.tldextract import ExtractResult, TLDExtract
 
 from app.models import Input
-from app.splash_models import HAR, Cookie, Entry, Header, Log, Request, Response, SplashResponse
+from app.splash_models import HAR, Entry, Header, Log, Request, Response, SplashResponse
 from core.website_manager import WebsiteData
-from features.cookies import Cookies
-from features.extract_from_files import ExtractFromFiles
 from features.gdpr import GDPR
 from features.html_based import (
     Advertisement,
@@ -130,57 +124,6 @@ async def test_easy_privacy():
     assert values == [
         "//www.googletagmanager.com",
         "https://cdn.fluidplayer.com/v2/current/fluidplayer.min.js?ver=5.6",
-    ]
-
-
-async def _test_extract_from_files_start_wrapper(self, site: WebsiteData):
-    before = time.perf_counter()
-
-    extractable_files = self._get_extractable_files(site)
-
-    path = os.getcwd()
-    current_dir = path.split("/")[-1]
-    if current_dir == "integration":
-        path = "/".join(path.split("/")[:-1])
-    elif current_dir != "tests":
-        path = path + "/tests/"
-    path = path + "/files/"
-
-    values = []
-    for file in extractable_files:
-        filename = os.path.basename(urlparse(file).path)
-        extension = filename.split(".")[-1]
-
-        content = {"extracted_content": [], "images": {}}
-        if extension == "docx":
-            content = self._extract_docx(path + filename)
-        elif extension == "pdf":
-            content = self._extract_pdfs(path + filename)
-        if len(content["extracted_content"]) > 0:
-            values.append(filename)
-
-    stars, explanation = self._decide(site)
-    return time.perf_counter() - before, values, stars, explanation
-
-
-@pytest.mark.asyncio
-async def test_extract_from_files():
-    feature = ExtractFromFiles()
-
-    await feature.setup()
-    feature.start = _test_extract_from_files_start_wrapper.__get__(feature, ExtractFromFiles)
-
-    html = """<a href=\"arbeitsblatt_analog_losung.pdf\" target=\"_blank\">
-           Arbeitsblatt analog L\u00f6sung.pdf</a>
-           <a href=\"arbeitsblatt_analog_losung.docx\" target=\"_blank\">
-           Arbeitsblatt analog L\u00f6sung.docx</a>
-           """
-    site = await mock_website_data(html=html)
-    duration, values, stars, explanation = await feature.start(site)
-    assert duration < 2
-    assert values == [
-        "arbeitsblatt_analog_losung.pdf",
-        "arbeitsblatt_analog_losung.docx",
     ]
 
 
