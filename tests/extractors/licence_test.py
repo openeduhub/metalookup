@@ -13,7 +13,7 @@ from features.licence import Licence, LicenceExtractor
 
 
 @pytest.mark.asyncio
-async def test_licence_extractor(executor: Executor):
+async def test_extract(executor: Executor):
     with open(Path(__file__).parent.parent / "resources" / "splash-response-google.json", "r") as f:
         splash_response = SplashResponse.parse_obj(json.load(f))
     # we dont want to count "CC BY-SA" as "CC BY"!
