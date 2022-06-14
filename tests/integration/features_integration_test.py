@@ -10,7 +10,6 @@ from app.splash_models import HAR, Entry, Header, Log, Request, Response, Splash
 from core.website_manager import WebsiteData
 from features.gdpr import GDPR
 from features.html_based import IFrameEmbeddable, LogInOut, Paywalls, PopUp, RegWall
-from features.javascript import Javascript
 
 
 async def mock_website_data(
@@ -181,23 +180,3 @@ async def test_iframe_embeddable():
     duration, values, stars, explanation = await feature.start(site)
     assert duration < 2
     assert values == ["deny;same_origin"]
-
-
-"""
---------------------------------------------------------------------------------
-"""
-
-
-@pytest.mark.asyncio
-async def test_javascript():
-    feature = Javascript()
-    await feature.setup()
-
-    html = """
-           <script src='/xlayer/layer.php?uid='></script>
-           <script href='some_test_javascript.js'></script>
-           """
-    site = await mock_website_data(html=html)
-    duration, values, stars, explanation = await feature.start(site)
-    assert duration < 2
-    assert values == ["/xlayer/layer.php?uid="]
