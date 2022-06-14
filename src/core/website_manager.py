@@ -1,9 +1,7 @@
 import json
-import os
 import re
 from dataclasses import dataclass
 from logging import Logger
-from urllib.parse import urlparse
 
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
@@ -28,7 +26,6 @@ class WebsiteData:
     values: list[str]  # fixme: remove
     raw_links: list[str]
     image_links: list[str]
-    extensions: list[str]
 
     @classmethod
     async def fetch_content(cls, url: str) -> SplashResponse:
@@ -89,13 +86,6 @@ class WebsiteData:
             logger.debug(f"Found {len(links)} links")
             return get_unique_list(links + [el for el in image_links if el is not None] + script_links)
 
-        def extract_extensions(raw_links: list[str]) -> list[str]:
-            def extension_from_link(link: str):
-                return os.path.splitext(urlparse(link)[2])[-1]
-
-            file_extensions = [extension_from_link(link) for link in raw_links]
-            return [x for x in get_unique_list(file_extensions) if x != ""]
-
         if input.splash_response is None:
             logger.debug(f"Missing har -> fetching {input.url}")
 
@@ -140,6 +130,5 @@ class WebsiteData:
             image_links=image_links,
             raw_links=raw_links,
             headers=headers_from_splash(splash_response),
-            extensions=extract_extensions(raw_links=raw_links),
             values=[],
         )
