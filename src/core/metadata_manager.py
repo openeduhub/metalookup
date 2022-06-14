@@ -12,10 +12,7 @@ from app.models import Error, Input, MetadataTags, Output
 from core.extractor import Extractor
 from core.website_manager import WebsiteData
 from features.accessibility import Accessibility
-from features.cookies import Cookies
-from features.extract_from_files import ExtractFromFiles
-from features.gdpr import GDPR
-from features.html_based import (
+from features.addblock_based import (
     Advertisement,
     AntiAdBlock,
     EasylistAdult,
@@ -24,12 +21,11 @@ from features.html_based import (
     FanboyAnnoyance,
     FanboyNotification,
     FanboySocialMedia,
-    IFrameEmbeddable,
-    LogInOut,
-    Paywalls,
-    PopUp,
-    RegWall,
 )
+from features.cookies import Cookies
+from features.extract_from_files import ExtractFromFiles
+from features.gdpr import GDPR
+from features.html_based import IFrameEmbeddable, LogInOut, Paywalls, PopUp, RegWall
 from features.javascript import Javascript
 from features.licence import LicenceExtractor
 from features.malicious_extensions import MaliciousExtensions
@@ -99,22 +95,21 @@ class MetadataManager:
         # hence it may fail with various different exceptions (ConnectionError, ...)
         # those exceptions should be handled in the caller of this function.
         try:
-            site = await WebsiteData.from_input(
-                input=message,
-                logger=self.logger,
-                tld_extractor=self.tld_extractor,
-            )
+            with runtime() as t:
+                site = await WebsiteData.from_input(
+                    input=message,
+                    logger=self.logger,
+                    tld_extractor=self.tld_extractor,
+                )
+            self.logger.info(f"Built WebsiteData object in {t():5.2f}s.")
         except ClientConnectorError as e:
             raise HTTPException(status_code=502, detail=f"Could not get HAR from splash: {e}")
         except ValidationError as e:
             raise HTTPException(status_code=500, detail=f"Received unexpected HAR from splash: {e}")
 
-        self.logger.debug("Build website data object.")
-
         async def run_extractor(extractor: Extractor) -> Union[MetadataTags, Error]:
             """Call the extractor and transform its result into the expected output format"""
             try:
-                self.logger.debug(f"Extracting {extractor.__class__.__name__}.")
                 with runtime() as t:
                     stars, explanation, extra_data = await extractor.extract(site=site, executor=self.process_pool)
                 self.logger.info(f"Extracted {extractor.__class__.__name__} in {t():5.2f}s.")
