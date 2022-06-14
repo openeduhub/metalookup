@@ -4,6 +4,7 @@ import os
 import subprocess
 from typing import List
 
+import pydantic
 import uvicorn as uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
@@ -65,6 +66,11 @@ async def accessibility(input_data: Input):
     try:
         output = json.loads(stdout.decode())
         return Output(score=[output["categories"][input_data.category]["score"]])
+    except pydantic.error_wrappers.ValidationError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Could not interpret lighthouse output: {e}. Raw output:\n{stdout.decode()}",
+        )
     except json.decoder.JSONDecodeError as e:
         raise HTTPException(
             status_code=500,
