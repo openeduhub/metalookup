@@ -3,6 +3,7 @@ import logging
 from concurrent.futures import Executor
 from logging import Logger
 from typing import Optional
+from unittest import mock
 
 import adblockparser
 from aiohttp import ClientSession
@@ -18,9 +19,10 @@ _FOUND_NO_LIST_MATCHES = "Found no list matches"
 
 class AdBlockBasedExtractor(Extractor[set[str]]):
     """
-    Base class for features to be extracted with add block package.
+    Base class for features to be extracted with `adblockparser` package.
 
-    The returned extra data corresponds to the set of blocked links.
+    The returned extra data corresponds to a sample of the blocked links.
+    The sample size can be configured with the limit member variable.
     """
 
     urls: list[str] = []  # needs to be provided by derived class
@@ -51,15 +53,44 @@ class AdBlockBasedExtractor(Extractor[set[str]]):
             "domain": "",
         }
         self.rules: AdblockRules = None  # noqa will be initialized in async setup call
+        self.limit: Optional[int] = 2
+        """
+        Stop after finding a given amount of to be blocked links.
+        For websites with a lot of referenced content, this can significantly speed up the extraction process,
+        as once it is clear that there will be blocked content, there is no more need to check for more blocked content.
+        If set to none, then all links will be checked.
+        """
 
     async def setup(self) -> None:
         """Fetch tag lists from configured urls."""
         assert self.urls != [], "Missing url specification of tag lists"
         assert self.rules is None, "rules must be initialized in async setup call"
 
+        # patch the adblockparser python package to work with googles re2 package.
+        # re2 seems to be significantly faster than the builtin re package.
+        # fixme: eventually we may want to abandon usage of the adblockparser package all-together and transition
+        #        to a more modern alternative (e.g. the adblock package which is a python wrapper for a native
+        #        rust implementation that would probably speed things up significantly)
+        import re
+
+        def _combined_regex(regexes, flags=re.IGNORECASE, use_re2=False, max_mem=None):
+            joined_regexes = "|".join(r for r in regexes if r)
+            if not joined_regexes:
+                return None
+
+            if use_re2:
+                import re2
+
+                options = re2.Options()
+                options.max_mem = max_mem
+                return re2.compile(joined_regexes, options=options)
+
+            return re.compile(joined_regexes, flags=flags)
+
         async with ClientSession() as session:
             rules = await download_tag_lists(urls=self.urls, session=session, logger=self.logger)
-            self.rules = adblockparser.AdblockRules(list(rules), skip_unsupported_rules=False, use_re2=False)
+            with mock.patch("adblockparser.parser._combined_regex", new=_combined_regex):
+                self.rules = adblockparser.AdblockRules(list(rules), skip_unsupported_rules=False, use_re2=True)
 
     def apply_rules(self, domain: str, links: list[str]) -> tuple[float, set[str]]:
         """Return the list of matches and the total computation time taken."""
@@ -67,7 +98,12 @@ class AdBlockBasedExtractor(Extractor[set[str]]):
             # note: we can modify that here because we are in an non-async context and probably a subprocess
             #       with its own memory.
             self.adblock_parser_options["domain"] = domain
-            values = {url for url in links if self.rules.should_block(url=url, options=self.adblock_parser_options)}
+            values = set()
+            for url in links:
+                if self.rules.should_block(url=url, options=self.adblock_parser_options):
+                    values.add(url)
+                    if self.limit is not None and len(values) > self.limit:
+                        break
         return t(), values
 
     async def extract(self, site: WebsiteData, executor: Executor) -> tuple[StarCase, Explanation, set[str]]:
@@ -76,6 +112,7 @@ class AdBlockBasedExtractor(Extractor[set[str]]):
         self.logger.info(
             f"Found {len(values)} links that should be blocked according to ad-block rules in {duration:5.2}s"
         )
+        # note: we will never find more than "self.limit" matches
         found_match = len(values) > 0
         explanation = _FOUND_LIST_MATCHES if found_match else _FOUND_NO_LIST_MATCHES
         stars = StarCase.ZERO if found_match else StarCase.FIVE
