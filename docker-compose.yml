@@ -50,7 +50,7 @@ services:
 
   lighthouse:
     dns: 8.8.8.8
-    image: docker.edu-sharing.com/projects/oeh-redaktion/edusharing-projects-oeh-redaktion-metalookup-lighthouse:latest
+    image: community.docker.edu-sharing.com/oeh-search-meta_lighthouse:latest
     restart: always
     ports:
       - "5058:5058"

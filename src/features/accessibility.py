@@ -77,9 +77,14 @@ class Accessibility(Extractor[AccessibilityScores]):
             "category": _ACCESSIBILITY,
             "strategy": strategy,
         }
-        response = await session.get(
-            url=f"{self.lighthouse_url}/{_ACCESSIBILITY}", timeout=self.lighthouse_timeout, json=params
-        )
+        try:
+            response = await session.get(
+                url=f"{self.lighthouse_url}/{_ACCESSIBILITY}", timeout=self.lighthouse_timeout, json=params
+            )
+        except asyncio.exceptions.TimeoutError:
+            raise RuntimeError(
+                f"Lighthouse request for {strategy=} and {url=} timed out after {self.lighthouse_timeout} seconds"
+            )
 
         if response.status == 200:
             # expected result looks like {"score": [0.123]}
