@@ -2,7 +2,7 @@ import time
 
 import pytest
 
-from caching.backends import DatabaseBackend
+from metalookup.caching.backends import DatabaseBackend
 
 
 @pytest.mark.asyncio

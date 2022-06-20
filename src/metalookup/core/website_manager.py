@@ -7,11 +7,11 @@ from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 from tldextract.tldextract import TLDExtract
 
-from app.models import Input
-from app.splash_models import HAR, SplashResponse
-from lib.constants import SCRIPT
-from lib.settings import SPLASH_HEADERS, SPLASH_TIMEOUT, SPLASH_URL
-from lib.tools import get_unique_list, runtime
+from metalookup.app.models import Input
+from metalookup.app.splash_models import HAR, SplashResponse
+from metalookup.lib.constants import SCRIPT
+from metalookup.lib.settings import SPLASH_HEADERS, SPLASH_TIMEOUT, SPLASH_URL
+from metalookup.lib.tools import get_unique_list, runtime
 
 
 @dataclass  # fixme: make frozen

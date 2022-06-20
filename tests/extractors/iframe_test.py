@@ -1,7 +1,7 @@
 import pytest
 
-from app.models import StarCase
-from features.iframe import IFrameEmbeddable
+from metalookup.app.models import StarCase
+from metalookup.features.iframe import IFrameEmbeddable
 from tests.extractors.conftest import mock_website_data
 
 

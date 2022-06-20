@@ -6,10 +6,10 @@ from pathlib import Path
 import pytest
 from tldextract import TLDExtract
 
-from app.models import Input, StarCase
-from app.splash_models import SplashResponse
-from core.website_manager import WebsiteData
-from features.licence import DetectedLicences, Licence, LicenceExtractor
+from metalookup.app.models import Input, StarCase
+from metalookup.app.splash_models import SplashResponse
+from metalookup.core.website_manager import WebsiteData
+from metalookup.features.licence import DetectedLicences, Licence, LicenceExtractor
 
 
 def test_serialize_extra():

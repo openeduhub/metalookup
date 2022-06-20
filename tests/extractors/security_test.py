@@ -2,8 +2,8 @@ from unittest import mock
 
 import pytest
 
-from app.models import StarCase
-from features.security import Security
+from metalookup.app.models import StarCase
+from metalookup.features.security import Security
 
 
 @pytest.mark.asyncio

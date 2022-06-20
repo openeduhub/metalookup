@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from app.splash_models import SplashResponse
+from metalookup.app.splash_models import SplashResponse
 
 
 @contextlib.contextmanager
@@ -21,7 +21,7 @@ def lighthouse_mock(score: float = 0.98):
     async def accessibility_api_call_mock(self, url, session, strategy) -> float:  # noqa
         return score
 
-    with mock.patch("features.accessibility.Accessibility._execute_api_call", accessibility_api_call_mock):
+    with mock.patch("metalookup.features.accessibility.Accessibility._execute_api_call", accessibility_api_call_mock):
         yield
 
 
@@ -39,7 +39,9 @@ def splash_mock():
         with open(path, "r") as f:
             return SplashResponse.parse_obj(json.load(f))
 
-    with mock.patch("core.website_manager.WebsiteData.fetch_content", new=AsyncMock(side_effect=load_response)):
+    with mock.patch(
+        "metalookup.core.website_manager.WebsiteData.fetch_content", new=AsyncMock(side_effect=load_response)
+    ):
         yield
 
 

@@ -10,9 +10,9 @@ from urllib.parse import urlparse
 
 from aiohttp import ClientSession
 
-from app.models import Explanation, StarCase
-from core.website_manager import WebsiteData
-from lib.settings import USE_LOCAL_IF_POSSIBLE
+from metalookup.app.models import Explanation, StarCase
+from metalookup.core.website_manager import WebsiteData
+from metalookup.lib.settings import USE_LOCAL_IF_POSSIBLE
 
 T = TypeVar("T")
 

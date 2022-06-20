@@ -1,6 +1,6 @@
 import pytest
 
-from features.javascript import Javascript
+from metalookup.features.javascript import Javascript
 from tests.extractors.conftest import mock_website_data
 
 

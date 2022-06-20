@@ -4,9 +4,9 @@ from unittest import mock
 
 from tldextract.tldextract import ExtractResult, TLDExtract
 
-from app.models import Input
-from app.splash_models import HAR, Entry, Header, Log, Request, Response, SplashResponse
-from core.website_manager import WebsiteData
+from metalookup.app.models import Input
+from metalookup.app.splash_models import HAR, Entry, Header, Log, Request, Response, SplashResponse
+from metalookup.core.website_manager import WebsiteData
 
 
 async def mock_website_data(

@@ -1,8 +1,8 @@
 from concurrent.futures import Executor
 
-from app.models import Explanation, StarCase
-from core.extractor import Extractor
-from core.website_manager import WebsiteData
+from metalookup.app.models import Explanation, StarCase
+from metalookup.core.extractor import Extractor
+from metalookup.core.website_manager import WebsiteData
 
 _NO_KNOCKOUT_MATCH_FOUND = "No knockout match found"
 _KNOCKOUT_MATCH_FOUND = "Found knockout match"

@@ -1,9 +1,9 @@
 import re
 from concurrent.futures import Executor
 
-from app.models import Explanation, StarCase
-from core.extractor import Extractor
-from core.website_manager import WebsiteData
+from metalookup.app.models import Explanation, StarCase
+from metalookup.core.extractor import Extractor
+from metalookup.core.website_manager import WebsiteData
 
 _MINIMUM_GDPR_REQUIREMENT_COVERED = "Minimum GDPR Requirements covered"
 _POTENTIALLY_INSUFFICIENT_GDPR_REQUIREMENTS = "Potentially non GDPR compliant"

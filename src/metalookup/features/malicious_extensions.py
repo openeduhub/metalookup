@@ -2,9 +2,9 @@ import os
 from concurrent.futures import Executor
 from urllib.parse import urlparse
 
-from app.models import Explanation, StarCase
-from core.extractor import Extractor
-from core.website_manager import WebsiteData
+from metalookup.app.models import Explanation, StarCase
+from metalookup.core.extractor import Extractor
+from metalookup.core.website_manager import WebsiteData
 
 FOUND_POTENTIALLY_MALICIOUS_EXTENSION = "Found potentially malicious extension"
 FOUND_SLIGHTLY_MALICIOUS_EXTENSION = "Found slightly malicious extension"

@@ -8,11 +8,11 @@ from fastapi import HTTPException
 from pydantic import ValidationError
 from tldextract import TLDExtract
 
-from app.models import Error, Input, MetadataTags, Output
-from core.extractor import Extractor
-from core.website_manager import WebsiteData
-from features.accessibility import Accessibility
-from features.addblock_based import (
+from metalookup.app.models import Error, Input, MetadataTags, Output
+from metalookup.core.extractor import Extractor
+from metalookup.core.website_manager import WebsiteData
+from metalookup.features.accessibility import Accessibility
+from metalookup.features.addblock_based import (
     Advertisement,
     AntiAdBlock,
     EasylistAdult,
@@ -22,16 +22,16 @@ from features.addblock_based import (
     FanboyNotification,
     FanboySocialMedia,
 )
-from features.cookies import Cookies
-from features.direct_match import LogInOut, Paywalls, PopUp, RegWall
-from features.extract_from_files import ExtractFromFiles
-from features.gdpr import GDPR
-from features.iframe import IFrameEmbeddable
-from features.javascript import Javascript
-from features.licence import LicenceExtractor
-from features.malicious_extensions import MaliciousExtensions
-from features.security import Security
-from lib.tools import runtime
+from metalookup.features.cookies import Cookies
+from metalookup.features.direct_match import LogInOut, Paywalls, PopUp, RegWall
+from metalookup.features.extract_from_files import ExtractFromFiles
+from metalookup.features.gdpr import GDPR
+from metalookup.features.iframe import IFrameEmbeddable
+from metalookup.features.javascript import Javascript
+from metalookup.features.licence import LicenceExtractor
+from metalookup.features.malicious_extensions import MaliciousExtensions
+from metalookup.features.security import Security
+from metalookup.lib.tools import runtime
 
 
 class MetadataManager:

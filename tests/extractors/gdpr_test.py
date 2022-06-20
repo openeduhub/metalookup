@@ -1,7 +1,7 @@
 import pytest
 
-from features.gdpr import GDPR
-from lib.tools import runtime
+from metalookup.features.gdpr import GDPR
+from metalookup.lib.tools import runtime
 from tests.extractors.conftest import mock_website_data
 
 

@@ -1,6 +1,6 @@
 import pytest
 
-from features.addblock_based import (
+from metalookup.features.addblock_based import (
     Advertisement,
     AntiAdBlock,
     EasylistAdult,
@@ -10,7 +10,7 @@ from features.addblock_based import (
     FanboyNotification,
     FanboySocialMedia,
 )
-from lib.tools import runtime
+from metalookup.lib.tools import runtime
 from tests.extractors.conftest import mock_website_data
 
 

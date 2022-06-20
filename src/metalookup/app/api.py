@@ -8,15 +8,15 @@ from aiohttp import ClientSession
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
-import lib.settings
-from app.models import Input, MetadataTags, Output, Ping
-from caching.backends import DatabaseBackend
-from caching.cache import cache
-from core.metadata_manager import MetadataManager
-from lib.logger import setup_logging
-from lib.tools import runtime
+import metalookup.lib.settings
+from metalookup.app.models import Input, MetadataTags, Output, Ping
+from metalookup.caching.backends import DatabaseBackend
+from metalookup.caching.cache import cache
+from metalookup.core.metadata_manager import MetadataManager
+from metalookup.lib.logger import setup_logging
+from metalookup.lib.tools import runtime
 
-setup_logging(level=lib.settings.LOG_LEVEL, path=lib.settings.LOG_PATH)
+setup_logging(level=metalookup.lib.settings.LOG_LEVEL, path=metalookup.lib.settings.LOG_PATH)
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,9 @@ app.add_middleware(
 )
 
 manager = MetadataManager()
-cache_backend = DatabaseBackend(url=lib.settings.CACHE_DATABASE_URL) if lib.settings.ENABLE_CACHE else None
+cache_backend = (
+    DatabaseBackend(url=metalookup.lib.settings.CACHE_DATABASE_URL) if metalookup.lib.settings.ENABLE_CACHE else None
+)
 
 
 @app.on_event("startup")
@@ -82,7 +84,7 @@ async def ping():
 
 
 # Developer endpoints
-if lib.settings.ENABLE_CACHE_CONTROL_ENDPOINTS:
+if metalookup.lib.settings.ENABLE_CACHE_CONTROL_ENDPOINTS:
     # fixme: Not sure if this would work if the service is running with multiple uvicorn replications.
     """If there is a background task already running, then this variable should be not None"""
     process: Optional[Process] = None
@@ -95,7 +97,7 @@ if lib.settings.ENABLE_CACHE_CONTROL_ENDPOINTS:
                 for url in urls:
                     logging.info(f"Warming up {url}")
                     await session.post(
-                        url=f"http://localhost:{lib.settings.API_PORT}/extract?extra=true",
+                        url=f"http://localhost:{metalookup.lib.settings.API_PORT}/extract?extra=true",
                         json=Input(url=url).dict(),
                     )
             logging.info(f"Finished cache warmup with {len(urls)} urls")

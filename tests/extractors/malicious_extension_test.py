@@ -1,7 +1,7 @@
 import pytest
 
-from app.models import StarCase
-from features.malicious_extensions import MaliciousExtensions
+from metalookup.app.models import StarCase
+from metalookup.features.malicious_extensions import MaliciousExtensions
 from tests.extractors.conftest import mock_website_data
 
 

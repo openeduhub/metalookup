@@ -6,10 +6,10 @@ from pathlib import Path
 import pytest
 from httpx import AsyncClient
 
-from app.api import Input, app, cache_backend, manager
-from app.models import Error, MetadataTags, Output
-from app.splash_models import SplashResponse
-from features.licence import DetectedLicences
+from metalookup.app.api import Input, app, cache_backend, manager
+from metalookup.app.models import Error, MetadataTags, Output
+from metalookup.app.splash_models import SplashResponse
+from metalookup.features.licence import DetectedLicences
 from tests.conftest import lighthouse_mock, splash_mock
 
 

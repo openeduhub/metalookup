@@ -1,8 +1,8 @@
 from concurrent.futures import Executor
 
-from app.models import Explanation, StarCase
-from core.extractor import Extractor
-from core.website_manager import WebsiteData
+from metalookup.app.models import Explanation, StarCase
+from metalookup.core.extractor import Extractor
+from metalookup.core.website_manager import WebsiteData
 
 _FOUND_NON_EMBEDDED_JAVASCRIPT = "Found non embedded javascript block(s)"
 _FOUND_NO_NON_EMBEDDED_JAVASCRIPT = "Found no non embedded javascript block(s)"

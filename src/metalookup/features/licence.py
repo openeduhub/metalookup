@@ -5,9 +5,9 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-from app.models import StarCase
-from core.extractor import Explanation, Extractor
-from core.website_manager import WebsiteData
+from metalookup.app.models import StarCase
+from metalookup.core.extractor import Explanation, Extractor
+from metalookup.core.website_manager import WebsiteData
 
 
 # see https://docs.python.org/3/library/enum.html#using-automatic-values

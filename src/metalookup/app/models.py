@@ -3,7 +3,7 @@ from typing import Any, Optional, Union
 
 from pydantic import BaseModel, Field, HttpUrl
 
-from app.splash_models import SplashResponse
+from metalookup.app.splash_models import SplashResponse
 
 Explanation = str
 

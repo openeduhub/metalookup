@@ -8,7 +8,7 @@ from unittest import mock
 import pytest
 from aiohttp import ClientSession
 
-from features.extract_from_files import ExtractFromFiles
+from metalookup.features.extract_from_files import ExtractFromFiles
 from tests.extractors.conftest import mock_website_data
 
 
@@ -21,7 +21,7 @@ def file_download_mock():
         with open(Path(__file__).parent.parent / "resources" / filename, "rb") as f:
             return io.BytesIO(f.read())
 
-    with mock.patch("features.extract_from_files.ExtractFromFiles._download_file", download_mock):
+    with mock.patch("metalookup.features.extract_from_files.ExtractFromFiles._download_file", download_mock):
         yield
 
 

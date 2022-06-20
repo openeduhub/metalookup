@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from app.splash_models import SplashResponse
+from metalookup.app.splash_models import SplashResponse
 
 
 def test_splash_model():

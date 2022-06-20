@@ -9,7 +9,7 @@ from typing import Optional, Protocol
 
 from fastapi import HTTPException, Request, Response
 
-from caching.backends import Backend
+from metalookup.caching.backends import Backend
 
 logger = logging.getLogger(__name__)
 

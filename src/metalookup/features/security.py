@@ -1,9 +1,9 @@
 from concurrent.futures import Executor
 from typing import Callable
 
-from app.models import Explanation, StarCase
-from core.extractor import Extractor
-from core.website_manager import WebsiteData
+from metalookup.app.models import Explanation, StarCase
+from metalookup.core.extractor import Extractor
+from metalookup.core.website_manager import WebsiteData
 
 _MINIMUM_SECURITY_REQUIREMENTS_COVERED = "Minimum security requirements covered"
 _INDICATORS_FOR_INSUFFICIENT_SECURITY_FOUND = "Indicators for insufficient security found"

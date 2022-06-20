@@ -5,10 +5,10 @@ from concurrent.futures import Executor
 from aiohttp import ClientSession
 from pydantic import BaseModel
 
-from app.models import Explanation, StarCase
-from core.extractor import Extractor
-from core.website_manager import WebsiteData
-from lib.settings import LIGHTHOUSE_TIMEOUT, LIGHTHOUSE_URL
+from metalookup.app.models import Explanation, StarCase
+from metalookup.core.extractor import Extractor
+from metalookup.core.website_manager import WebsiteData
+from metalookup.lib.settings import LIGHTHOUSE_TIMEOUT, LIGHTHOUSE_URL
 
 _DESKTOP = "desktop"
 _MOBILE = "mobile"

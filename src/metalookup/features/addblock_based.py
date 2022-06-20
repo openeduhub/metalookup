@@ -8,10 +8,10 @@ from unittest import mock
 import adblockparser
 from aiohttp import ClientSession
 
-from app.models import Explanation, StarCase
-from core.extractor import Extractor, download_tag_lists
-from core.website_manager import WebsiteData
-from lib.tools import runtime
+from metalookup.app.models import Explanation, StarCase
+from metalookup.core.extractor import Extractor, download_tag_lists
+from metalookup.core.website_manager import WebsiteData
+from metalookup.lib.tools import runtime
 
 _FOUND_LIST_MATCHES = "Found list matches"
 _FOUND_NO_LIST_MATCHES = "Found no list matches"

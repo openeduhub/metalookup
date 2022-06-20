@@ -1,8 +1,8 @@
 from concurrent.futures import Executor
 
-from app.models import Explanation, StarCase
-from core.extractor import Extractor
-from core.website_manager import WebsiteData
+from metalookup.app.models import Explanation, StarCase
+from metalookup.core.extractor import Extractor
+from metalookup.core.website_manager import WebsiteData
 
 _FOUND_LIST_MATCHES = "Found list matches"
 _FOUND_NO_LIST_MATCHES = "Found no list matches"
