@@ -144,7 +144,7 @@ class Output(BaseModel):
         "1 if the website is 100% accessible, "
         "0 if the website is not accessible at all.",
     )
-    g_d_p_r: Union[MetadataTags, Error] = Field(
+    gdpr: Union[MetadataTags, Error] = Field(
         default=None,
         description="Alpha. Are there indications that GDPR is obeyed?"
         "Probability = "
