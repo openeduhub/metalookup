@@ -1,5 +1,6 @@
 import abc
 import asyncio
+import itertools
 import logging
 import os
 import re
@@ -7,7 +8,7 @@ from collections import OrderedDict
 from concurrent.futures import Executor
 from enum import Enum
 from logging import Logger
-from typing import Generic, Optional, Type, TypeVar
+from typing import Generic, Optional, Type, TypeVar, Union
 from urllib.parse import urlparse
 
 import adblockparser
@@ -27,8 +28,8 @@ T = TypeVar("T")
 FOUND_LIST_MATCHES = "Found list matches"
 FOUND_NO_LIST_MATCHES = "Found no list matches"
 EMPTY_EXPLANATION = ""  # todo remove
-NO_KOCKOUT_MATCH_FOUND = "No knockout match found"
-KOCKOUT_MATCH_FOUND = "Found knockout match"
+NO_KNOCKOUT_MATCH_FOUND = "No knockout match found"
+KNOCKOUT_MATCH_FOUND = "Found knockout match"
 NO_EXPLANATION = "No explanation"  # todo remove
 
 
@@ -52,6 +53,73 @@ class Extractor(Generic[T]):
         """
 
 
+async def download_tag_lists(session: ClientSession, urls: Union[str, list[str]], logger: Logger) -> set[str]:
+    """
+    Download tags from a list of urls and combine all downloaded tag lists into set removing all duplicates.
+    :param session: The client to use for the downloads.
+    :param urls: The urls from where to download individual tag lists.
+    :param logger: Logger to be used.
+    :return: The combined set of all tags.
+    """
+
+    def extract_dates(tags: list[str]) -> tuple[Optional[int], Optional[str]]:
+        """
+        Try to extract the expiration and last modification date from a downloaded tag list.
+        :param tags: The individual lines of a downloaded tag list.
+        :return: Tuple holding the expiration (in days?) and last modification date.
+        """
+        expires_expression = re.compile(r"[!#:]\sExpires[:=]\s?(\d+)\s?\w{0,4}")
+        last_modified_expression = re.compile(r"[!#]\sLast modified:\s(\d\d\s\w{3}\s\d{4}\s\d\d:\d\d\s\w{3})")
+        expiration = None
+        last_modification = None
+        # sometimes the first couple of lines of the downloaded
+        # tag lists contain information about expiration and creation date.
+        # checking the first lines would catch them if they are there and in
+        # the expected format.
+        for line in tags[0:10]:
+            if match := last_modified_expression.match(line):
+                last_modification = match.group(1)
+            elif match := expires_expression.match(line):
+                expiration = int(match.group(1))
+
+            if last_modification is not None and expiration is not None:
+                break
+        return expiration, last_modification
+
+    async def download_tags(url: str) -> tuple[Optional[int], Optional[str], set[str]]:
+        taglist_path = "tag_lists/"
+        if not os.path.isdir(taglist_path):
+            os.makedirs(taglist_path, exist_ok=True)
+
+        filename = os.path.basename(urlparse(url).path)
+        if USE_LOCAL_IF_POSSIBLE and os.path.isfile(taglist_path + filename):
+            with open(taglist_path + filename, "r") as file:
+                tag_list = file.read().splitlines()
+        else:
+            result = await session.get(url=url)
+            if result.status == 200:
+                text = await result.text()
+                tag_list = text.splitlines()
+                if USE_LOCAL_IF_POSSIBLE:
+                    with open(taglist_path + filename, "w+") as file:
+                        file.write(text)
+            else:
+                raise RuntimeError(f"Downloading tag list from '{url}' yielded status code '{result.status}'.")
+
+        expiration, last_modification = extract_dates(tag_list)
+        logger.info(
+            f"Downloaded tag list from {url=} with {len(tag_list)} entries and {expiration=}, {last_modification=}"
+        )
+        return expiration, last_modification, set(tag_list)
+
+    # normalize urls argument into list[str]
+    urls = [urls] if isinstance(urls, str) else urls
+    tasks = [download_tags(url=url) for url in urls]
+    tags: tuple[tuple[Optional[int], Optional[str], set[str]], ...] = await asyncio.gather(*tasks)
+    # return set union, ignore expiration and last modification for now
+    return set(itertools.chain(*(t for _, _, t in tags)))
+
+
 class ProbabilityDeterminationMethod(Enum):
     NUMBER_OF_ELEMENTS = 1
     SINGLE_OCCURRENCE = 2
@@ -69,10 +137,7 @@ class MetadataBase(Extractor[list[str]]):
     """
 
     tag_list: list = []
-    tag_list_last_modified = ""
-    tag_list_expires: int = 0
     false_list: list = []
-    url: str = ""
     urls: list = []
     comment_symbol: str = ""
     evaluate_header: bool = False
@@ -121,9 +186,22 @@ class MetadataBase(Extractor[list[str]]):
 
     def __init__(self, logger: Optional[Logger] = None):
         self._logger = logger or logging.getLogger(__name__)
-        # todo: change class setupt to factory pattern to avoid having to manually calling setup after construction
-        #       see https://stackoverflow.com/a/33134213/2160256
-        # self.setup()
+
+    async def setup(self) -> None:
+        """Fetch tag lists from configured urls."""
+
+        if len(self.urls) > 0:
+            if len(self.tag_list) != 0:
+                raise RuntimeError("Cannot specify both urls and tag list")
+            async with ClientSession() as session:
+                self.tag_list = list(await download_tag_lists(urls=self.urls, session=session, logger=self._logger))
+
+        if self.tag_list:
+            self._prepare_tag_list()
+            if self.extraction_method == ExtractionMethod.USE_ADBLOCK_PARSER:
+                self.match_rules = adblockparser.AdblockRules(
+                    self.tag_list, skip_unsupported_rules=False, use_re2=False
+                )
 
     async def extract(self, site: WebsiteData, executor: Executor) -> tuple[StarCase, Explanation, T]:
         _, values, stars, explanation = await self.start(site)
@@ -192,11 +270,11 @@ class MetadataBase(Extractor[list[str]]):
 
     def _decide_false_list(self, website_data: WebsiteData) -> tuple[StarCase, Explanation]:
         decision = StarCase.FIVE
-        explanation = NO_KOCKOUT_MATCH_FOUND
+        explanation = NO_KNOCKOUT_MATCH_FOUND
         for false_element in self.false_list:
             if false_element in website_data.values:
                 decision = StarCase.ZERO
-                explanation = KOCKOUT_MATCH_FOUND
+                explanation = KNOCKOUT_MATCH_FOUND
                 break
 
         return decision, explanation
@@ -257,49 +335,6 @@ class MetadataBase(Extractor[list[str]]):
 
         return values
 
-    async def _download_multiple_tag_lists(self, session: ClientSession) -> list[str]:
-        tasks = [self._download_tag_list(url=url, session=session) for url in self.urls]
-        tag_lists = await asyncio.gather(*tasks)
-        complete_list = list(tag for tag_list in tag_lists for tag in tag_list)
-        return complete_list
-
-    async def _download_tag_list(self, url: str, session: ClientSession) -> list[str]:
-        taglist_path = "tag_lists/"
-        if not os.path.isdir(taglist_path):
-            os.makedirs(taglist_path, exist_ok=True)
-
-        filename = os.path.basename(urlparse(url).path)
-        if USE_LOCAL_IF_POSSIBLE and os.path.isfile(taglist_path + filename):
-            with open(taglist_path + filename, "r") as file:
-                tag_list = file.read().splitlines()
-        else:
-            result = await session.get(url=url)
-            if result.status == 200:
-                text = await result.text()
-                tag_list = text.splitlines()
-                if USE_LOCAL_IF_POSSIBLE:
-                    with open(taglist_path + filename, "w+") as file:
-                        file.write(text)
-            else:
-                self._logger.exception(f"Downloading tag list from '{url}' yielded status code '{result.status}'.")
-                tag_list = []
-        return tag_list
-
-    def _extract_date_from_list(self) -> None:
-        expires_expression = re.compile(r"[!#:]\sExpires[:=]\s?(\d+)\s?\w{0,4}")
-        last_modified_expression = re.compile(r"[!#]\sLast modified:\s(\d\d\s\w{3}\s\d{4}\s\d\d:\d\d\s\w{3})")
-        for line in self.tag_list[0:10]:
-            match = last_modified_expression.match(line)
-            if match:
-                self.tag_list_last_modified = match.group(1)
-
-            match = expires_expression.match(line)
-            if match:
-                self.tag_list_expires = int(match.group(1))
-
-            if self.tag_list_last_modified != "" and self.tag_list_expires != 0:
-                break
-
     def _prepare_tag_list(self) -> None:
         tag_list = [
             el.lower()
@@ -308,21 +343,3 @@ class MetadataBase(Extractor[list[str]]):
         ]
 
         self.tag_list = list(OrderedDict.fromkeys(tag_list))
-
-    async def _setup_downloads(self) -> None:
-        async with ClientSession() as session:
-            if self.urls:
-                self.tag_list = await self._download_multiple_tag_lists(session=session)
-            elif self.url != "":
-                self.tag_list = await self._download_tag_list(url=self.url, session=session)
-
-    async def setup(self) -> None:
-        """Child function."""
-        await self._setup_downloads()
-        if self.tag_list:
-            self._extract_date_from_list()
-            self._prepare_tag_list()
-            if self.extraction_method == ExtractionMethod.USE_ADBLOCK_PARSER:
-                self.match_rules = adblockparser.AdblockRules(
-                    self.tag_list, skip_unsupported_rules=False, use_re2=False
-                )

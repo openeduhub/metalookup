@@ -1,19 +1,23 @@
+from concurrent.futures import Executor
 from typing import Callable
 
 from app.models import Explanation, StarCase
-from core.extractor import MetadataBase
+from core.extractor import Extractor
 from core.website_manager import WebsiteData
 
 _MINIMUM_SECURITY_REQUIREMENTS_COVERED = "Minimum security requirements covered"
 _INDICATORS_FOR_INSUFFICIENT_SECURITY_FOUND = "Indicators for insufficient security found"
 
 
-@MetadataBase.with_key()
-class Security(MetadataBase):
+class Security(Extractor[set[str]]):
     """
     Checks various HTTP headers for security aspects resulting in either a zero or five star rating.
     See '../../docs/acceptance.md#(Sicherheit alias Security)' for details.
+
+    The returned extra data is a set of strings naming the http headers where the checks have failed.
     """
+
+    key = "security"
 
     # The validators that all must yield a positive result for a website to get 5 stars.
     # If a header is not present, the validation result for the header defaults to false.
@@ -28,30 +32,18 @@ class Security(MetadataBase):
         "strict-transport-security": lambda s: "includesubdomains" in s.lower(),
     }
 
-    async def _start(self, website_data: WebsiteData) -> list[str]:
-        """
-        Run the header checks against the headers of given
-        site and return the field names of the checks that passed.
-        """
-        return [
-            field
-            for field, check in self.header_checks.items()
-            if field in website_data.headers and check(website_data.headers[field])
-        ]
+    async def setup(self):
+        pass
 
-    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, Explanation]:
-        # fixme: Currently copy pasted from _start.
-        passed = [
-            field
-            for field, check in self.header_checks.items()
-            if field in website_data.headers and check(website_data.headers[field])
+    async def extract(self, site: WebsiteData, executor: Executor) -> tuple[StarCase, Explanation, set[str]]:
+        # No need to dispatch to the executor as this is a rather trivial computation
+        passed_checks = [
+            field for field, check in self.header_checks.items() if field in site.headers and check(site.headers[field])
         ]
+        failed_checks = set(self.header_checks.keys()) - set(passed_checks)
 
         return (
-            (StarCase.FIVE, _MINIMUM_SECURITY_REQUIREMENTS_COVERED)
-            if len(passed) == len(self.header_checks)
-            else (
-                StarCase.ZERO,
-                _INDICATORS_FOR_INSUFFICIENT_SECURITY_FOUND,
-            )
+            (StarCase.FIVE, _MINIMUM_SECURITY_REQUIREMENTS_COVERED, failed_checks)
+            if len(passed_checks) == len(self.header_checks)
+            else (StarCase.ZERO, _INDICATORS_FOR_INSUFFICIENT_SECURITY_FOUND, failed_checks)
         )

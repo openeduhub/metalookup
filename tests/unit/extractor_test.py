@@ -19,9 +19,6 @@ def metadatabase(mocker):
 
 def test_init(metadatabase: MetadataBase, mocker):
     assert metadatabase.tag_list == []
-    assert metadatabase.tag_list_last_modified == ""
-    assert metadatabase.tag_list_expires == 0
-    assert metadatabase.url == ""
     assert metadatabase.comment_symbol == ""
     assert not metadatabase.evaluate_header
     assert isinstance(metadatabase._logger, mocker.MagicMock)
@@ -72,49 +69,6 @@ async def test_under_start(metadatabase: MetadataBase, mocker):
     await metadatabase._start(website_data=website_data)
     assert work_header_spy.call_count == 1
     assert work_html_content_spy.call_count == 1
-
-
-"""
---------------------------------------------------------------------------------
-"""
-
-
-@pytest.mark.asyncio
-async def test_setup(metadatabase: MetadataBase, mocker):
-    metadatabase._download_tag_list = mocker.AsyncMock(return_value=[])
-    metadatabase._download_multiple_tag_lists = mocker.AsyncMock(return_value=[])
-    extract_date_from_list_spy = mocker.spy(metadatabase, "_extract_date_from_list")
-    prepare_tag_spy = mocker.spy(metadatabase, "_prepare_tag_list")
-
-    await metadatabase.setup()
-    assert metadatabase._download_tag_list.call_count == 0
-    assert metadatabase._download_multiple_tag_lists.call_count == 0
-    assert extract_date_from_list_spy.call_count == 0
-    assert prepare_tag_spy.call_count == 0
-
-    metadatabase.url = "hello"
-    await metadatabase.setup()
-    assert metadatabase._download_tag_list.call_count == 1
-    assert metadatabase._download_multiple_tag_lists.call_count == 0
-    assert extract_date_from_list_spy.call_count == 0
-    assert prepare_tag_spy.call_count == 0
-
-    metadatabase.url = ""
-    metadatabase.urls = ["Hello1", "Hello2"]
-    metadatabase._download_tag_list.return_value = ["empty_list"]
-    await metadatabase.setup()
-    assert metadatabase._download_tag_list.call_count == 1
-    assert metadatabase._download_multiple_tag_lists.call_count == 1
-    assert extract_date_from_list_spy.call_count == 0
-    assert prepare_tag_spy.call_count == 0
-
-    metadatabase.tag_list = ["empty_list"]
-    metadatabase.urls = []
-    await metadatabase.setup()
-    assert metadatabase._download_tag_list.call_count == 1
-    assert metadatabase._download_multiple_tag_lists.call_count == 1
-    assert extract_date_from_list_spy.call_count == 1
-    assert prepare_tag_spy.call_count == 1
 
 
 """

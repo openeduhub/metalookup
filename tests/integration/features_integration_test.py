@@ -1,19 +1,13 @@
-import json
 import logging
-import os
-import time
 from typing import Optional
 from unittest import mock
-from urllib.parse import urlparse
 
 import pytest
 from tldextract.tldextract import ExtractResult, TLDExtract
 
 from app.models import Input
-from app.splash_models import HAR, Cookie, Entry, Header, Log, Request, Response, SplashResponse
+from app.splash_models import HAR, Entry, Header, Log, Request, Response, SplashResponse
 from core.website_manager import WebsiteData
-from features.cookies import Cookies
-from features.extract_from_files import ExtractFromFiles
 from features.gdpr import GDPR
 from features.html_based import (
     Advertisement,
@@ -109,28 +103,6 @@ async def test_easylist_adult():
 
 
 @pytest.mark.asyncio
-async def test_cookies_in_html():
-    feature = Cookies()
-    await feature.setup()
-    html = """
-           <div class='ast-small-footer-section ast-small-footer-section-1 ast-small-footer-section-equally ast-col-md-6 ast-col-xs-12' >
-           Copyright © 2021 Can You Block It<br><a href='https://www.iubenda.com/privacy-policy/24196256'
-           class='iubenda-black iubenda-embed" title="Privacy Policy ">Privacy Policy</a><script
-           type="3f8f8d2155875297dce02d6a-text/javascript">(function (w,d) {var loader = function ()
-           {var s = d.createElement("script"), tag = d.getElementsByTagName("script")[0];
-           s.src="https://cdn.iubenda.com/iubenda.js"; tag.parentNode.insertBefore(s,tag);};
-           if(w.addEventListener){w.addEventListener("load", loader, false);}else
-           if(w.attachEvent){w.attachEvent("onload", loader);}else{w.onload = loader;}})(window, document);
-           </script><a href="https://canyoublockit.com/disclaimer" rel="nofollow">Disclaimer</a>
-           <a href="https://www.iubenda.com/privacy-policy/24196256'" rel="nofollow">iubenda</a></div>
-           """
-    site = await mock_website_data(html=html)
-    duration, values, stars, explanation = await feature.start(site)
-    assert duration < 10
-    assert values == ["https://www.iubenda.com/privacy-policy/24196256"]
-
-
-@pytest.mark.asyncio
 async def test_easy_privacy():
     feature = EasyPrivacy()
     await feature.setup()
@@ -152,57 +124,6 @@ async def test_easy_privacy():
     assert values == [
         "//www.googletagmanager.com",
         "https://cdn.fluidplayer.com/v2/current/fluidplayer.min.js?ver=5.6",
-    ]
-
-
-async def _test_extract_from_files_start_wrapper(self, site: WebsiteData):
-    before = time.perf_counter()
-
-    extractable_files = self._get_extractable_files(site)
-
-    path = os.getcwd()
-    current_dir = path.split("/")[-1]
-    if current_dir == "integration":
-        path = "/".join(path.split("/")[:-1])
-    elif current_dir != "tests":
-        path = path + "/tests/"
-    path = path + "/files/"
-
-    values = []
-    for file in extractable_files:
-        filename = os.path.basename(urlparse(file).path)
-        extension = filename.split(".")[-1]
-
-        content = {"extracted_content": [], "images": {}}
-        if extension == "docx":
-            content = self._extract_docx(path + filename)
-        elif extension == "pdf":
-            content = self._extract_pdfs(path + filename)
-        if len(content["extracted_content"]) > 0:
-            values.append(filename)
-
-    stars, explanation = self._decide(site)
-    return time.perf_counter() - before, values, stars, explanation
-
-
-@pytest.mark.asyncio
-async def test_extract_from_files():
-    feature = ExtractFromFiles()
-
-    await feature.setup()
-    feature.start = _test_extract_from_files_start_wrapper.__get__(feature, ExtractFromFiles)
-
-    html = """<a href=\"arbeitsblatt_analog_losung.pdf\" target=\"_blank\">
-           Arbeitsblatt analog L\u00f6sung.pdf</a>
-           <a href=\"arbeitsblatt_analog_losung.docx\" target=\"_blank\">
-           Arbeitsblatt analog L\u00f6sung.docx</a>
-           """
-    site = await mock_website_data(html=html)
-    duration, values, stars, explanation = await feature.start(site)
-    assert duration < 2
-    assert values == [
-        "arbeitsblatt_analog_losung.pdf",
-        "arbeitsblatt_analog_losung.docx",
     ]
 
 
@@ -463,70 +384,6 @@ async def test_javascript():
     duration, values, stars, explanation = await feature.start(site)
     assert duration < 2
     assert values == ["/xlayer/layer.php?uid="]
-
-
-"""
---------------------------------------------------------------------------------
-"""
-
-
-@pytest.mark.asyncio
-async def test_cookies():
-    feature = Cookies()
-    await feature.setup()
-
-    har = HAR.parse_obj(
-        json.loads(
-            """{
-        "log": {
-            "entries": [
-                {
-                    "response": {
-                        "headers": [],
-                        "cookies": [
-                            {
-                                "name": "test_response_cookie",
-                                "value": "dummy",
-                                "httpOnly": "false",
-                                "secure": "true"
-                            }
-                        ]
-                    },
-                    "request": {
-                        "headers": [],
-                        "cookies": [
-                            {
-                                "name": "test_request_cookie",
-                                "value": "dummy",
-                                "httpOnly": "false",
-                                "secure": "true"
-                            }
-                        ]
-                    }
-                }
-            ]
-        }
-    }"""
-        )
-    )
-    site = await mock_website_data(har=har)
-    duration, values, stars, explanation = await feature.start(site)
-    assert duration < 2
-    # fixme: This should also return a list of strings?
-    assert values == [
-        Cookie(
-            httpOnly=False,
-            value="dummy",
-            name="test_response_cookie",
-            secure=True,
-        ),
-        Cookie(
-            httpOnly=False,
-            name="test_request_cookie",
-            secure=True,
-            value="dummy",
-        ),
-    ]
 
 
 """
