@@ -23,9 +23,10 @@ from features.addblock_based import (
     FanboySocialMedia,
 )
 from features.cookies import Cookies
+from features.direct_match import LogInOut, Paywalls, PopUp, RegWall
 from features.extract_from_files import ExtractFromFiles
 from features.gdpr import GDPR
-from features.html_based import IFrameEmbeddable, LogInOut, Paywalls, PopUp, RegWall
+from features.iframe import IFrameEmbeddable
 from features.javascript import Javascript
 from features.licence import LicenceExtractor
 from features.malicious_extensions import MaliciousExtensions
