@@ -2,7 +2,7 @@ import pytest
 
 from app.models import StarCase
 from features.malicious_extensions import MaliciousExtensions
-from tests.integration.features_integration_test import mock_website_data
+from tests.extractors.conftest import mock_website_data
 
 
 @pytest.mark.asyncio

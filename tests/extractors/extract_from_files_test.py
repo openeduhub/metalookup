@@ -9,7 +9,7 @@ import pytest
 from aiohttp import ClientSession
 
 from features.extract_from_files import ExtractFromFiles
-from tests.integration.features_integration_test import mock_website_data
+from tests.extractors.conftest import mock_website_data
 
 
 @contextlib.contextmanager

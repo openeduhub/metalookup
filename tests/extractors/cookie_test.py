@@ -4,7 +4,7 @@ import pytest
 
 from app.splash_models import HAR
 from features.cookies import Cookies
-from tests.integration.features_integration_test import mock_website_data
+from tests.extractors.conftest import mock_website_data
 
 
 @pytest.mark.asyncio

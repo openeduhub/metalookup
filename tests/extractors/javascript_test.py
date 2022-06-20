@@ -1,7 +1,7 @@
 import pytest
 
 from features.javascript import Javascript
-from tests.integration.features_integration_test import mock_website_data
+from tests.extractors.conftest import mock_website_data
 
 
 @pytest.mark.asyncio

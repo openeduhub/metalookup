@@ -2,7 +2,7 @@ import pytest
 
 from features.direct_match import LogInOut, Paywalls, PopUp, RegWall
 from lib.tools import runtime
-from tests.integration.features_integration_test import mock_website_data
+from tests.extractors.conftest import mock_website_data
 
 
 @pytest.mark.asyncio
