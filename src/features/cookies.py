@@ -1,7 +1,10 @@
 from app.models import Explanation, StarCase
 from app.splash_models import Cookie, Entry
-from core.metadata_base import ExtractionMethod, MetadataBase
+from core.extractor import ExtractionMethod, MetadataBase
 from core.website_manager import WebsiteData
+
+_COOKIES_FOUND = "Found Cookies"
+_NO_COOKIES_FOUND = "Found no Cookies"
 
 
 @MetadataBase.with_key()
@@ -32,7 +35,7 @@ class Cookies(MetadataBase):
 
         return raw_cookies + values
 
-    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, list[Explanation]]:
+    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, Explanation]:
         cookies_in_html = [cookie for cookie in website_data.values if isinstance(cookie, str)]
 
         insecure_cookies = [
@@ -43,5 +46,5 @@ class Cookies(MetadataBase):
 
         probability = 1 if insecure_cookies or cookies_in_html else 0
         decision = self._get_decision(probability)
-        explanation = [Explanation.CookiesFound] if decision == StarCase.ZERO else [Explanation.NoCookiesFound]
+        explanation = _COOKIES_FOUND if decision == StarCase.ZERO else _NO_COOKIES_FOUND
         return decision, explanation

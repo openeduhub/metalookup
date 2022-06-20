@@ -11,6 +11,7 @@ from httpx import AsyncClient
 from app.api import Input, app, cache_backend, manager
 from app.models import Error, MetadataTags, Output
 from app.splash_models import SplashResponse
+from features.licence import DetectedLicences
 
 
 @pytest.fixture()
@@ -22,6 +23,9 @@ async def client() -> AsyncClient:
     cache_db = Path(__file__).parent.parent / "meta-lookup-cache.db"
     if os.path.exists(cache_db):
         os.remove(cache_db)
+    from databases import Database
+
+    cache_backend.database = Database("sqlite://./meta-lookup-cache.db")
 
     # Using an async client allows to have async unit tests which simplifies checking the desired
     # side effects (e.g. cache modifications). However it means we manually need to ensure that
@@ -42,7 +46,7 @@ async def test_ping_endpoint(client):
 
 @pytest.mark.asyncio
 async def test_extract_endpoint(client):
-    path = Path(__file__).parent.parent / "splash-response-google.json"
+    path = Path(__file__).parent.parent / "resources" / "splash-response-google.json"
     with open(path, "r") as f:
         splash = SplashResponse.parse_obj(json.load(f))
 
@@ -56,14 +60,14 @@ async def test_extract_endpoint(client):
     # make sure, that our result actually complies with the promised open api spec.
     output = Output.parse_obj(json.loads(response.text))
     assert output.url == input.url
-    assert isinstance(output.security, MetadataTags), "did not receive data for security extactor"
+    assert isinstance(output.security, MetadataTags), "did not receive data for security extractor"
     # This should not be present, as the request to the accessibility container will fail
     assert isinstance(output.accessibility, Error), "received accessibility result but container should not be running"
 
 
 @pytest.mark.asyncio
 async def test_extract_endpoint_cache(client):
-    path = Path(__file__).parent.parent / "splash-response-google.json"
+    path = Path(__file__).parent.parent / "resources" / "splash-response-google.json"
     with open(path, "r") as f:
         splash = SplashResponse.parse_obj(json.load(f))
 
@@ -108,7 +112,7 @@ async def test_extract_endpoint_cache(client):
             # now we should get a fully populated result (now Errors within the individual extractors)
             # which should also get cached.
             response = await client.post(
-                "/extract",
+                "/extract?extra=true",
                 json=Input(url="https://google.com").dict(),
                 timeout=10,
             )
@@ -124,6 +128,9 @@ async def test_extract_endpoint_cache(client):
             ), "should be cached, as it was a complete result"
 
             assert output.url == "https://google.com"
+            assert isinstance(output.licence.extra, dict)
+            # should be possible to deserialize the extra data
+            print(DetectedLicences.parse_obj(output.licence.extra))
             assert isinstance(output.security, MetadataTags), "did not receive data for security extactor"
             # This should not be present, as the request to the accessibility container will fail
             assert isinstance(

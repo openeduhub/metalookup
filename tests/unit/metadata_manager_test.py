@@ -19,7 +19,7 @@ async def manager() -> MetadataManager:
 
 @pytest.mark.asyncio
 async def test_extract(manager: MetadataManager):
-    with open(Path(__file__).parent.parent / "splash-response-google.json", "r") as f:
+    with open(Path(__file__).parent.parent / "resources" / "splash-response-google.json", "r") as f:
         splash_response = SplashResponse.parse_obj(json.load(f))
 
     input = Input(
@@ -36,7 +36,7 @@ async def test_extract(manager: MetadataManager):
         "features.accessibility.Accessibility._execute_api_call",
         accessibility_api_call_mock,
     ):
-        output = await manager.extract(input)
+        output = await manager.extract(input, extra=True)
 
         print("Extraction result from manager:")
         pprint.pprint(output.dict())

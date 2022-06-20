@@ -1,8 +1,11 @@
 import re
 
 from app.models import Explanation, StarCase
-from core.metadata_base import MetadataBase
+from core.extractor import MetadataBase
 from core.website_manager import WebsiteData
+
+_MINIMUM_GDPR_REQUIREMENT_COVERED = "Minimum GDPR Requirements covered"
+_POTENTIALLY_INSUFFICIENT_GDPR_REQUIREMENTS = "Potentially non GDPR compliant"
 
 
 @MetadataBase.with_key(key="g_d_p_r")  # fixme use GDPR as key!
@@ -126,7 +129,7 @@ class GDPR(MetadataBase):
 
         return list(set(values))
 
-    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, list[Explanation]]:
+    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, Explanation]:
         probability = 0.5
 
         if (
@@ -146,8 +149,8 @@ class GDPR(MetadataBase):
             decision = StarCase.ONE
 
         explanation = (
-            [Explanation.MinimumGDPRRequirementsCovered]
+            _MINIMUM_GDPR_REQUIREMENT_COVERED
             if decision == StarCase.ONE
-            else [Explanation.PotentiallyInsufficientGDPRFound]
+            else _POTENTIALLY_INSUFFICIENT_GDPR_REQUIREMENTS
         )
         return decision, explanation

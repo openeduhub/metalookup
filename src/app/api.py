@@ -39,7 +39,7 @@ async def initialize():
 async def caching_and_response_time(request: Request, call_next):
     with runtime() as t:
         response = await call_next(request)
-    response.headers["X-Process-Time"] = f"{t():5.2f}"
+    response.headers["X-Process-Time"] = str(round(t(), 2))
     return response
 
 
@@ -50,15 +50,14 @@ async def caching_and_response_time(request: Request, call_next):
 )
 @cache(
     expire=24 * 60 * 60 * 28,
-    key=lambda input, request, response: str(input.url) if input.splash_response is None else None,
+    key=lambda input, request, response, extra: f"{input.url}-{extra}" if input.splash_response is None else None,
     backend=cache_backend,
 )
 # request and response arguments are needed for the cache wrapper.
-async def extract(input: Input, request: Request, response: Response):
-    """The extract endpoint"""
+async def extract(input: Input, request: Request, response: Response, extra: bool = False):
     logger.info(f"Received request for {input.url}")
 
-    result = await manager.extract(input)
+    result = await manager.extract(input, extra=extra)
 
     # prevent caching of responses that do not contain a full set of metadata information.
     if any(not isinstance(getattr(result, extractor.key), MetadataTags) for extractor in manager.extractors):
