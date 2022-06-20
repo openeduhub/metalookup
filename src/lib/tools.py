@@ -1,6 +1,25 @@
 import math
-import os
-from distutils import util
+from contextlib import contextmanager
+from time import perf_counter
+
+
+@contextmanager
+def runtime() -> float:
+    """
+    Context manager to measure execution time of a with block.
+
+    Example usage:
+
+    ```
+    with runtime() as t:
+        import time
+        time.sleep(1)
+
+    print(f"Execution time: {t():.4f} secs")
+    ```
+    """
+    start = perf_counter()
+    yield lambda: perf_counter() - start
 
 
 def get_mean(values: list) -> float:
@@ -23,7 +42,3 @@ def get_unique_list(items: list) -> list:
         else:
             seen.add(item)
     return items
-
-
-def is_production_environment() -> bool:
-    return bool(util.strtobool(os.getenv("PRODUCTION", "True")))

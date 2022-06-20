@@ -34,14 +34,13 @@ from tests.integration.features_integration_test import mock_website_data
     ],
 )
 async def test_malicious_extensions(
-    mocker,
     expected_values,
     input_html,
     expected_decision,
 ):
     feature = MaliciousExtensions()
     await feature.setup()
-    site = mock_website_data(html=input_html)
+    site = await mock_website_data(html=input_html)
 
     duration, values, stars, explanation = await feature.start(site)
     assert duration < 10

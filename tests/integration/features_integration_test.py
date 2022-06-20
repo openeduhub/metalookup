@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 import pytest
 from tldextract.tldextract import ExtractResult, TLDExtract
 
-from app.communication import Message
+from app.models import Input
 from app.splash_models import HAR, Cookie, Entry, Header, Log, Request, Response, SplashResponse
 from core.website_manager import WebsiteData
 from features.cookies import Cookies
@@ -32,10 +32,9 @@ from features.html_based import (
 )
 from features.javascript import Javascript
 from features.metatag_explorer import MetatagExplorer
-from lib.logger import get_logger
 
 
-def mock_website_data(
+async def mock_website_data(
     html: Optional[str] = None,
     url: Optional[str] = None,
     header: Optional[dict[str, str]] = None,
@@ -63,15 +62,10 @@ def mock_website_data(
 
     splash_response = SplashResponse(url=url, html=html, har=har)
 
-    return WebsiteData.from_message(
-        Message(
-            url=url,
-            splash_response=splash_response,
-            bypass_cache=False,
-            whitelist=None,
-        ),
+    return await WebsiteData.from_input(
+        Input(url=url, splash_response=splash_response),
         tld_extractor=mock_extractor if url is None else TLDExtract(cache_dir=None),
-        logger=get_logger(),
+        logger=logging.getLogger(),
     )
 
 
@@ -79,7 +73,7 @@ def mock_website_data(
 async def test_advertisement():
     feature = Advertisement()
     await feature.setup()
-    site = mock_website_data(html="<script src='/layer.php?bid='></script>")
+    site = await mock_website_data(html="<script src='/layer.php?bid='></script>")
 
     duration, values, stars, explanation = await feature.start(site)
     assert duration < 10
@@ -90,7 +84,7 @@ async def test_advertisement():
 async def test_paywalls():
     feature = Paywalls()
     await feature.setup()
-    site = mock_website_data(html="<paywall></paywalluser>")
+    site = await mock_website_data(html="<paywall></paywalluser>")
 
     duration, values, stars, explanation = await feature.start(site)
 
@@ -106,7 +100,7 @@ async def test_easylist_adult():
            <link href='bookofsex.com'/>
            <link href='geofamily.ru^$third-party'/>
            """
-    site = mock_website_data(html=html)
+    site = await mock_website_data(html=html)
 
     duration, values, stars, explanation = await feature.start(site)
 
@@ -130,7 +124,7 @@ async def test_cookies_in_html():
            </script><a href="https://canyoublockit.com/disclaimer" rel="nofollow">Disclaimer</a>
            <a href="https://www.iubenda.com/privacy-policy/24196256'" rel="nofollow">iubenda</a></div>
            """
-    site = mock_website_data(html=html)
+    site = await mock_website_data(html=html)
     duration, values, stars, explanation = await feature.start(site)
     assert duration < 10
     assert values == ["https://www.iubenda.com/privacy-policy/24196256"]
@@ -152,7 +146,7 @@ async def test_easy_privacy():
            (window,"googletag","function");</script><script type="6cf3255238f69b4dbff7a6d1-text/javascript"
            src='https://cdn.fluidplayer.com/v2/current/fluidplayer.min.js?ver=5.6' id='fluid-player-js-js'></script>
            """
-    site = mock_website_data(html=html)
+    site = await mock_website_data(html=html)
     duration, values, stars, explanation = await feature.start(site)
     assert duration < 10
     assert values == [
@@ -193,9 +187,7 @@ async def _test_extract_from_files_start_wrapper(self, site: WebsiteData):
 
 @pytest.mark.asyncio
 async def test_extract_from_files():
-    logger = get_logger()
-    logger.setLevel(logging.INFO)  # logging takes quite some time for this
-    feature = ExtractFromFiles(logger)
+    feature = ExtractFromFiles()
 
     await feature.setup()
     feature.start = _test_extract_from_files_start_wrapper.__get__(feature, ExtractFromFiles)
@@ -205,7 +197,7 @@ async def test_extract_from_files():
            <a href=\"arbeitsblatt_analog_losung.docx\" target=\"_blank\">
            Arbeitsblatt analog L\u00f6sung.docx</a>
            """
-    site = mock_website_data(html=html)
+    site = await mock_website_data(html=html)
     duration, values, stars, explanation = await feature.start(site)
     assert duration < 2
     assert values == [
@@ -223,7 +215,7 @@ async def test_fanboy_social_media():
 <link rel='stylesheet' id='wpzoom-social-icons-block-style-css' href='https://canyoublockit.com/wp-content/plugins/social-icons-widget-by-wpzoom/block/dist/blocks.style.build.css?ver=1603794146' type='text/css' media='all' />
 <script type="4fc846f350e30f875f7efd7a-text/javascript" src='https://canyoublockit.com/wp-content/plugins/elementor/assets/lib/share-link/share-link.min.js?ver=3.0.15' id='share-link-js'></script>
 """
-    site = mock_website_data(html=html)
+    site = await mock_website_data(html=html)
     duration, values, stars, explanation = await feature.start(site)
     assert duration < 2
     assert set(values) == {
@@ -249,7 +241,7 @@ async def test_pop_up():
 "anOptionModalShowAfter":0,"anPageMD5":"","anSiteID":0,
 "modalHTML":"
 """
-    site = mock_website_data(html=html)
+    site = await mock_website_data(html=html)
     duration, values, stars, explanation = await feature.start(site)
     assert duration < 2
     assert values == [
@@ -266,7 +258,7 @@ async def test_log_in_out():
     html = """input[type="email"]:focus,input[type="url"]:focus,input[type="password"]:focus,input[type="reset"]:
            input#submit,input[type="button"],input[type="submit"],input[type="reset"]
            """
-    site = mock_website_data(html=html)
+    site = await mock_website_data(html=html)
     duration, values, stars, explanation = await feature.start(site)
     assert duration < 2
     assert values == [
@@ -298,7 +290,7 @@ async def test_g_d_p_r():
         "Strict-Transport-Security": "max-age=15724800; includeSubDomains; preload",
     }
 
-    site = mock_website_data(html=html, url=url, header=header)
+    site = await mock_website_data(html=html, url=url, header=header)
     duration, values, stars, explanation = await feature.start(site)
     assert duration < 2
     assert set(values) == {
@@ -331,7 +323,7 @@ async def test_easylist_germany():
            <link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='.at/werbung/' type='text/css' media='all' />
            <link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='finanzen100.de' type='text/css' media='all' />
            """
-    site = mock_website_data(html=html)
+    site = await mock_website_data(html=html)
     duration, values, stars, explanation = await feature.start(site)
     assert duration < 2
     assert values == [
@@ -356,7 +348,7 @@ async def test_anti_adblock():
             <link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='cmath.fr/images/fond2.gif' type='text/css' media='all' />
             <link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='||dbz-fantasy.com/ads.css' type='text/css' media='all' />
             """
-    site = mock_website_data(html=html)
+    site = await mock_website_data(html=html)
     duration, values, stars, explanation = await feature.start(site)
     assert duration < 2
     assert set(values) == {
@@ -381,7 +373,7 @@ async def test_fanboy_notification():
            <link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='/notification-ext.' type='text/css' media='all' />
            <link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='indianexpress.com' type='text/css' media='all' />
            """
-    site = mock_website_data(html=html)
+    site = await mock_website_data(html=html)
     duration, values, stars, explanation = await feature.start(site)
     assert duration < 2
     assert values == [
@@ -405,7 +397,7 @@ async def test_fanboy_annoyance():
            <link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='/notification-ext.' type='text/css' media='all' />
            <link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='indianexpress.com' type='text/css' media='all' />
            """
-    site = mock_website_data(html=html)
+    site = await mock_website_data(html=html)
     duration, values, stars, explanation = await feature.start(site)
     assert duration < 2
     assert values == [
@@ -428,7 +420,7 @@ async def test_reg_wall():
            <link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='regwall' type='text/css' media='all' />
            <link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='registerbtn' type='text/css' media='all' />
            """
-    site = mock_website_data(html=html)
+    site = await mock_website_data(html=html)
     duration, values, stars, explanation = await feature.start(site)
     assert duration < 2
     assert set(values) == {"register", "regwall", "registerbtn"}
@@ -447,7 +439,7 @@ async def test_iframe_embeddable():
     # fixme: This actually tests whether the header normalization in WebsiteData works correctly :-/
     header = {"X-Frame-Options": "deny", "x-frame-options": "same_origin"}
     #
-    site = mock_website_data(header=header)
+    site = await mock_website_data(header=header)
     duration, values, stars, explanation = await feature.start(site)
     assert duration < 2
     assert values == ["deny;same_origin"]
@@ -467,7 +459,7 @@ async def test_javascript():
            <script src='/xlayer/layer.php?uid='></script>
            <script href='some_test_javascript.js'></script>
            """
-    site = mock_website_data(html=html)
+    site = await mock_website_data(html=html)
     duration, values, stars, explanation = await feature.start(site)
     assert duration < 2
     assert values == ["/xlayer/layer.php?uid="]
@@ -517,7 +509,7 @@ async def test_cookies():
     }"""
         )
     )
-    site = mock_website_data(har=har)
+    site = await mock_website_data(har=har)
     duration, values, stars, explanation = await feature.start(site)
     assert duration < 2
     # fixme: This should also return a list of strings?
@@ -558,7 +550,7 @@ async def test_metatag_explorer():
             <meta name="referrer" content="origin-when-cross-origin">
             </head></html>
             """
-    site = mock_website_data(html=html)
+    site = await mock_website_data(html=html)
     duration, values, stars, explanation = await feature.start(site)
     assert duration < 2
     assert values == [

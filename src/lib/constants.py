@@ -25,7 +25,6 @@ SPLASH = "splash"
 SCORE = "score"
 SCRIPT = "script"
 
-METADATA_EXTRACTOR = "metadata_extractor"
 LIGHTHOUSE_EXTRACTOR = "lighthouse_extractor"
 
 # Header

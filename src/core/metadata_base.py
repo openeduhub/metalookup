@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import re
 from collections import OrderedDict
@@ -13,9 +14,8 @@ from bs4 import BeautifulSoup
 
 from app.models import Explanation, StarCase
 from core.website_manager import WebsiteData
-from lib.logger import get_logger
 from lib.settings import USE_LOCAL_IF_POSSIBLE
-from lib.timing import get_utc_now
+from lib.tools import runtime
 
 
 class ProbabilityDeterminationMethod(Enum):
@@ -86,7 +86,7 @@ class MetadataBase:
         return decorator
 
     def __init__(self, logger: Optional[Logger] = None):
-        self._logger = logger or get_logger()
+        self._logger = logger or logging.getLogger(__name__)
         # todo: change class setupt to factory pattern to avoid having to manually calling setup after construction
         #       see https://stackoverflow.com/a/33134213/2160256
         # self.setup()
@@ -172,12 +172,11 @@ class MetadataBase:
         return decision, explanation
 
     async def start(self, site: WebsiteData) -> tuple[float, list[str], StarCase, list[Explanation]]:
-        self._logger.info(f"Starting {self.__class__.__name__}.")
-        before = get_utc_now()
-        values = await self._start(website_data=site)
-        site.values = values
-        star_case, explanation = self._decide(website_data=site)
-        return get_utc_now() - before, values, star_case, explanation
+        with runtime() as t:
+            values = await self._start(website_data=site)
+            site.values = values
+            star_case, explanation = self._decide(website_data=site)
+        return t(), values, star_case, explanation
 
     async def _start(self, website_data: WebsiteData) -> list[str]:
         if self.evaluate_header:
@@ -212,7 +211,7 @@ class MetadataBase:
     def _work_html_content(self, website_data: WebsiteData) -> list:
         values = []
 
-        self._logger.info(f"Working on html content: {self.__class__.__name__},{len(self.tag_list)}")
+        self._logger.info(f"Working on html content: {self.__class__.__name__}")
         if self.tag_list:
             if self.extraction_method == ExtractionMethod.MATCH_DIRECTLY:
                 html = "".join(website_data.html.lower())

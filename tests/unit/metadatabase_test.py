@@ -1,5 +1,3 @@
-import asyncio
-
 import adblockparser
 import pytest
 
@@ -34,11 +32,12 @@ def test_init(metadatabase: MetadataBase, mocker):
 """
 
 
-def test_start(metadatabase: MetadataBase, mocker):
-    site = mock_website_data()
+@pytest.mark.asyncio
+async def test_start(metadatabase: MetadataBase, mocker):
+    site = await mock_website_data()
     metadatabase.key = "test_key"
     start_spy = mocker.spy(metadatabase, "_start")
-    _, values, _, _ = asyncio.run(metadatabase.start(site=site))
+    _, values, _, _ = await metadatabase.start(site=site)
 
     assert isinstance(values, list)
     assert values == []
@@ -46,7 +45,7 @@ def test_start(metadatabase: MetadataBase, mocker):
     assert start_spy.call_count == 1
     assert start_spy.call_args_list[0][1] == {"website_data": site}
 
-    _ = asyncio.run(metadatabase.start(site))
+    _ = await metadatabase.start(site)
     assert start_spy.call_args_list[1][1] == {"website_data": site}
 
 
@@ -55,21 +54,22 @@ def test_start(metadatabase: MetadataBase, mocker):
 """
 
 
-def test_under_start(metadatabase: MetadataBase, mocker):
+@pytest.mark.asyncio
+async def test_under_start(metadatabase: MetadataBase, mocker):
     work_header_spy = mocker.spy(metadatabase, "_work_header")
     work_html_content_spy = mocker.spy(metadatabase, "_work_html_content")
 
     metadatabase.evaluate_header = False
-    website_data = mock_website_data()
+    website_data = await mock_website_data()
 
-    values = asyncio.run(metadatabase._start(website_data=website_data))
+    values = await metadatabase._start(website_data=website_data)
 
     assert isinstance(values, list)
     assert work_header_spy.call_count == 0
     assert work_html_content_spy.call_count == 1
 
     metadatabase.evaluate_header = True
-    _ = asyncio.run(metadatabase._start(website_data=website_data))
+    await metadatabase._start(website_data=website_data)
     assert work_header_spy.call_count == 1
     assert work_html_content_spy.call_count == 1
 
@@ -181,14 +181,15 @@ def test_easylist_filter():
         ([], 1, StarCase.FIVE, [Explanation.FoundNoListMatches]),
     ],
 )
-def test_decide_single(
+@pytest.mark.asyncio
+async def test_decide_single(
     metadatabase: MetadataBase,
     values,
     decision_threshold,
     expected_decision,
     expected_explanation,
 ):
-    website_data = mock_website_data()
+    website_data = await mock_website_data()
 
     website_data.values = values
     metadatabase.decision_threshold = decision_threshold
@@ -237,7 +238,8 @@ def test_decide_single(
         ),
     ],
 )
-def test_decide_number_of_elements(
+@pytest.mark.asyncio
+async def test_decide_number_of_elements(
     metadatabase: MetadataBase,
     values,
     decision_threshold,
@@ -245,7 +247,7 @@ def test_decide_number_of_elements(
     raw_links,
     expected_explanation,
 ):
-    website_data = mock_website_data()
+    website_data = await mock_website_data()
 
     website_data.values = values
     website_data.raw_links = raw_links
@@ -309,7 +311,8 @@ def test_decide_number_of_elements(
         ),
     ],
 )
-def test_false_list(
+@pytest.mark.asyncio
+async def test_false_list(
     metadatabase: MetadataBase,
     values,
     decision_threshold,
@@ -317,7 +320,7 @@ def test_false_list(
     false_list,
     expected_explanation,
 ):
-    website_data = mock_website_data()
+    website_data = await mock_website_data()
 
     website_data.values = values
     metadatabase.false_list = false_list
