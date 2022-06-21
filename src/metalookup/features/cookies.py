@@ -4,7 +4,7 @@ from concurrent.futures import Executor
 from metalookup.app.models import Explanation, StarCase
 from metalookup.app.splash_models import Cookie, Entry
 from metalookup.core.website_manager import WebsiteData
-from metalookup.features.addblock_based import AdBlockBasedExtractor
+from metalookup.features.adblock_based import AdBlockBasedExtractor
 
 _COOKIES_FOUND = "Found potentially insecure Cookies"
 _NO_COOKIES_FOUND = "Found no potentially insecure Cookies"

@@ -12,7 +12,7 @@ from metalookup.app.models import Error, Input, MetadataTags, Output
 from metalookup.core.extractor import Extractor
 from metalookup.core.website_manager import WebsiteData
 from metalookup.features.accessibility import Accessibility
-from metalookup.features.addblock_based import (
+from metalookup.features.adblock_based import (
     Advertisement,
     AntiAdBlock,
     EasylistAdult,

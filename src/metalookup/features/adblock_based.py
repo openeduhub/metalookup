@@ -23,6 +23,10 @@ class AdBlockBasedExtractor(Extractor[set[str]]):
 
     The returned extra data corresponds to a sample of the blocked links.
     The sample size can be configured with the limit member variable.
+
+     FIXME: eventually we may want to abandon usage of the adblockparser package all-together and transition
+            to a more modern alternative (e.g. the adblock package which is a python wrapper for a native
+            rust implementation that would probably speed things up significantly)
     """
 
     urls: list[str] = []  # needs to be provided by derived class
@@ -50,7 +54,7 @@ class AdBlockBasedExtractor(Extractor[set[str]]):
             "collapse": True,
             "donottrack": True,
             "websocket": True,
-            "domain": "",
+            # "domain" key must be populated on use
         }
         self.rules: AdblockRules = None  # noqa will be initialized in async setup call
         self.limit: Optional[int] = 2
@@ -63,14 +67,13 @@ class AdBlockBasedExtractor(Extractor[set[str]]):
 
     async def setup(self) -> None:
         """Fetch tag lists from configured urls."""
-        assert self.urls != [], "Missing url specification of tag lists"
-        assert self.rules is None, "rules must be initialized in async setup call"
+        if len(self.urls) == 0:
+            raise RuntimeError("Missing url specification of tag lists")
+        if self.rules is not None:
+            raise RuntimeError("rules must be initialized in async setup call")
 
         # patch the adblockparser python package to work with googles re2 package.
         # re2 seems to be significantly faster than the builtin re package.
-        # fixme: eventually we may want to abandon usage of the adblockparser package all-together and transition
-        #        to a more modern alternative (e.g. the adblock package which is a python wrapper for a native
-        #        rust implementation that would probably speed things up significantly)
         import re
 
         def _combined_regex(regexes, flags=re.IGNORECASE, use_re2=False, max_mem=None):
@@ -95,12 +98,11 @@ class AdBlockBasedExtractor(Extractor[set[str]]):
     def apply_rules(self, domain: str, links: list[str]) -> tuple[float, set[str]]:
         """Return the list of matches and the total computation time taken."""
         with runtime() as t:
-            # note: we can modify that here because we are in an non-async context and probably a subprocess
-            #       with its own memory.
-            self.adblock_parser_options["domain"] = domain
+            options = self.adblock_parser_options.copy()
+            options["domain"] = domain
             values = set()
             for url in links:
-                if self.rules.should_block(url=url, options=self.adblock_parser_options):
+                if self.rules.should_block(url=url, options=options):
                     values.add(url)
                     if self.limit is not None and len(values) > self.limit:
                         break

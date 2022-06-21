@@ -1,6 +1,6 @@
 import pytest
 
-from metalookup.features.addblock_based import (
+from metalookup.features.adblock_based import (
     Advertisement,
     AntiAdBlock,
     EasylistAdult,
