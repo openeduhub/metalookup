@@ -2,6 +2,6 @@ poetry build
 
 docker volume create db_volume
 
-docker build -t community.docker.edu-sharing.com/oeh-search-meta:latest .
+docker build -t docker.edu-sharing.com/projects/oeh-redaktion/edusharing-projects-oeh-redaktion-metalookup-api:latest .
 
-docker build -f dockerfile_lighthouse -t community.docker.edu-sharing.com/oeh-search-meta_lighthouse:latest .
+docker build -f dockerfile_lighthouse -t docker.edu-sharing.com/projects/oeh-redaktion/edusharing-projects-oeh-redaktion-metalookup-lighthouse:latest .

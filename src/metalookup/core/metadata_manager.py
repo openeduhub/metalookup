@@ -8,14 +8,11 @@ from fastapi import HTTPException
 from pydantic import ValidationError
 from tldextract import TLDExtract
 
-from app.models import Error, Input, MetadataTags, Output
-from core.extractor import Extractor
-from core.website_manager import WebsiteData
-from features.accessibility import Accessibility
-from features.cookies import Cookies
-from features.extract_from_files import ExtractFromFiles
-from features.gdpr import GDPR
-from features.html_based import (
+from metalookup.app.models import Error, Input, MetadataTags, Output
+from metalookup.core.extractor import Extractor
+from metalookup.core.website_manager import WebsiteData
+from metalookup.features.accessibility import Accessibility
+from metalookup.features.adblock_based import (
     Advertisement,
     AntiAdBlock,
     EasylistAdult,
@@ -24,18 +21,17 @@ from features.html_based import (
     FanboyAnnoyance,
     FanboyNotification,
     FanboySocialMedia,
-    IFrameEmbeddable,
-    LogInOut,
-    Paywalls,
-    PopUp,
-    RegWall,
 )
-from features.javascript import Javascript
-from features.licence import LicenceExtractor
-from features.malicious_extensions import MaliciousExtensions
-from features.metatag_explorer import MetatagExplorer
-from features.security import Security
-from lib.tools import runtime
+from metalookup.features.cookies import Cookies
+from metalookup.features.direct_match import LogInOut, Paywalls, PopUp, RegWall
+from metalookup.features.extract_from_files import ExtractFromFiles
+from metalookup.features.gdpr import GDPR
+from metalookup.features.iframe import IFrameEmbeddable
+from metalookup.features.javascript import Javascript
+from metalookup.features.licence import LicenceExtractor
+from metalookup.features.malicious_extensions import MaliciousExtensions
+from metalookup.features.security import Security
+from metalookup.lib.tools import runtime
 
 
 class MetadataManager:
@@ -70,7 +66,6 @@ class MetadataManager:
             Cookies,
             GDPR,
             Javascript,
-            MetatagExplorer,
             Accessibility,
             LicenceExtractor,
         ]
@@ -99,22 +94,21 @@ class MetadataManager:
         # hence it may fail with various different exceptions (ConnectionError, ...)
         # those exceptions should be handled in the caller of this function.
         try:
-            site = await WebsiteData.from_input(
-                input=message,
-                logger=self.logger,
-                tld_extractor=self.tld_extractor,
-            )
+            with runtime() as t:
+                site = await WebsiteData.from_input(
+                    input=message,
+                    logger=self.logger,
+                    tld_extractor=self.tld_extractor,
+                )
+            self.logger.info(f"Built WebsiteData object in {t():5.2f}s.")
         except ClientConnectorError as e:
             raise HTTPException(status_code=502, detail=f"Could not get HAR from splash: {e}")
         except ValidationError as e:
             raise HTTPException(status_code=500, detail=f"Received unexpected HAR from splash: {e}")
 
-        self.logger.debug("Build website data object.")
-
         async def run_extractor(extractor: Extractor) -> Union[MetadataTags, Error]:
             """Call the extractor and transform its result into the expected output format"""
             try:
-                self.logger.debug(f"Extracting {extractor.__class__.__name__}.")
                 with runtime() as t:
                     stars, explanation, extra_data = await extractor.extract(site=site, executor=self.process_pool)
                 self.logger.info(f"Extracted {extractor.__class__.__name__} in {t():5.2f}s.")

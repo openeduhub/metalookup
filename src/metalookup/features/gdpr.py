@@ -1,19 +1,72 @@
 import re
+from concurrent.futures import Executor
 
-from app.models import Explanation, StarCase
-from core.extractor import MetadataBase
-from core.website_manager import WebsiteData
+from metalookup.app.models import Explanation, StarCase
+from metalookup.core.extractor import Extractor
+from metalookup.core.website_manager import WebsiteData
 
 _MINIMUM_GDPR_REQUIREMENT_COVERED = "Minimum GDPR Requirements covered"
 _POTENTIALLY_INSUFFICIENT_GDPR_REQUIREMENTS = "Potentially non GDPR compliant"
 
 
-@MetadataBase.with_key(key="g_d_p_r")  # fixme use GDPR as key!
-class GDPR(MetadataBase):
+class GDPR(Extractor[set[str]]):
+    key = "gdpr"
     tag_list = ["impressum"]
     decision_threshold = 0.3
     _MAX_AGE_REGEX = re.compile(r"max-age=(\d*)")
     _MAX_AGE_REQUIREMENT = 100 * 24 * 60 * 60  # 100 days
+
+    async def setup(self):
+        pass
+
+    async def extract(self, site: WebsiteData, executor: Executor) -> tuple[StarCase, Explanation, set[str]]:
+        html = site.html.lower()
+        values = [ele for ele in self.tag_list if ele in html]
+
+        for func in [
+            self._check_https_in_url,
+            self._get_hsts,
+            self._get_referrer_policy,
+            self._find_fonts,
+            self._find_input_fields,
+        ]:
+            values += func(website_data=site)
+
+        values = set(values)
+
+        star_case, explanation = self.decide(values=values)
+        return star_case, explanation, values
+
+    def decide(self, values: set[str]) -> tuple[StarCase, Explanation]:
+        probability = 0.5
+
+        if "https_in_url" not in values or "hsts" not in values or "impressum" not in values:
+            probability = 0
+
+        if "max_age" not in values:
+            probability -= 0.1
+        if "found_no_fonts" in values:
+            probability -= 0.1
+
+        def _get_inverted_decision(probability: float) -> StarCase:
+            decision = StarCase.ONE
+            if probability > 0:
+                if probability <= self.decision_threshold:
+                    decision = StarCase.ZERO
+                else:
+                    decision = StarCase.FIVE
+            return decision
+
+        decision = _get_inverted_decision(max(probability, 0))
+        if decision == StarCase.FIVE:
+            decision = StarCase.ONE
+
+        explanation = (
+            _MINIMUM_GDPR_REQUIREMENT_COVERED
+            if decision == StarCase.ONE
+            else _POTENTIALLY_INSUFFICIENT_GDPR_REQUIREMENTS
+        )
+        return decision, explanation
 
     @staticmethod
     def _check_https_in_url(website_data: WebsiteData) -> list[str]:
@@ -114,43 +167,3 @@ class GDPR(MetadataBase):
         else:
             inputs = "found_no_inputs"
         return [inputs]
-
-    async def _start(self, website_data: WebsiteData) -> list[str]:
-        values = await super()._start(website_data=website_data)
-
-        for func in [
-            self._check_https_in_url,
-            self._get_hsts,
-            self._get_referrer_policy,
-            self._find_fonts,
-            self._find_input_fields,
-        ]:
-            values += func(website_data=website_data)
-
-        return list(set(values))
-
-    def _decide(self, website_data: WebsiteData) -> tuple[StarCase, Explanation]:
-        probability = 0.5
-
-        if (
-            "https_in_url" not in website_data.values
-            or "hsts" not in website_data.values
-            or "impressum" not in website_data.values
-        ):
-            probability = 0
-
-        if "max_age" not in website_data.values:
-            probability -= 0.1
-        if "found_no_fonts" in website_data.values:
-            probability -= 0.1
-
-        decision = self._get_inverted_decision(max(probability, 0))
-        if decision == StarCase.FIVE:
-            decision = StarCase.ONE
-
-        explanation = (
-            _MINIMUM_GDPR_REQUIREMENT_COVERED
-            if decision == StarCase.ONE
-            else _POTENTIALLY_INSUFFICIENT_GDPR_REQUIREMENTS
-        )
-        return decision, explanation

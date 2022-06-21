@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import os
 import subprocess
 from typing import List
@@ -16,6 +17,8 @@ _DESKTOP = "desktop"
 _MOBILE = "mobile"
 _ACCESSIBILITY = "accessibility"
 
+
+logger = logging.getLogger("lighthouse")
 app = FastAPI(title="Lighthouse Accessibility Extractor", version="1.0")
 
 
@@ -52,9 +55,9 @@ async def accessibility(input_data: Input):
         "--quiet",
         f"{'--screenEmulation.mobile=true' if input_data.strategy == _MOBILE else '--no-screenEmulation.mobile'}",
     ]
-
+    logger.debug(f"launching subprocess for {input_data}")
     process = await asyncio.create_subprocess_exec("lighthouse", *args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-
+    logger.debug(f"awaiting outputs for {input_data}")
     stdout, stderr = await process.communicate()
 
     if process.returncode != 0:
@@ -64,6 +67,7 @@ async def accessibility(input_data: Input):
         )
 
     try:
+        logger.debug(f"building response for {input_data}")
         output = json.loads(stdout.decode())
         return Output(score=[output["categories"][input_data.category]["score"]])
     except pydantic.error_wrappers.ValidationError as e:

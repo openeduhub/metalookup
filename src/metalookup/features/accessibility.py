@@ -5,10 +5,10 @@ from concurrent.futures import Executor
 from aiohttp import ClientSession
 from pydantic import BaseModel
 
-from app.models import Explanation, StarCase
-from core.extractor import Extractor
-from core.website_manager import WebsiteData
-from lib.settings import LIGHTHOUSE_TIMEOUT, LIGHTHOUSE_URL
+from metalookup.app.models import Explanation, StarCase
+from metalookup.core.extractor import Extractor
+from metalookup.core.website_manager import WebsiteData
+from metalookup.lib.settings import LIGHTHOUSE_TIMEOUT, LIGHTHOUSE_URL
 
 _DESKTOP = "desktop"
 _MOBILE = "mobile"
@@ -77,9 +77,14 @@ class Accessibility(Extractor[AccessibilityScores]):
             "category": _ACCESSIBILITY,
             "strategy": strategy,
         }
-        response = await session.get(
-            url=f"{self.lighthouse_url}/{_ACCESSIBILITY}", timeout=self.lighthouse_timeout, json=params
-        )
+        try:
+            response = await session.get(
+                url=f"{self.lighthouse_url}/{_ACCESSIBILITY}", timeout=self.lighthouse_timeout, json=params
+            )
+        except asyncio.exceptions.TimeoutError:
+            raise RuntimeError(
+                f"Lighthouse request for {strategy=} and {url=} timed out after {self.lighthouse_timeout} seconds"
+            )
 
         if response.status == 200:
             # expected result looks like {"score": [0.123]}

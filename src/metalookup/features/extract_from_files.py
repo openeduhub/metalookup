@@ -14,10 +14,10 @@ from bs4 import BeautifulSoup
 from pdfminer.high_level import extract_text
 from PyPDF2.errors import PdfReadError
 
-from app.models import Explanation, StarCase
-from core.extractor import Extractor
-from core.website_manager import WebsiteData
-from lib.settings import RETURN_IMAGES_IN_METADATA
+from metalookup.app.models import Explanation, StarCase
+from metalookup.core.extractor import Extractor
+from metalookup.core.website_manager import WebsiteData
+from metalookup.lib.settings import RETURN_IMAGES_IN_METADATA
 
 logger = logging.getLogger(__file__)
 

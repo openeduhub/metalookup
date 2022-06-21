@@ -15,7 +15,7 @@ LOG_PATH = os.environ.get("LOG_PATH", None)
 # Caching
 ENABLE_CACHE = bool(os.environ.get("ENABLE_CACHE", True))
 CACHE_DATABASE_URL = os.environ.get("CACHE_DATABASE_URL", "postgresql://metalookup:metalookup@postgres/metalookup")
-ENABLE_CACHE_CONTROL_ENDPOINTS = bool(os.environ.get("ENABLE_CACHE_CONTROL_ENDPOINTS", False))
+ENABLE_CACHE_CONTROL_ENDPOINTS = bool(os.environ.get("ENABLE_CACHE_CONTROL_ENDPOINTS", True))
 
 # Splash
 SPLASH_URL = os.environ.get("SPLASH_URL", "http://splash:8050")

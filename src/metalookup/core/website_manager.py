@@ -1,19 +1,17 @@
 import json
-import os
 import re
 from dataclasses import dataclass
 from logging import Logger
-from urllib.parse import urlparse
 
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 from tldextract.tldextract import TLDExtract
 
-from app.models import Input
-from app.splash_models import HAR, SplashResponse
-from lib.constants import SCRIPT
-from lib.settings import SPLASH_HEADERS, SPLASH_TIMEOUT, SPLASH_URL
-from lib.tools import get_unique_list, runtime
+from metalookup.app.models import Input
+from metalookup.app.splash_models import HAR, SplashResponse
+from metalookup.lib.constants import SCRIPT
+from metalookup.lib.settings import SPLASH_HEADERS, SPLASH_TIMEOUT, SPLASH_URL
+from metalookup.lib.tools import get_unique_list, runtime
 
 
 @dataclass  # fixme: make frozen
@@ -27,8 +25,6 @@ class WebsiteData:
     headers: dict[str, str]
     values: list[str]  # fixme: remove
     raw_links: list[str]
-    image_links: list[str]
-    extensions: list[str]
 
     @classmethod
     async def fetch_content(cls, url: str) -> SplashResponse:
@@ -89,13 +85,6 @@ class WebsiteData:
             logger.debug(f"Found {len(links)} links")
             return get_unique_list(links + [el for el in image_links if el is not None] + script_links)
 
-        def extract_extensions(raw_links: list[str]) -> list[str]:
-            def extension_from_link(link: str):
-                return os.path.splitext(urlparse(link)[2])[-1]
-
-            file_extensions = [extension_from_link(link) for link in raw_links]
-            return [x for x in get_unique_list(file_extensions) if x != ""]
-
         if input.splash_response is None:
             logger.debug(f"Missing har -> fetching {input.url}")
 
@@ -137,9 +126,7 @@ class WebsiteData:
             domain=top_level_domain(url=input.url),
             soup=soup,
             har=splash_response.har,
-            image_links=image_links,
             raw_links=raw_links,
             headers=headers_from_splash(splash_response),
-            extensions=extract_extensions(raw_links=raw_links),
             values=[],
         )

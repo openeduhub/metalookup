@@ -52,10 +52,10 @@ jobs:
         if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Build the extractor image
-        run: docker build -t ${{env.docker_repository}}${{env.path_prefix}}-extractor:latest .
+        run: docker build -t ${{env.docker_repository}}${{env.path_prefix}}-api:latest .
 
       - name: Push the extractor image (only on main)
-        run: docker push ${{env.docker_repository}}${{env.path_prefix}}-extractor:latest
+        run: docker push ${{env.docker_repository}}${{env.path_prefix}}-api:latest
         if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Build the lighthouse image

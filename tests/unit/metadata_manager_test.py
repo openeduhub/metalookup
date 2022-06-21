@@ -2,8 +2,8 @@ import pprint
 
 import pytest
 
-from app.models import Input, MetadataTags
-from core.metadata_manager import MetadataManager
+from metalookup.app.models import Input, MetadataTags
+from metalookup.core.metadata_manager import MetadataManager
 from tests.conftest import lighthouse_mock, splash_mock
 
 

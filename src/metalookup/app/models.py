@@ -3,7 +3,7 @@ from typing import Any, Optional, Union
 
 from pydantic import BaseModel, Field, HttpUrl
 
-from app.splash_models import SplashResponse
+from metalookup.app.splash_models import SplashResponse
 
 Explanation = str
 
@@ -144,7 +144,7 @@ class Output(BaseModel):
         "1 if the website is 100% accessible, "
         "0 if the website is not accessible at all.",
     )
-    g_d_p_r: Union[MetadataTags, Error] = Field(
+    gdpr: Union[MetadataTags, Error] = Field(
         default=None,
         description="Alpha. Are there indications that GDPR is obeyed?"
         "Probability = "
@@ -153,12 +153,6 @@ class Output(BaseModel):
     javascript: Union[MetadataTags, Error] = Field(
         default=None,
         description="Alpha. Is there javascript among the files of this website?" "Always False for now",
-    )
-    metatag_explorer: Union[MetadataTags, Error] = Field(
-        default=None,
-        description="Alpha. Store meta tags to explore for interesting data"
-        "Probability = "
-        "Ratio fo javascript files versus all files.",
     )
     licence: Union[MetadataTags, Error] = Field(
         default=None,

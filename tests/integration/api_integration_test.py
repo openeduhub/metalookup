@@ -6,10 +6,10 @@ from pathlib import Path
 import pytest
 from httpx import AsyncClient
 
-from app.api import Input, app, cache_backend, manager
-from app.models import Error, MetadataTags, Output
-from app.splash_models import SplashResponse
-from features.licence import DetectedLicences
+from metalookup.app.api import Input, app, cache_backend, manager
+from metalookup.app.models import Error, MetadataTags, Output
+from metalookup.app.splash_models import SplashResponse
+from metalookup.features.licence import DetectedLicences
 from tests.conftest import lighthouse_mock, splash_mock
 
 
@@ -45,6 +45,13 @@ async def test_ping_endpoint(client):
 
 @pytest.mark.asyncio
 async def test_extract_endpoint(client):
+    """
+    This test:
+     - does not require the splash container because it sends the full har together with the initial request
+     - does not need the lighthouse container because it expects the lighthouse extractor to fail (with a timeout or
+       connection refused)
+     - does not need postgres container because it uses sqlite cache backend
+    """
     path = Path(__file__).parent.parent / "resources" / "splash-response-google.json"
     with open(path, "r") as f:
         splash = SplashResponse.parse_obj(json.load(f))
@@ -66,6 +73,18 @@ async def test_extract_endpoint(client):
 
 @pytest.mark.asyncio
 async def test_extract_endpoint_cache(client):
+    """
+    This test:
+     - does not require the splash container because it
+         - either sends the full har together with the initial request
+         - or mocks the the function where the request to splash is issued to simply return the response from the
+           resources directory
+     - does not need the lighthouse container because it
+         - either expects the lighthouse extractor to fail (with a timeout or connection refused)
+         - or mocks the function where the request to lighthouse is issued
+         - or loads the response from cache (no need to issue a request)
+     - does not need postgres container because it uses sqlite cache backend
+    """
     path = Path(__file__).parent.parent / "resources" / "splash-response-google.json"
     with open(path, "r") as f:
         splash = SplashResponse.parse_obj(json.load(f))

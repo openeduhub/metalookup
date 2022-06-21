@@ -1,30 +1,37 @@
 import asyncio
-import enum
 from concurrent.futures import Executor
+from enum import Enum, auto
 from typing import Optional
 
 from pydantic import BaseModel
 
-from app.models import StarCase
-from core.extractor import Explanation, Extractor
-from core.website_manager import WebsiteData
+from metalookup.app.models import StarCase
+from metalookup.core.extractor import Explanation, Extractor
+from metalookup.core.website_manager import WebsiteData
 
 
-class Licence(enum.Enum):
+# see https://docs.python.org/3/library/enum.html#using-automatic-values
+# We want the names to show up when serializing and deserializing the enum
+class AutoName(Enum):
+    def _generate_next_value_(name, start, count, last_values):
+        return name
+
+
+class Licence(AutoName):
     """
     See https://en.wikipedia.org/wiki/List_of_free-content_licences for more information about the licences.
     """
 
-    CC0 = "Creative Commons Zero"
-    CC_BY = "Creative Commons Attribution"
-    CC_BY_SA = "Creative Commons Attribution-ShareAlike"
-    CC_BY_ND = "Creative Commons Attribution-NoDerivatives"
-    CC_BY_NC = "Creative Commons Attribution-NonCommercial"
-    CC_BY_NC_SA = "Creative Commons Attribution-NonCommercial-ShareAlike"
-    CC_BY_NC_ND = "Creative Commons Attribution-NonCommercial-NoDerivatives"
-    FREE_BSD = "FreeBSD Documentation Licence"
-    GFDL = "GNU Free Documentation Licence"
-    GSFDL = "GNU Simpler Free Documentation License"
+    CC0 = auto()  # "Creative Commons Zero"
+    CC_BY = auto()  # "Creative Commons Attribution"
+    CC_BY_SA = auto()  # "Creative Commons Attribution-ShareAlike"
+    CC_BY_ND = auto()  # "Creative Commons Attribution-NoDerivatives"
+    CC_BY_NC = auto()  # "Creative Commons Attribution-NonCommercial"
+    CC_BY_NC_SA = auto()  # "Creative Commons Attribution-NonCommercial-ShareAlike"
+    CC_BY_NC_ND = auto()  # "Creative Commons Attribution-NonCommercial-NoDerivatives"
+    FREE_BSD = auto()  # "FreeBSD Documentation Licence"
+    GFDL = auto()  # "GNU Free Documentation Licence"
+    GSFDL = auto()  # "GNU Simpler Free Documentation License"
 
 
 class DetectedLicences(BaseModel):
@@ -37,6 +44,9 @@ class DetectedLicences(BaseModel):
     # How many matches have been found in total
     total: int
 
+    class Config:
+        use_enum_values = True  # make sure that the enum variants are not just numbers
+
 
 class LicenceExtractor(Extractor[DetectedLicences]):
     """
@@ -48,22 +58,23 @@ class LicenceExtractor(Extractor[DetectedLicences]):
 
     def __init__(self):
         self.ranking: dict[Licence, StarCase] = {
+            # Note: See https://github.com/samuelcolvin/pydantic/issues/1917 for explanation of the .value below
             # least restrictive?
-            Licence.CC0: StarCase.FIVE,
-            Licence.CC_BY: StarCase.FIVE,
-            Licence.CC_BY_SA: StarCase.FIVE,
+            Licence.CC0.value: StarCase.FIVE,
+            Licence.CC_BY.value: StarCase.FIVE,
+            Licence.CC_BY_SA.value: StarCase.FIVE,
             # pretty standard and good?
             # fixme: eventually we want to rang CC ND licences lower,
             #  I believe the NoDerivatives means changing is not allowed which might be
             #  less attractive for educational material?
-            Licence.CC_BY_ND: StarCase.FOUR,
-            Licence.CC_BY_NC: StarCase.FOUR,
-            Licence.CC_BY_NC_SA: StarCase.FOUR,
-            Licence.CC_BY_NC_ND: StarCase.FOUR,
-            Licence.FREE_BSD: StarCase.FOUR,
+            Licence.CC_BY_ND.value: StarCase.FOUR,
+            Licence.CC_BY_NC.value: StarCase.FOUR,
+            Licence.CC_BY_NC_SA.value: StarCase.FOUR,
+            Licence.CC_BY_NC_ND.value: StarCase.FOUR,
+            Licence.FREE_BSD.value: StarCase.FOUR,
             # less well known?
-            Licence.GFDL: StarCase.THREE,
-            Licence.GSFDL: StarCase.THREE,
+            Licence.GFDL.value: StarCase.THREE,
+            Licence.GSFDL.value: StarCase.THREE,
         }
         """Defines how we map from a detected licence to a star rating"""
 
