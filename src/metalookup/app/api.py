@@ -7,6 +7,7 @@ from typing import Optional
 from aiohttp import ClientSession
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import HttpUrl
 
 import metalookup.lib.settings
 from metalookup.app.models import Input, MetadataTags, Output, Ping
@@ -90,7 +91,7 @@ if metalookup.lib.settings.ENABLE_CACHE_CONTROL_ENDPOINTS:
     process: Optional[Process] = None
 
     # Note: needs to be in global context to be pickleable in order to be transferable to other process.
-    def _loop_urls(urls: list[str]):
+    def _loop_urls(urls: list[HttpUrl]):
         async def loop():
             logging.info(f"Starting cache warmup with {len(urls)} urls")
             async with ClientSession() as session:
@@ -112,7 +113,7 @@ if metalookup.lib.settings.ENABLE_CACHE_CONTROL_ENDPOINTS:
         is running, other requests to this endpoint will be answered with a 429 (Too many requests).
         """,
     )
-    async def warmup(urls: list[str], response: Response):
+    async def warmup(urls: list[HttpUrl], response: Response):
         global process
         logger.info("Received cache-warmup request - dispatching background process")
 
