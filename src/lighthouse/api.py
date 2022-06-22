@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import subprocess
+from time import perf_counter
 from typing import List
 
 import pydantic
@@ -56,9 +57,14 @@ async def accessibility(input_data: Input):
         f"{'--screenEmulation.mobile=true' if input_data.strategy == _MOBILE else '--no-screenEmulation.mobile'}",
     ]
     logger.debug(f"launching subprocess for {input_data}")
+
+    # cant use metalookup.lib.tools.runtime, as the metalookup package is not available in this environment
+    start = perf_counter()
     process = await asyncio.create_subprocess_exec("lighthouse", *args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     logger.debug(f"awaiting outputs for {input_data}")
     stdout, stderr = await process.communicate()
+    runtime = perf_counter() - start
+    logger.info(f"Subprocess call for {input_data.url} took {runtime:3.2f}s")
 
     if process.returncode != 0:
         raise HTTPException(
