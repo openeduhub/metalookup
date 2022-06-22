@@ -1,10 +1,8 @@
-import asyncio
 import logging
 import multiprocessing
 from multiprocessing import Process
 from typing import Optional
 
-from aiohttp import ClientSession
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import HttpUrl
@@ -13,6 +11,7 @@ import metalookup.lib.settings
 from metalookup.app.models import Input, MetadataTags, Output, Ping
 from metalookup.caching.backends import DatabaseBackend
 from metalookup.caching.cache import cache
+from metalookup.caching.warmup import warmup
 from metalookup.core.metadata_manager import MetadataManager
 from metalookup.lib.logger import setup_logging
 from metalookup.lib.tools import runtime
@@ -90,21 +89,6 @@ if metalookup.lib.settings.ENABLE_CACHE_CONTROL_ENDPOINTS:
     """If there is a background task already running, then this variable should be not None"""
     process: Optional[Process] = None
 
-    # Note: needs to be in global context to be pickleable in order to be transferable to other process.
-    def _loop_urls(urls: list[HttpUrl]):
-        async def loop():
-            logging.info(f"Starting cache warmup with {len(urls)} urls")
-            async with ClientSession() as session:
-                for url in urls:
-                    logging.info(f"Warming up {url}")
-                    await session.post(
-                        url=f"http://localhost:{metalookup.lib.settings.API_PORT}/extract?extra=true",
-                        json=Input(url=url).dict(),
-                    )
-            logging.info(f"Finished cache warmup with {len(urls)} urls")
-
-        asyncio.run(loop())
-
     @app.post(
         "/cache/warmup",
         description="""
@@ -113,7 +97,7 @@ if metalookup.lib.settings.ENABLE_CACHE_CONTROL_ENDPOINTS:
         is running, other requests to this endpoint will be answered with a 429 (Too many requests).
         """,
     )
-    async def warmup(urls: list[HttpUrl], response: Response):
+    async def cache_warmup(urls: list[HttpUrl], response: Response):
         global process
         logger.info("Received cache-warmup request - dispatching background process")
 
@@ -121,8 +105,7 @@ if metalookup.lib.settings.ENABLE_CACHE_CONTROL_ENDPOINTS:
             # use spawn context to not pull in all the resources from the running service and instead start a "clean"
             # python interpreter: https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
             ctx = multiprocessing.get_context("spawn")
-
-            process = ctx.Process(target=_loop_urls, args=(urls,), daemon=True)
+            process = ctx.Process(target=warmup, args=(urls,), daemon=True)
             process.start()
             # we cannot join here (or in a background task) as that would block the request (or the entire service)
             response.status_code = 202  # "Accepted"
