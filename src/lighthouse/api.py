@@ -8,7 +8,7 @@ from typing import List
 import pydantic
 import uvicorn as uvicorn
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
 
 # the timeout that lighthouse internally uses when loading the website
 LOAD_TIMEOUT = int(os.environ.get("LOAD_TIMEOUT", 120))
@@ -30,7 +30,7 @@ class Output(BaseModel):
 
 
 class Input(BaseModel):
-    url: str = Field(..., description="The base url of the scraped website.")
+    url: HttpUrl = Field(..., description="The base url of the scraped website.")
     strategy: str = Field(
         default=_DESKTOP,
         description=f"Whether to use {_MOBILE} or {_DESKTOP}.",
