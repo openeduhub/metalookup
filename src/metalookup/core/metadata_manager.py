@@ -92,7 +92,7 @@ class MetadataManager:
 
         # this will eventually load the content dynamically if not provided in the message
         # hence it may fail with various different exceptions (ConnectionError, ...)
-        # those exceptions should be handled in the caller of this function.
+        # those exceptions will be handled below.
         try:
             with runtime() as t:
                 site = await WebsiteData.from_input(
@@ -101,10 +101,17 @@ class MetadataManager:
                     tld_extractor=self.tld_extractor,
                 )
             self.logger.info(f"Built WebsiteData object in {t():5.2f}s.")
+
+        # Technically, for the user the communication with the splash container is
+        # an implementation detail of the server. Returning a 502 (Bad Gateway)
+        # should indicate to the user, that the resource (in this case the url
+        # that was transmitted to the extract endpoint) is no longer available,
+        # whereas internal communication problems should not give this indication
+        # to the user.
         except ClientError as e:
-            raise HTTPException(status_code=502, detail=f"Could not get HAR from splash: {e}")
+            raise HTTPException(status_code=500, detail=f"Could not get HAR from splash: {e}")
         except asyncio.exceptions.TimeoutError:
-            raise HTTPException(status_code=502, detail="Splash container request timeout.")
+            raise HTTPException(status_code=500, detail="Splash container request timeout.")
         except ValidationError as e:
             raise HTTPException(status_code=500, detail=f"Received unexpected HAR from splash: {e}")
 
