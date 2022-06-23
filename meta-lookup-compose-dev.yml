@@ -6,6 +6,20 @@ version: '3.4'
 # Use: > docker-compose --compatibility up extractor playwright lighthouse
 
 services:
+
+  # As docker-compose does not provide an automatic mechanism for restarting unhealthy containers
+  # we here use a sidecar that does just that. It checks the container health status and restarts
+  # them accordingly. To do that, it needs access to the host's docker socket. See also:
+  # https://stackoverflow.com/a/48538213/2160256
+  autoheal:
+    restart: always
+    image: willfarrell/autoheal
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=all
+      - AUTOHEAL_START_PERIOD=30
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
   extractor:
     dns: 8.8.8.8
     image: docker.edu-sharing.com/projects/oeh-redaktion/edusharing-projects-oeh-redaktion-metalookup-api:latest
@@ -17,13 +31,16 @@ services:
       - postgres
     depends_on:
       - postgres
+    restart: always
+    labels:
+      # this should tell the autoheal container to restart this container in case of failure
+      autoheal: true
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:5057/_ping" ]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 40s
-    restart: always
     deploy:
       resources:
         limits:
@@ -53,6 +70,9 @@ services:
     ports:
       - "5058:5058"
     restart: always
+    labels:
+      # this should tell the autoheal container to restart this container in case of failure
+      autoheal: true
     deploy:
       resources:
         limits:
@@ -74,7 +94,6 @@ services:
     image: postgres
     ports:
       - "5432:5432"
-    restart: always
     environment:
       # by default this will then also use metalookup db
       - POSTGRES_USER=metalookup

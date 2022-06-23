@@ -1,6 +1,7 @@
 version: '3.3'
 
 services:
+  # fixme: Add auto-heal container similar to dev docker-compose.yml
   extractor:
     dns: 8.8.8.8
     image: docker.edu-sharing.com/projects/oeh-redaktion/edusharing-projects-oeh-redaktion-metalookup-api:latest
