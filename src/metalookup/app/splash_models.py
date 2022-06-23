@@ -31,6 +31,7 @@ class Response(BaseModel):
 
     headers: list[Header]
     cookies: list[Cookie]
+    status: int  # the HTTP response code
 
 
 class Request(BaseModel):

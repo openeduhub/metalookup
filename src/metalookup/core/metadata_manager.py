@@ -101,6 +101,13 @@ class MetadataManager:
                     tld_extractor=self.tld_extractor,
                 )
             self.logger.info(f"Built WebsiteData object in {t():5.2f}s.")
+            # fixme: For now we simply assume that the last entry is the relevant one.
+            #        This may be fixed together with https://github.com/openeduhub/metalookup/issues/85
+            response_code = site.har.log.entries[-1].response.status
+            if response_code != 200:
+                raise HTTPException(
+                    status_code=502, detail=f"Resource could not be loaded by splash (reported: {response_code})"
+                )
 
         # Technically, for the user the communication with the splash container is
         # an implementation detail of the server. Returning a 502 (Bad Gateway)
