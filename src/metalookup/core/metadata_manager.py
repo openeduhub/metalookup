@@ -103,6 +103,8 @@ class MetadataManager:
             self.logger.info(f"Built WebsiteData object in {t():5.2f}s.")
         except ClientConnectorError as e:
             raise HTTPException(status_code=502, detail=f"Could not get HAR from splash: {e}")
+        except asyncio.exceptions.TimeoutError:
+            raise HTTPException(status_code=502, detail="Splash container request timeout.")
         except ValidationError as e:
             raise HTTPException(status_code=500, detail=f"Received unexpected HAR from splash: {e}")
 
