@@ -3,7 +3,7 @@ import logging
 from concurrent.futures import ProcessPoolExecutor
 from typing import Type, Union
 
-from aiohttp import ClientConnectorError
+from aiohttp import ClientError
 from fastapi import HTTPException
 from pydantic import ValidationError
 from tldextract import TLDExtract
@@ -101,8 +101,10 @@ class MetadataManager:
                     tld_extractor=self.tld_extractor,
                 )
             self.logger.info(f"Built WebsiteData object in {t():5.2f}s.")
-        except ClientConnectorError as e:
+        except ClientError as e:
             raise HTTPException(status_code=502, detail=f"Could not get HAR from splash: {e}")
+        except asyncio.exceptions.TimeoutError:
+            raise HTTPException(status_code=502, detail="Splash container request timeout.")
         except ValidationError as e:
             raise HTTPException(status_code=500, detail=f"Received unexpected HAR from splash: {e}")
 
@@ -116,7 +118,7 @@ class MetadataManager:
                     return MetadataTags(stars=stars, explanation=explanation, extra=extra_data)
                 return MetadataTags(stars=stars, explanation=explanation, extra=None)
             except Exception as e:
-                self.logger.exception(f"Failed to extract {extractor.key}")
+                self.logger.exception(f"Failed to extract {extractor.key} for {message.url}")
                 return Error(error=str(e))
 
         self.logger.debug("Dispatching extractor calls.")

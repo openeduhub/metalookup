@@ -45,6 +45,10 @@ def warmup(urls: list[HttpUrl], n_tasks: int = metalookup.lib.settings.CACHE_WAR
                         )
                     except ClientError:
                         logging.exception(f"Failed to warmup cache for {url}. Continuing with next in queue.")
+                    # See: https://github.com/aio-libs/aiohttp/issues/5582
+                    #      We also need to catch this (until above eventually gets fixed)
+                    except asyncio.exceptions.TimeoutError:
+                        logging.exception(f"Failed to warmup cache for {url}: Request timed out.")
 
         # wait until all tasks have completed meaning the queue of to-be-processed urls is empty.
         await asyncio.gather(*[task(id=id) for id in range(n_tasks)])
