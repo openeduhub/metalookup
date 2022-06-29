@@ -29,7 +29,8 @@ async def test_cookies_har(executor):
                                 "httpOnly": "false",
                                 "secure": "true"
                             }
-                        ]
+                        ],
+                        "status" : 200
                     },
                     "request": {
                         "headers": [],

@@ -29,7 +29,7 @@ async def mock_website_data(
             entries=[
                 Entry(
                     request=Request(headers=[], cookies=[]),
-                    response=Response(headers=headers, cookies=[]),
+                    response=Response(headers=headers, cookies=[], status=200),
                 )
             ]
         )

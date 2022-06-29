@@ -33,9 +33,12 @@ def splash_mock():
     """
 
     def load_response(url: str) -> SplashResponse:
-        if not url.startswith("https://www.google.com"):
+        if url.startswith("https://www.google.com"):
+            path = Path(__file__).parent / "resources" / "splash-response-google.json"
+        elif url.startswith("https://wirlernenonline.de/does-not-exist.html"):
+            path = Path(__file__).parent / "resources" / "splash-response-404.json"
+        else:
             raise ValueError(f"Cannot provide mocked splash response for {url=}")
-        path = Path(__file__).parent / "resources" / "splash-response-google.json"
         with open(path, "r") as f:
             return SplashResponse.parse_obj(json.load(f))
 
