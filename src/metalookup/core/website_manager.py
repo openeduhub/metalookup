@@ -23,7 +23,6 @@ class WebsiteData:
     domain: str
     """A dictionary with the http headers where all keys have been converted to lowercase."""
     headers: dict[str, str]
-    values: list[str]  # fixme: remove
     raw_links: list[str]
 
     @classmethod
@@ -128,5 +127,4 @@ class WebsiteData:
             har=splash_response.har,
             raw_links=raw_links,
             headers=headers_from_splash(splash_response),
-            values=[],
         )
