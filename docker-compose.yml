@@ -1,4 +1,9 @@
 version: '3.4'
+# Note: Below services make use of the `deploy.resources.limits.memory` settings which is only supported by docker swarm
+# To make these settings work with regular docker-compose the services need to be deployed with the `--compatibility`
+# flag. This tells the docker-daemon to translate the `deploy.resources.limits.memory` settings to the v2 compose file
+# equivalents and sets the appropriate limits.
+# Use: > docker-compose --compatibility up extractor splash lighthouse
 
 services:
   extractor:
@@ -12,17 +17,19 @@ services:
       - postgres
     depends_on:
       - postgres
-    restart: always
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:5057/_ping" ]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 40s
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 2000M
     networks:
       - backend
-    environment:
-      - PRODUCTION=false
     logging:
       options:
         max-size: "1m"
@@ -32,9 +39,13 @@ services:
     dns: 8.8.8.8
     image: scrapinghub/splash:latest
     command: --maxrss 4000
-    restart: always
     ports:
       - "8050:8050"
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 2000M
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8050/_ping" ]
       interval: 30s
@@ -51,9 +62,13 @@ services:
   lighthouse:
     dns: 8.8.8.8
     image: docker.edu-sharing.com/projects/oeh-redaktion/edusharing-projects-oeh-redaktion-metalookup-lighthouse:latest
-    restart: always
     ports:
       - "5058:5058"
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 2000M
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:5058/_ping" ]
       interval: 30s
