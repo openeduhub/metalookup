@@ -64,10 +64,3 @@ jobs:
       - name: Push the lighthouse image (only on main)
         run: docker push ${{env.docker_repository}}${{env.path_prefix}}-lighthouse:latest
         if: ${{ github.ref == 'refs/heads/main' }}
-
-      - name: Build the nighly-rerun image
-        run: docker build -f dockerfile_nightly_rerun -t ${{env.docker_repository}}${{env.path_prefix}}-nightly_rerun:latest .
-
-      - name: Push the nighly-rerun image (only on main)
-        run: docker push ${{env.docker_repository}}${{env.path_prefix}}-nightly_rerun:latest
-        if: ${{ github.ref == 'refs/heads/main' }}
