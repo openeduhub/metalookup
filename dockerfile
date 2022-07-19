@@ -4,6 +4,9 @@ RUN adduser --system extractor
 
 WORKDIR /home/extractor
 
+# needed for docker healthcheck
+RUN apt-get update && apt-get install -y curl
+
 # make wheel file built with poetry build available in docker build step
 COPY ./*.whl /home/extractor
 
