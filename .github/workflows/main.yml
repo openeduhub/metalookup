@@ -1,4 +1,4 @@
-name: Run python unittests, formatting checks, build wheel file and docker containers and push containers (for main)
+name: "Test, format, and build"
 
 on: push
 
