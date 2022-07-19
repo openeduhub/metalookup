@@ -52,7 +52,7 @@ jobs:
         if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Build the extractor image
-        run: docker build -t ${{env.docker_repository}}${{env.path_prefix}}-api:latest .
+        run: docker build -f dockerfile_api -t ${{env.docker_repository}}${{env.path_prefix}}-api:latest .
 
       - name: Push the extractor image (only on main)
         run: docker push ${{env.docker_repository}}${{env.path_prefix}}-api:latest
