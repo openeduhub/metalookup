@@ -42,6 +42,15 @@ class Error(BaseModel):
 class Output(BaseModel):
     url: HttpUrl = Field(..., description="The base url of the scraped website.")
 
+    # "Aligned attributes"
+    # These match the WLO/OEH Metadata definitions
+    data_privacy: Union[MetadataTags, Error] = Field(
+        default=None,
+        description="Summarize the easy_privacy, GDPR, and Cookies extractors' ratings. (ccm:oeh_quality_data_privacy)",
+    )
+
+    # "Custom attributes"
+    # They do not have a one to one relation to the WLO/OEH Metadata definitions
     advertisement: Union[MetadataTags, Error] = Field(
         default=None,
         description="Beta. Are there advertisments?"
