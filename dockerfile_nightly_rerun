@@ -4,20 +4,8 @@ RUN adduser -D rerunner
 
 WORKDIR /home/rerunner
 
-RUN apk add --update --no-cache --virtual .build-deps g++ python3-dev libxml2 libxml2-dev libffi-dev openssl-dev
-RUN apk add libxslt-dev curl
-
-# Needed for psycopg2
-RUN apk update && \
-    apk add --virtual build-deps gcc musl-dev && \
-    apk add postgresql-dev
-
-COPY requirements.txt requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-RUN apk del .build-deps
-
-# First copy the data, then give ownership to it, then switch to correct user
-COPY src/ .
+# It is just a single file with no dependencies except python core libaries
+COPY src/tools/nightly_rerun.py .
 
 RUN chown -R rerunner:rerunner ./
 

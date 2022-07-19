@@ -24,11 +24,7 @@ RUN apt-get update || : && \
 
 RUN apt-get install curl -y
 
-# Needed for psycopg2
-RUN apt-get install libpq-dev -y
-
-COPY requirements.txt requirements.txt
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir fastapi==0.65.3 uvicorn==0.13.4 pydantic==1.8.2
 
 USER chrome
 
@@ -37,7 +33,5 @@ ENV CHROME_FLAGS="--headless --disable-gpu --no-sandbox"
 WORKDIR /home/chrome
 
 COPY src/lighthouse/api.py .
-COPY src/lib/constants.py lib/
-COPY src/lib/settings.py lib/
 
 CMD python3 api.py

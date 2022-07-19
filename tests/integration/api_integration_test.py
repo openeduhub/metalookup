@@ -1,95 +1,153 @@
 import json
-import multiprocessing
 import os
-import time
-from unittest import mock
+import pprint
+from pathlib import Path
 
-import requests
-import uvicorn
+import pytest
+from httpx import AsyncClient
 
-from app.api import Input, app
-from lib.settings import API_PORT
-
-if "PRE_COMMIT" in os.environ:
-    from test_libs import DOCKER_TEST_HEADERS, DOCKER_TEST_URL
-else:
-    from tests.test_libs import DOCKER_TEST_HEADERS, DOCKER_TEST_URL
-
-"""
---------------------------------------------------------------------------------
-"""
+from metalookup.app.api import Input, app, cache_backend, manager
+from metalookup.app.models import Error, MetadataTags, Output
+from metalookup.app.splash_models import SplashResponse
+from metalookup.features.licence import DetectedLicences
+from tests.conftest import lighthouse_mock, splash_mock
 
 
-def _start_api(send_message, get_message):
-    app.communicator = mock.MagicMock()
-    app.communicator.send_message = send_message
-    app.communicator.get_message = get_message
-    uvicorn.run(app, host="0.0.0.0", port=API_PORT, log_level="info")
+@pytest.fixture()
+async def client() -> AsyncClient:
+    # clear cache before each test. We cannot use sqlite inmemory cache, because
+    # the databases package creates a new inmemory sqlite connection for each request
+    # essentially rendering the inmemory sqlite backend useless for caching.
+    # See  https://github.com/encode/databases/issues/488
+    cache_db = Path(__file__).parent.parent / "meta-lookup-cache.db"
+    if os.path.exists(cache_db):
+        os.remove(cache_db)
+    from databases import Database
+
+    cache_backend.database = Database("sqlite://./meta-lookup-cache.db")
+
+    # Using an async client allows to have async unit tests which simplifies checking the desired
+    # side effects (e.g. cache modifications). However it means we manually need to ensure that
+    # the application state is setup.
+    await cache_backend.setup()
+    await manager.setup()
+
+    async with AsyncClient(app=app, base_url="http://localhost") as client:
+        yield client
 
 
-def test_ping_container():
-    api_to_manager_queue = multiprocessing.Queue()
-    manager_to_api_queue = multiprocessing.Queue()
+@pytest.mark.asyncio
+async def test_ping_endpoint(client):
+    response = await client.get("/_ping")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
 
-    with mock.patch("app.api.create_request_record"):
-        with mock.patch("app.api.create_response_record"):
-            api_process = multiprocessing.Process(
-                target=_start_api,
-                args=(api_to_manager_queue, manager_to_api_queue),
+
+@pytest.mark.asyncio
+async def test_extract_endpoint(client):
+    """
+    This test:
+     - does not require the splash container because it sends the full har together with the initial request
+     - does not need the lighthouse container because it expects the lighthouse extractor to fail (with a timeout or
+       connection refused)
+     - does not need postgres container because it uses sqlite cache backend
+    """
+    path = Path(__file__).parent.parent / "resources" / "splash-response-google.json"
+    with open(path, "r") as f:
+        splash = SplashResponse.parse_obj(json.load(f))
+
+    input = Input(url="https://google.com", splash_response=splash)
+    response = await client.post("/extract", json=input.dict(), timeout=10, headers={"Cache-Control": "no-cache"})
+
+    pprint.pprint(response.json())
+
+    assert response.status_code == 200
+
+    # make sure, that our result actually complies with the promised open api spec.
+    output = Output.parse_obj(json.loads(response.text))
+    assert output.url == input.url
+    assert isinstance(output.security, MetadataTags), "did not receive data for security extractor"
+    # This should not be present, as the request to the accessibility container will fail
+    assert isinstance(output.accessibility, Error), "received accessibility result but container should not be running"
+
+
+@pytest.mark.asyncio
+async def test_extract_endpoint_cache(client):
+    """
+    This test:
+     - does not require the splash container because it
+         - either sends the full har together with the initial request
+         - or mocks the the function where the request to splash is issued to simply return the response from the
+           resources directory
+     - does not need the lighthouse container because it
+         - either expects the lighthouse extractor to fail (with a timeout or connection refused)
+         - or mocks the function where the request to lighthouse is issued
+         - or loads the response from cache (no need to issue a request)
+     - does not need postgres container because it uses sqlite cache backend
+    """
+    path = Path(__file__).parent.parent / "resources" / "splash-response-google.json"
+    with open(path, "r") as f:
+        splash = SplashResponse.parse_obj(json.load(f))
+
+    response = await client.post(
+        "/extract",
+        json=Input(url="https://www.google.com", splash_response=splash).dict(),
+        timeout=10,
+        headers={"Cache-Control": "only-if-cached"},
+    )
+    assert response.status_code == 400, "response cannot be cached, as the whole har body is part of the request."
+
+    with splash_mock():
+        response = await client.post(
+            "/extract",
+            json=Input(url="https://www.google.com").dict(),
+            timeout=10,
+            headers={"Cache-Control": "only-if-cached"},
+        )
+        assert response.status_code == 404, "response can be cached but is not present in cache."
+
+        response = await client.post(
+            "/extract",
+            json=Input(url="https://www.google.com").dict(),
+            timeout=10,
+            headers={"Cache-Control": "max-age=5000"},
+        )
+        assert response.status_code == 200
+
+        output = Output.parse_obj(json.loads(response.text))
+        assert output.url == "https://www.google.com"
+        assert isinstance(output.security, MetadataTags), "did not receive data for security extractor"
+        assert isinstance(output.accessibility, Error), "did not receive an error for accessibility"
+
+        assert (
+            await cache_backend.get(key="https://www.google.com") is None
+        ), "should not be cached, as it was not a complete result"
+
+        with lighthouse_mock():
+            # now we should get a fully populated result (now Errors within the individual extractors)
+            # which should also get cached.
+            response = await client.post(
+                "/extract?extra=true",
+                json=Input(url="https://www.google.com").dict(),
+                timeout=10,
             )
-            api_process.start()
-            time.sleep(0.1)
 
-            response = requests.request(
-                "GET",
-                DOCKER_TEST_URL + "_ping",
-                headers=DOCKER_TEST_HEADERS,
-                timeout=1,
-            )
-            api_process.terminate()
-            api_process.join()
+            # make sure, that our result actually complies with the promised open api spec.
+            output = Output.parse_obj(json.loads(response.text))
 
-    data = json.loads(response.text)
-    is_ok = data["status"] == "ok"
-    assert is_ok
+            pprint.pprint(output.dict())
 
+            assert response.status_code == 200, response.text
+            assert (
+                cache_backend.get(key="https://www.google.com") is not None
+            ), "should be cached, as it was a complete result"
 
-"""
---------------------------------------------------------------------------------
-"""
-
-
-def test_extract_meta_container(mocker):
-    send_message = mocker.MagicMock()
-    send_message.return_value = 3
-    get_message = mocker.MagicMock()
-    get_message.return_value = {"meta": "empty"}
-
-    with mock.patch("app.api.create_request_record"):
-        with mock.patch("app.api.create_response_record"):
-
-            api_process = multiprocessing.Process(
-                target=_start_api,
-                args=(send_message, get_message),
-            )
-            api_process.start()
-            time.sleep(0.1)
-
-            url = "useless_url"
-            input_data = Input(url=url).__dict__
-            input_data["allow_list"] = input_data["allow_list"].__dict__
-
-            response = requests.request(
-                "POST",
-                DOCKER_TEST_URL + "extract_meta",
-                data=json.dumps(input_data),
-                headers=DOCKER_TEST_HEADERS,
-                timeout=3,
-            )
-            api_process.terminate()
-            api_process.join()
-
-    data = json.loads(response.text)
-
-    assert data["url"] == url
-    assert len(data["url"]) == 11
+            assert output.url == "https://www.google.com"
+            assert isinstance(output.licence.extra, dict)
+            # should be possible to deserialize the extra data
+            print(DetectedLicences.parse_obj(output.licence.extra))
+            assert isinstance(output.security, MetadataTags), "did not receive data for security extactor"
+            # This should not be present, as the request to the accessibility container will fail
+            assert isinstance(
+                output.accessibility, MetadataTags
+            ), "received accessibility result but container should not be running"

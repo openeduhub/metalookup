@@ -1,34 +1,46 @@
+import datetime
 import json
 import sys
 
 import requests
 
-from lib.constants import MESSAGE_EXCEPTION, MESSAGE_URL, SECONDS_PER_DAY
-from lib.settings import METALOOKUP_EXTRACT_META, METALOOKUP_RECORDS
-from lib.timing import get_utc_now
-from lib.tools import get_unique_list
+METALOOKUP_RECORDS = "https://metalookup.openeduhub.net/records"
+METALOOKUP_EXTRACT_META = "https://metalookup.openeduhub.net/extract_meta"
+
+SECONDS_PER_DAY = 60 * 60 * 24
+MESSAGE_URL = "url"
+MESSAGE_EXCEPTION = "exception"
 
 
+def get_unique_list(items: list) -> list:
+    seen = set()
+    for element in range(len(items) - 1, -1, -1):
+        item = items[element]
+        if item in seen:
+            del items[element]
+        else:
+            seen.add(item)
+    return items
+
+
+def get_utc_now() -> float:
+    return datetime.datetime.utcnow().timestamp()
+
+
+# fixme: eventually integrate this into meta-lookup to be run internally on a regular basis
 def main(maximum_age_in_seconds: int = SECONDS_PER_DAY):
-
     payload = {}
     headers = {}
 
-    response = requests.request(
-        "GET", METALOOKUP_RECORDS, headers=headers, data=payload
-    )
+    response = requests.request("GET", METALOOKUP_RECORDS, headers=headers, data=payload)
 
     try:
         records = json.loads(response.text)["records"]
     except TypeError as err:
-        print(
-            f"Exception when loading records with {err.args}.\nPotentially due to outdated record schema. "
-        )
+        print(f"Exception when loading records with {err.args}.\nPotentially due to outdated record schema. ")
         sys.exit(1)
 
-    print(
-        f"----------------- Total number of evaluated records so far: {len(records)}"
-    )
+    print(f"----------------- Total number of evaluated records so far: {len(records)}")
     if len(records) == 1:
         print(records)
         return
@@ -43,9 +55,7 @@ def main(maximum_age_in_seconds: int = SECONDS_PER_DAY):
             unique_urls.append(record[MESSAGE_URL])
 
     output = "\n".join(get_unique_list(unique_urls))
-    print(
-        f"----------------- Unique evaluated urls with splash error:\n{output}"
-    )
+    print(f"----------------- Unique evaluated urls with splash error:\n{output}")
 
     headers = {"Content-Type": "application/json"}
 

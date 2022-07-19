@@ -1,8 +1,10 @@
 *.log
+*.db
 .idea/sonarlint/
 __pycache__/
 src/__pycache__/
 src/app/__pycache__/
+src/tag_lists
 
 # IDEs
 .idea
@@ -11,11 +13,13 @@ src/app/__pycache__/
 .sonarlint
 
 # Local data
+.env
+dist
 /local_tools/
 .coverage
 Pipfile
 src/logs/*
-*.json
 *.csv
 /tests/tag_lists
+/tests/meta-lookup-cache.db
 /tag_lists
