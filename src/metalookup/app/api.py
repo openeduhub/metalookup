@@ -73,6 +73,81 @@ async def extract(input: Input, request: Request, response: Response, extra: boo
     return result
 
 
+# todo (https://github.com/openeduhub/metalookup/issues/135): remove once frontend is transitioned to new API
+@app.post(
+    "/extract_meta",
+    description="The legacy endpoint for metadata extraction.",
+)
+# request and response arguments are needed for the cache wrapper.
+async def legacy_extract(input: Input):
+    logger.info(f"Received legacy request for {input.url}")
+
+    # need extra data for accessibility score below!
+    result = await manager.extract(input, extra=True)
+
+    logger.info(f"Translating to legacy response for {input.url} ")
+    # if a required item is missing (e.g. because of an exception in the respective extractor, then we want
+    # to have that information present in the frontend as diagnostic information for now
+    try:
+        return {
+            # everything but the "meta" keyword is ignored in the current frontend implementation
+            "meta": {
+                # extractors in order as used in current frontend implementation html template
+                "accessibility": {
+                    # frontend uses values list to extract score :facepalm:
+                    "values": [str(result.accessibility.extra.average_score)],
+                    "stars": result.accessibility.stars.value,
+                    "explanation": result.accessibility.explanation,
+                },
+                "advertisement": {
+                    "stars": result.advertisement.stars.value,
+                },
+                "g_d_p_r": {
+                    "stars": result.gdpr.stars.value,
+                },
+                "cookies": {
+                    "stars": result.cookies.stars.value,
+                },
+                "fanboy_social_media": {
+                    "stars": result.fanboy_social_media.stars.value,
+                },
+                "anti_adblock": {
+                    "stars": result.anti_adblock.stars.value,
+                },
+                "easy_privacy": {
+                    "stars": result.easy_privacy.stars.value,
+                },
+                "pop_up": {
+                    "stars": result.pop_up.stars.value,
+                },
+                "paywall": {
+                    "stars": result.paywall.stars.value,
+                },
+                "malicious_extensions": {
+                    "stars": result.malicious_extensions.stars.value,
+                },
+                # not used in frontend
+                # "extract_from_files": {},
+                # "fanboy_annoyance": {},
+                # "fanboy_notification": {},
+                # "easylist_germany": {},
+                # "easylist_adult": {},
+                # "security": {},
+                # "iframe_embeddable": {},
+                # "reg_wall": {},
+                # "log_in_out": {},
+                # "javascript": {},
+            },
+        }
+    except Exception as e:
+        from fastapi import HTTPException
+
+        raise HTTPException(
+            status_code=502,
+            detail=f"Cannot build legacy data model from extracted information: {str(result)}.\n Reason: {e}",
+        )
+
+
 @app.get(
     "/_ping",
     description="Ping function for automatic health check.",
