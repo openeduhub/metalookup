@@ -1,4 +1,4 @@
-name: Run python unittests, formatting checks, build wheel file and docker containers and push containers (for main)
+name: "Test, format, and build"
 
 on: push
 
@@ -52,7 +52,7 @@ jobs:
         if: ${{ github.ref == 'refs/heads/main' }}
 
       - name: Build the extractor image
-        run: docker build -t ${{env.docker_repository}}${{env.path_prefix}}-api:latest .
+        run: docker build -f dockerfile_api -t ${{env.docker_repository}}${{env.path_prefix}}-api:latest .
 
       - name: Push the extractor image (only on main)
         run: docker push ${{env.docker_repository}}${{env.path_prefix}}-api:latest
@@ -63,11 +63,4 @@ jobs:
 
       - name: Push the lighthouse image (only on main)
         run: docker push ${{env.docker_repository}}${{env.path_prefix}}-lighthouse:latest
-        if: ${{ github.ref == 'refs/heads/main' }}
-
-      - name: Build the nighly-rerun image
-        run: docker build -f dockerfile_nightly_rerun -t ${{env.docker_repository}}${{env.path_prefix}}-nightly_rerun:latest .
-
-      - name: Push the nighly-rerun image (only on main)
-        run: docker push ${{env.docker_repository}}${{env.path_prefix}}-nightly_rerun:latest
         if: ${{ github.ref == 'refs/heads/main' }}
