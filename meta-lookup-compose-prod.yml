@@ -1,7 +1,23 @@
 version: '3.3'
 
+# fixme: what about resource limits (like in dev compose)?
 services:
-  # fixme: Add auto-heal container similar to dev docker-compose.yml
+
+  # The docker-compose 'restart: always' option does not automatically restart unhealthy containers.
+  # It only restarts the container if it terminated (from within), or e.g. the host or docker daemon
+  # restarted.
+  # To avoid being stuck with a running, but unhealthy container, we use the autoheal container which
+  # restarts containers explicitly once they become unhealthy. To do that, it needs access to the
+  # host's docker socket. See also: https://stackoverflow.com/a/48538213/2160256
+  autoheal:
+    restart: always
+    image: willfarrell/autoheal
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=all
+      - AUTOHEAL_START_PERIOD=30
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
   extractor:
     dns: 8.8.8.8
     image: docker.edu-sharing.com/projects/oeh-redaktion/edusharing-projects-oeh-redaktion-metalookup-api:latest
@@ -19,6 +35,9 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+    labels:
+      # tell the autoheal container to restart this container in case of failure
+      autoheal: true
     networks:
       - traefik-public
     deploy:
@@ -60,6 +79,9 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+    labels:
+      # tell the autoheal container to restart this container in case of failure
+      autoheal: true
     networks:
       - traefik-public
 
