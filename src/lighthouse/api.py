@@ -9,16 +9,10 @@ from typing import List
 import pydantic
 import uvicorn as uvicorn
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, constr
 
 # the timeout that lighthouse internally uses when loading the website
 LOAD_TIMEOUT = int(os.environ.get("LOAD_TIMEOUT", 120))
-
-_DESKTOP = "desktop"
-_MOBILE = "mobile"
-_ACCESSIBILITY = "accessibility"
-
-
 logger = logging.getLogger("lighthouse")
 app = FastAPI(title="Lighthouse Accessibility Extractor", version="1.0")
 
@@ -26,35 +20,37 @@ app = FastAPI(title="Lighthouse Accessibility Extractor", version="1.0")
 class Output(BaseModel):
     score: List[float] = Field(
         default=[-1.0],
-        description=f"The {_ACCESSIBILITY} score.",
+        description="The accessibility score.",
     )
 
 
 class Input(BaseModel):
     url: HttpUrl = Field(..., description="The base url of the scraped website.")
-    strategy: str = Field(
-        default=_DESKTOP,
-        description=f"Whether to use {_MOBILE} or {_DESKTOP}.",
+    strategy: constr(regex="(desktop|mobile)") = Field(  # noqa
+        default="desktop", description="Defines for which target platform the accessibility will be calculated."
     )
-    category: str = Field(
-        default=_ACCESSIBILITY,
+    category: constr(regex="(accessibility)") = Field(
+        default="accessibility",
         description="Which category to evaluate. Only one for now",
     )
 
 
-@app.get("/accessibility", response_model=Output)
+@app.post("/accessibility", response_model=Output)
 async def accessibility(input_data: Input):
+    # NOTE: Make sure all string interpolations and inputs into the args are sanitized.
+    #       Not doing so potentially provides a remote code execution exploit as the arguments
+    #       are passed to process.Popen.
     args = [
-        input_data.url,
+        input_data.url,  # sanitized via HttUrl annotation in input base model
         "--enable-error-reporting",
         # See https://github.com/GoogleChrome/lighthouse/issues/6512 for discussion about timeouts
         "--chrome-flags='--headless --no-sandbox --disable-gpu --disable-dev-shm-usage'",
-        f"--formFactor={input_data.strategy}",
+        f"--formFactor={input_data.strategy}",  # sanitized via regex in input based model
         f"--max-wait-for-load={LOAD_TIMEOUT * 1000}",
-        f"--only-categories={input_data.category}",
+        f"--only-categories={input_data.category}",  # sanitized via regex in input based model
         "--output=json",
         "--quiet",
-        f"{'--screenEmulation.mobile=true' if input_data.strategy == _MOBILE else '--no-screenEmulation.mobile'}",
+        f"{'--screenEmulation.mobile=true' if input_data.strategy == 'mobile' else '--no-screenEmulation.mobile'}",
     ]
     logger.debug(f"launching subprocess for {input_data}")
 
