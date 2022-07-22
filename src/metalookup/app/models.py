@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import Enum
 from typing import Any, Optional, Union
 
@@ -18,6 +20,21 @@ class StarCase(int, Enum):
 
     def __repr__(self):
         return str(self.value)
+
+    def __int__(self):
+        return self.value
+
+    @staticmethod
+    def from_number(n: Union[float, int]) -> StarCase:
+        mapping = {
+            0: StarCase.ZERO,
+            1: StarCase.ONE,
+            2: StarCase.TWO,
+            3: StarCase.THREE,
+            4: StarCase.FOUR,
+            5: StarCase.FIVE,
+        }
+        return mapping[int(round(n))]
 
 
 class MetadataTags(BaseModel):
@@ -159,6 +176,18 @@ class Output(BaseModel):
         description="Information about the potential licence of the content. Determined by scanning the content for"
         " common licence names.",
     )
+
+
+class LRMISuggestions(BaseModel):
+    protection_of_minors: Union[MetadataTags, Error] = Field(alias="ccm:oeh_quality_protection_of_minors")
+    login: Union[MetadataTags, Error] = Field(alias="ccm:oeh_quality_login")
+    data_privacy: Union[MetadataTags, Error] = Field(alias="ccm:oeh_quality_data_privacy")
+    accessibility: Union[MetadataTags, Error] = Field(alias="ccm:accessibilitySummary")
+
+    class Config:
+        # tells pydantic, that we want to use the fields names in the
+        # constructor, but the alias when it gets serialized.
+        allow_population_by_field_name = True
 
 
 class Input(BaseModel):

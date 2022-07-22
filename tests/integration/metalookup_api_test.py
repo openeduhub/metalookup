@@ -7,7 +7,7 @@ import pytest
 from httpx import AsyncClient
 
 from metalookup.app.api import Input, app, cache_backend, manager
-from metalookup.app.models import Error, MetadataTags, Output
+from metalookup.app.models import Error, LRMISuggestions, MetadataTags, Output
 from metalookup.app.splash_models import SplashResponse
 from metalookup.features.licence import DetectedLicences
 from tests.conftest import lighthouse_mock, splash_mock
@@ -69,6 +69,38 @@ async def test_extract_endpoint(client):
     assert isinstance(output.security, MetadataTags), "did not receive data for security extractor"
     # This should not be present, as the request to the accessibility container will fail
     assert isinstance(output.accessibility, Error), "received accessibility result but container should not be running"
+
+
+@pytest.mark.asyncio
+async def test_suggest_endpoint(client):
+    """
+    This test:
+     - does not require the splash container because it sends the full har together with the initial request
+     - does not need the lighthouse container because it assumes an accessibility extraction error
+     - does not need postgres container because it uses sqlite cache backend
+    """
+    path = Path(__file__).parent.parent / "resources" / "splash-response-google.json"
+    with open(path, "r") as f:
+        splash = SplashResponse.parse_obj(json.load(f))
+
+    input = Input(url="https://google.com", splash_response=splash)
+    response = await client.post(
+        "/lrmi-suggestions", json=input.dict(), timeout=10, headers={"Cache-Control": "no-cache"}
+    )
+    assert response.status_code == 200
+    response = json.loads(response.text)
+
+    assert "ccm:oeh_quality_protection_of_minors" in response
+    assert "ccm:oeh_quality_login" in response
+    assert "ccm:oeh_quality_data_privacy" in response
+    assert "ccm:accessibilitySummary" in response
+
+    # make sure, that our result actually complies with the promised open api spec.
+    suggestion = LRMISuggestions.parse_obj(response)
+
+    assert hasattr(
+        suggestion.accessibility, "error"
+    ), f"Accessibility extraction is expected to be an error but was: {suggestion.accessibility}"
 
 
 @pytest.mark.asyncio
