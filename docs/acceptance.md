@@ -37,6 +37,7 @@ Die url `https://canyoublockit.com/extreme-test/` liefert Werte von `0.98` für 
 Damit liegt auch der Mittelwert bei `0.98` welcher über dem Schwellwert von `0.95` für ein 5 Sterne rating liegt.
 
 ### Cookies
+__TODO: https://github.com/openeduhub/metalookup/issues/114__
 
 Dieses Merkmal liest die Cookies ein, die von der Webseite benutzt werden.
 Wird eines dieser Cookies als unsicher dargestellt, so wird dieses Merkmal als `false` definiert.
@@ -85,10 +86,12 @@ Cookie 2:
 - Cookies könnten unsicher sein, obwohl die überprüften Merkmale es als sicher anzeigen. Eine Blacklist wäre nötig.
 
 ### Dateiextrahierbarkeit alias ExtractFromFiles
+- __TODO: https://github.com/openeduhub/metalookup/issues/110__
+- __TODO: https://github.com/openeduhub/metalookup/issues/118__
 
 Dieses Merkmal untersucht die herunterladbaren Dateien einer Webseite darauf, ob diese als Volltext gelesen werden können.
 Unterstützte Dateiformate sind derzeit `.docx` und `.pdf`.
-Wenn mehr als die Hälfte aller Dateien extrahiert werden können, so gilt dieses Merkmal als `true`.
+Können mehr als die Hälfte aller Dateien extrahiert werden, so wird ein 5 Sterne ranking zurückgegeben, sonst 0 Sterne.
 
 #### Vorteil
 
@@ -100,16 +103,14 @@ angeboten werden.
 
 1. Das Merkmal entnimmt alle Links, welche von der Webseite benutzt werden.
 2. Jeder Link wird untersucht, ob er auf eine Datei mit einem unterstützten Dateiformat verweist.
-3. Wird ein solcher Link gefunden, so wird die Datei heruntergeladen und temporär gespeichert.
-4. Lässt sich aus einer solchen Datei ohne Fehler ein Text extrahieren, so wird die Datei als lesbar eingestuft und zu
-   `values` hinzugefügt.
-5. Die `probability` ergibt sich als Anteil solcher extrahierbarer Dateien im Vergleich zu allen vorhandenen Dateien.
-4. Ist die `probability` über dem Schwellwert, so wird `isHappyCase` auf `true` gesetzt.
+3. Wird ein solcher Link gefunden, so wird die Datei heruntergeladen.
+4. Lässt sich aus einer solchen Datei ohne Fehler ein Text extrahieren, so wird die Datei als lesbar eingestuft.
+
 
 #### Beispiel
 
 1. Die url `https://digitallearninglab.de/unterrichtsbausteine/anlauttraining` enthält Pdf und Docx Dateien.
-2. Alle Dateien sind extrahierbar, sodass das Merkmal hier die `isHappyCase` `true` zurückgegeben wird.
+2. Alle Dateien sind extrahierbar, sodass ein 5 Sterne Rating zurückgegeben wird.
 3. Da dies programmatisch passiert, kann lediglich durch den Nutzer überprüft werden, dass die Dateien nicht
    passwortgeschützt sind und der Text in den PDFs selektiert und kopiert werden kann.
 
