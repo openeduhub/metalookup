@@ -36,7 +36,7 @@ def cache(expire: int, key: KeyBuilder, backend: Optional[Backend]):
         # Note:
         # functools.wraps essentially makes the wrapper function looking exactly like the wrapped function.
         # This means, that registering the wrapper function with a fastapi router will look to fastapi like
-        # registering the original function. Hence we cannot add the 'request: Request, response: Response'
+        # registering the original function. Hence, we cannot add the 'request: Request, response: Response'
         # arguments to the wrapper (they would not be provided by fastapi, because fastapi only sees the wrapped
         # signature).
         # On the other hand, we cannot not use wraps, as the cache decorator should work for arbitrary signatures
