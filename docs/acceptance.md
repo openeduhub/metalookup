@@ -1,48 +1,22 @@
-# Akzeptanzkriterien
+## Merkmale & Extraktoren
 
-Dieser Abschnitt erläutert was die verschiedenen Merkmale untersuchen und wie dies überprüft werden kann.
+Extraktoren geben drei wichtige Werte zurück:
 
-Automatisierte Akzeptanztests sind in `tests/e2e/e2e_test.py` zu finden.
-Dieser Test baut alle Docker Container, schickt eine Test-Webseite zur Überprüfung und evaluiert alle
-Merkmale auf erwartetes Verhalten.
-Das erwartete Verhalten ist dort einmal exemplarisch definiert und kann von dort übernommen werden.
-
-Die Unit- und Integrationstests vertiefen dies weiter.
-
-## Merkmale
-
-Merkmale geben vier wichtige Werte zurück:
-
-- `isHappyCase`:
-    - Die getroffene Entscheidung.
-    - `true`, `unknown` oder `false`. `true` zeigt an, ob das Merkmal zum Knockout oder zum HappyCase führt.
-    - Als HappyCase gilt im allgemeinen die Merkmalsfreiheit, also das bspw. eine Webseite frei von Werbung ist.
-    - Knockout bedeutet hingegen ein negatives Ergebnis zum Happy Case, also bspw. das DGSVO nicht erfüllt ist oder Werbung vorhanden ist.
-    - `isHappyCase` ist explizit nur in Kombination mit `probability` wertvoll.
-- `probability`:
-    - Die Wahrscheinlichkeit, dass die Entscheidung zutrifft.
-    - Ein Wert von 0 bedeutet, die Entscheidung hat keinen Wert. Egal ob `true` oder `false`, wir wissen nichts. Standardmäßig wird hier `unknown` zurück gegeben.
-    - Dies geschieht bspw., wenn das Merkmal exakt auf der Schwelle zwischen `true` und `false`.
-      An diesem Punkt wären beide Entscheidungen möglich und würde sich die Webseite nur minimal ändern, wäre die Entscheidung anders.
-      Daher ist hier nichts sicher auszusagen.
-- `values`:
-    - Die rohen Werte, welche das Merkmal gefunden hat
-    - Basierend auf diesen Werten werden die Entscheidung und deren Wahrscheinlichkeit bestimmt
-- `explanation`:
-  - eine knappe, prägnante Erläuterung warum der entsprechende Wert für `isHappyCase` gewählt wurde.
-  - Der Eintrag `Cached` deutet hier an, dass die Daten aus dem Cache reproduziert worden.
-    - Möglicherweise hat die Webseite sich seit dem Cache-Eintrag verändert. Das Ergebnis sollte ggf. hinterfragt werden.
+- `stars`: Ein Rating zwischen 0 und 5 sternen, höhere Ratings bedeuten besser geeignet als OER.
+- `explanation`: Eine knappe, prägnante Erläuterung warum das entsprechende rating gewählt wurde.
+- `extra`: Die rohen Werte, welche das Extraktor gefunden hat. Basierend auf diesen Werten wurde das Rating bestimmt.
 
 Im Folgenden werden die verschiedenen Merkmale näher beschrieben und durch Beispiele erläutert.
 
 ### Barrierefreiheit alias Accessibility
 
-Dieses Merkmal gibt an, ob die Webseite barrierefrei nach [Google Lighthouse](https://developers.google.com/web/tools/lighthouse/) ist.
+Dieses Merkmal gibt an, ob die Webseite barrierefrei nach
+[Google Lighthouse](https://developers.google.com/web/tools/lighthouse/) ist.
 Dafür wird eine Punktezahl für mobile Endgeräte und Desktop-PCs berechnet.
 Deren Mittelwert wird benutzt, um eine Aussage über die Barrierefreiheit zu treffen.
-Ist der Mittelwert hoch genug, gilt Barrierefreiheit als `true`.
 
-Barrierefreiheit wird hierbei durch Google definiert, bspw., ob zwingend eine Maus benutzt werden muss, um die Webseite zu navigieren.
+Barrierefreiheit wird hierbei durch Google definiert, bspw., ob zwingend eine Maus benutzt werden muss, um die Webseite
+zu navigieren.
 
 #### Vorteil
 
@@ -55,15 +29,12 @@ gepflegtes Werkzeug zurückgegriffen, welches reproduzierbare Ergebnisse liefert
    `https://github.com/femtopixel/docker-google-lighthouse`.
 2. Zurück kommen Fließkommazahlen zwischen `0` und `1`.
 3. Der Wert wird für mobile Endgeräte und Desktop-PCs einzeln berechnet und dann gemittelt.
-4. Liegt der Mittelwert über dem konfigurierten Schwellwert, e.g., `0.8`, so wird `isHappyCase` `true`.
-Die `probability` wird entsprechend zwischen dem Schwellwert und `1` linear skaliert.
-Je näher der Mittelwert am Schwellwert liegt, desto geringer ist `probability`.
-D. h., liegt der Mittelwert bei `0.85` und der Schwellwert bei `0.8`, so wird `probability` `0.25`.
+4. Der Mittelwert wird mit Schwellenwerten für die verschiedenen Rating Stufen verglichen und so das Rating bestimmt.
 
 #### Beispiel
 
 Die url `https://canyoublockit.com/extreme-test/` liefert Werte von `0.98` für mobile Endgeräte und Desktop-PCs.
-Damit liegt auch der Mittelwert bei `0.98` und die `probability` bei `0.9` für einen Schwellwert von `0.8`.
+Damit liegt auch der Mittelwert bei `0.98` welcher über dem Schwellwert von `0.95` für ein 5 Sterne rating liegt.
 
 ### Cookies
 
