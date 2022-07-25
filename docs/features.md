@@ -1,68 +1,59 @@
 # Features
-
-A feature is a kind of metadata extracted from the desired url.
+A feature is a kind of metadata extracted from the desired url with a dedicated `Extractor` class.
 This can be header information regarding security, whether the url contains advertisement,
 PG18 content or complies to GDPR.
-Many features are opinionated and require feedback from production for hardening.
-Some features "react" hysterically, e.g., flag the website as insecure because one cookie has `secure=False`.
-Other features are insensitive to certain cases, e.g., whether a website confirms to GDPR is difficult to decide.
+Many extractors are opinionated and require feedback from production for hardening.
+Some extractors "react" hysterically, e.g., flag the website as insecure because one cookie has `secure=False`.
+Other extractors are insensitive to certain cases, e.g., whether a website confirms to GDPR is difficult to decide.
 
-Thus, please take all output with a grain of salt.
+Thus, please take all output with a grain of salt, all results are opinionated and heavily biased, with more production
+data, these features may be improved!
 
-## Understanding decision and probability
+## Understanding the extractors decision
+Every extractor results in exactly one extracted feature in the response. This extractor specific response part looks
+as follows:
 
-The service returns the values
+```json
+{
+  "stars": 3,
+  "explanation": "Some human readable message",
+  "extra": {
+    "foo1": "A structure that depends on the implementation of the extractor.",
+    "foo2": "It contains additional information about how the extractor came to it's star rating and explanation."
+  }
+}
+```
 
-- `isHappyCase`
-- `probability`
+For example, the structure for the `Licence` extractor could look as follows:
 
-for each evaluated feature.
+```json
+{
+  "stars": 5,
+  "explanation": "Content appears to be licenced with CC0.",
+  "extra": {
+    "guess": "CC0",
+    "total": 5,
+    "counts": {"CC_BY": 1, "CC0": 4}
+  }
+}
+```
 
-`isHappyCase` is either:
+In case an extractor is not able to complete (due to internal errors), then the respective extractor will report this
+error in the following form:
 
-- `True`:
-  Knockout for this metadata is true.:
-    - advertisement: if true, ads have been found
-    - GDPR: if true, the website is confirming to GDPR
-- `False`:
-    - either the metadata has not been found in the website (e.g., ads)
-      or the website is not conforming to the requirements (e.g., is not iframe embeddable)
-- `Unknown`:
-    - it is unclear, whether this metadata leads to knock-out or not.
-    - A human should double-check this metadata prior to final decision
-
-The `probability` scales from `0` to `1`.
-
-- `0` indicates that nothing is certain, i.e., whether `isHappyCase` is True or False is irrelevant.
-  - generally, `isHappyCase` will be `Unknown` in this case
-- `1` indicates certainty, i.e., either False or True are certain.
-
-Both `isHappyCase` and `probability` are determined specifically for each feature based on developer-chosen thresholds
-and methods.
-Therefore, all results are opinionated and heavily biased.
-With more production data, these features may be improved.
-
-`True` and `False` are not strict opposites, i.e., just because something is false does not mean it is not true.
-E.g., it may indicate that the algorithm does not find suitable results or only partial agreement is found
-(as in the case of GDPR).
-In line with that, a 30% probability of True does not mean it is 70% False.
+```json
+{
+  "error": "What went wrong, eventually including a stack trace where the error originated."
+}
+```
 
 ## Adding new features for detection
+To add a new feature,
 
-To add a new feature, it must inherit from MetadataBase.
+ - create a new class that implements the [`Extractor`](../src/metalookup/core/extractor.py) interface in the `features`
+   module.
+ - Add the new class to the `setup` call of the [`MetaDataManager`](../src/metalookup/core/metadata_manager.py)
+ - Add a field that matches your extractors `key` to the [output model](../src/metalookup/app/models.py)
 
-The class must be included in
-
-1. `src/features/metadata_manager.py:__setup_extractors`
-2. `app.models.ExtractorTags`
-3. `app.models.ListTags`
-
-Furthermore, the cache must be extended, update
-- `db.models.CacheEntry`
-- `app.schemas.CacheSchema`
-
-Potentially, the cache must be reset through the respective API endpoint.
-
-### Example
-
-A good example to see minimum requirements for a feature can be found in `src/features/javascript.py`.
+Note, that such a change can be considered a breaking change, as the response model of the API gets modified. Also, it
+may make sense to truncate the cache, as otherwise cached results will not include the newly added feature.
