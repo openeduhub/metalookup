@@ -13,6 +13,7 @@ LOG_LEVEL = getattr(logging, os.environ.get("LOG_LEVEL", "INFO"))
 LOG_PATH = os.environ.get("LOG_PATH", None)
 
 # Caching
+# Careful: in python bool("False") === True!
 ENABLE_CACHE = os.environ.get("ENABLE_CACHE", "True") == "True"
 CACHE_DATABASE_URL = os.environ.get("CACHE_DATABASE_URL", "postgresql://metalookup:metalookup@postgres/metalookup")
 ENABLE_CACHE_CONTROL_ENDPOINTS = os.environ.get("ENABLE_CACHE_CONTROL_ENDPOINTS", "True") == "True"

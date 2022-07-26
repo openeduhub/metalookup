@@ -3,8 +3,8 @@ from concurrent.futures import Executor
 from urllib.parse import urlparse
 
 from metalookup.app.models import Explanation, StarCase
+from metalookup.core.content import Content
 from metalookup.core.extractor import Extractor
-from metalookup.core.website_manager import WebsiteData
 
 FOUND_POTENTIALLY_MALICIOUS_EXTENSION = "Found potentially malicious extension"
 FOUND_SLIGHTLY_MALICIOUS_EXTENSION = "Found slightly malicious extension"
@@ -205,14 +205,14 @@ class MaliciousExtensions(Extractor[set[str]]):
     async def setup(self):
         pass
 
-    async def extract(self, site: WebsiteData, executor: Executor) -> tuple[StarCase, Explanation, set[str]]:
+    async def extract(self, content: Content, executor: Executor) -> tuple[StarCase, Explanation, set[str]]:
         def extract_extensions(raw_links: list[str]) -> set[str]:
             def suffix(link: str):
                 return os.path.splitext(urlparse(link)[2])[-1]
 
             return {suffix(link) for link in raw_links} - {""}
 
-        extensions = extract_extensions(raw_links=site.raw_links)
+        extensions = extract_extensions(raw_links=await content.raw_links())
         malicious = {extension for extension in extensions if extension in self.malicious_extensions}
 
         if len(malicious) > 0:

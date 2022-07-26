@@ -3,7 +3,7 @@ from concurrent.futures import Executor
 
 from metalookup.app.models import Explanation, StarCase
 from metalookup.app.splash_models import Cookie, Entry
-from metalookup.core.website_manager import WebsiteData
+from metalookup.core.content import Content
 from metalookup.features.adblock_based import AdBlockBasedExtractor
 
 _COOKIES_FOUND = "Found potentially insecure Cookies"
@@ -27,10 +27,10 @@ class Cookies(AdBlockBasedExtractor):
         "https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_thirdparty.txt",
     ]
 
-    async def extract(self, site: WebsiteData, executor: Executor) -> tuple[StarCase, Explanation, set[str]]:
+    async def extract(self, content: Content, executor: Executor) -> tuple[StarCase, Explanation, set[str]]:
         # Note: we derive from AdBlockBasedExtractor, but fully reimplement the extract function, as we don't want
         #       to apply the ad-block rules on links, but the detected cookies instead.
-        entries: list[Entry] = site.har.log.entries
+        entries: list[Entry] = (await content.har()).log.entries
 
         insecure_cookies: list[Cookie] = [
             cookie
@@ -44,7 +44,7 @@ class Cookies(AdBlockBasedExtractor):
 
         # validate the detected insecure cookies against the above adblock rules.
         duration, matches = await loop.run_in_executor(
-            executor, self.apply_rules, site.domain, [cookie.name for cookie in insecure_cookies]
+            executor, self.apply_rules, await content.domain(), [cookie.name for cookie in insecure_cookies]
         )
         self.logger.info(f"Found {len(matches)} potentially malicious cookies in {duration:5.2}s")
 

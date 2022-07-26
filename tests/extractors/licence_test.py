@@ -1,15 +1,13 @@
 import json
-import logging
 from concurrent.futures import Executor
 from pathlib import Path
 
 import pytest
-from tldextract import TLDExtract
 
-from metalookup.app.models import Input, StarCase
+from metalookup.app.models import StarCase
 from metalookup.app.splash_models import SplashResponse
-from metalookup.core.website_manager import WebsiteData
 from metalookup.features.licence import DetectedLicences, Licence, LicenceExtractor
+from tests.extractors.conftest import mock_content
 
 
 def test_serialize_extra():
@@ -26,16 +24,15 @@ async def test_extract(executor: Executor):
     with open(Path(__file__).parent.parent / "resources" / "splash-response-google.json", "r") as f:
         splash_response = SplashResponse.parse_obj(json.load(f))
     # we dont want to count "CC BY-SA" as "CC BY"!
-    splash_response.html = "Lorem ipsum Creative Commons Zero ... CC BY-SA ... CC BY ... CC0 ..."
-    site = await WebsiteData.from_input(
-        input=Input(url="https://www.google.com", splash_response=splash_response),
-        tld_extractor=TLDExtract(cache_dir=None),
-        logger=logging.getLogger(),
+    content = mock_content(
+        url="https://www.google.com",  # noqa
+        har=splash_response.har,
+        html="Lorem ipsum Creative Commons Zero ... CC BY-SA ... CC BY ... CC0 ...",
     )
 
     extractor = LicenceExtractor()
     await extractor.setup()
-    stars, explanation, extra = await extractor.extract(site=site, executor=executor)
+    stars, explanation, extra = await extractor.extract(content=content, executor=executor)
     assert extra.guess == Licence.CC0.value
     assert extra.total == 4
     assert len(extra.counts) == 3

@@ -2,7 +2,7 @@ import pytest
 
 from metalookup.features.gdpr import GDPR
 from metalookup.lib.tools import runtime
-from tests.extractors.conftest import mock_website_data
+from tests.extractors.conftest import mock_content
 
 
 @pytest.mark.asyncio
@@ -26,10 +26,10 @@ async def test_gdpr(executor):
         "Referrer-Policy": "no-referrer",
         "Strict-Transport-Security": "max-age=15724800; includeSubDomains; preload",
     }
-    site = await mock_website_data(html=html, url=url, header=header)
+    content = mock_content(html=html, url=url, header=header)  # noqa
 
     with runtime() as t:
-        stars, explanation, values = await feature.extract(site, executor=executor)
+        stars, explanation, values = await feature.extract(content, executor=executor)
     assert t() < 2
     assert values == {
         "preload",

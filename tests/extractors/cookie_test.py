@@ -4,7 +4,7 @@ import pytest
 
 from metalookup.app.splash_models import HAR
 from metalookup.features.cookies import Cookies
-from tests.extractors.conftest import mock_website_data
+from tests.extractors.conftest import mock_content
 
 
 @pytest.mark.asyncio
@@ -49,8 +49,8 @@ async def test_cookies_har(executor):
     }"""
         )
     )
-    site = await mock_website_data(har=har)
-    stars, explanation, values = await feature.extract(site, executor=executor)
+    content = mock_content(har=har)
+    stars, explanation, values = await feature.extract(content, executor=executor)
 
     # extra data returns "cookie-name=cookie-value" pairs for cookies extracted from har
     assert values == {"https://some-domain.org/agreements/cookie?key=value", "prefix-cookie-notice.suffix"}
