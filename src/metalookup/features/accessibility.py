@@ -39,7 +39,7 @@ class Accessibility(Extractor[AccessibilityScores]):
         """
         self.lighthouse_timeout = lighthouse_timeout
         self.lighthouse_url = lighthouse_url
-        self.star_levels = [0.7, 0.8, 0.85, 0.9, 0.95, 1]
+        self.star_levels = [0.7, 0.8, 0.85, 0.9, 0.95]
 
     async def setup(self):
         pass
