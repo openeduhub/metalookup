@@ -1,14 +1,14 @@
 import logging
 import multiprocessing
 from multiprocessing import Process
-from typing import Optional
+from typing import Dict, Optional, Union
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import HttpUrl
 
 import metalookup.lib.settings
-from metalookup.app.models import Input, MetadataTags, Output, Ping
+from metalookup.app.models import Error, Input, LRMISuggestions, MetadataTags, Output, Ping, StarCase
 from metalookup.caching.backends import DatabaseBackend
 from metalookup.caching.cache import cache
 from metalookup.caching.warmup import warmup
@@ -71,6 +71,51 @@ async def extract(input: Input, request: Request, response: Response, extra: boo
         response.headers.append("Cache-Control", "no-cache")
         response.headers.append("Cache-Control", "no-store")
     return result
+
+
+@app.post(
+    "/lrmi-suggestions",
+    response_model=LRMISuggestions,
+    description="Use the available extractors to deduce PoC level suggestions for four of the meta data fields of the LRMI.",
+)
+@cache(
+    expire=24 * 60 * 60 * 28,
+    # Note, we simply modify the cache key here to use the same codebase as for the extract endpoint.
+    key=lambda input, request, response, extra: f"{input.url}-lrmi" if input.splash_response is None else None,
+    backend=cache_backend,
+)
+# request and response arguments are needed for the cache wrapper.
+async def suggest(input: Input, request: Request, response: Response):
+    logger.info(f"Received request for {input.url}")
+
+    result = await manager.extract(input, extra=True)
+
+    def combine(*fields: str) -> Union[MetadataTags, Error]:
+        """
+        Combines the extractors' MetaDataTags for given extractors (the field names used in the Output model).
+        Star rating will be deduced as minimum star rating.
+        If any extractor failed, the combined result is also a failure listing all sub-failures.
+        """
+        fields: Dict[str, Union[Error, MetadataTags]] = {field: getattr(result, field) for field in fields}
+        # check if any of the three extractors resulted in an error
+        errors = {name: field.error for name, field in fields.items() if hasattr(field, "error")}
+        if len(errors) > 0:
+            return Error(error=f"Extractor errors: {errors}")
+        return MetadataTags(
+            stars=StarCase.from_number(min(int(field.stars) for field in fields.values())),
+            explanation=(
+                "Deduced from the minimum star rating of the following extractors.\n"
+                "\n".join(f"{name}-explanation: {field.explanation}" for name, field in fields.items())
+            ),
+            extra={name: field.extra for name, field in fields.items()},
+        )
+
+    return LRMISuggestions(
+        protection_of_minors=combine("easylist_adult"),
+        login=combine("log_in_out", "reg_wall", "paywall"),
+        data_privacy=combine("easy_privacy", "gdpr", "cookies"),
+        accessibility=combine("accessibility"),
+    )
 
 
 # todo (https://github.com/openeduhub/metalookup/issues/135): remove once frontend is transitioned to new API
