@@ -9,8 +9,8 @@ import adblockparser
 from aiohttp import ClientSession
 
 from metalookup.app.models import Explanation, StarCase
+from metalookup.core.content import Content
 from metalookup.core.extractor import Extractor, download_tag_lists
-from metalookup.core.website_manager import WebsiteData
 from metalookup.lib.tools import runtime
 
 _FOUND_LIST_MATCHES = "Found list matches"
@@ -108,9 +108,11 @@ class AdBlockBasedExtractor(Extractor[set[str]]):
                         break
         return t(), values
 
-    async def extract(self, site: WebsiteData, executor: Executor) -> tuple[StarCase, Explanation, set[str]]:
+    async def extract(self, content: Content, executor: Executor) -> tuple[StarCase, Explanation, set[str]]:
         loop = asyncio.get_running_loop()
-        duration, values = await loop.run_in_executor(executor, self.apply_rules, site.domain, site.raw_links)
+        duration, values = await loop.run_in_executor(
+            executor, self.apply_rules, await content.domain(), await content.raw_links()
+        )
         self.logger.info(
             f"Found {len(values)} links that should be blocked according to ad-block rules in {duration:5.2}s"
         )

@@ -1,8 +1,8 @@
 from concurrent.futures import Executor
 
 from metalookup.app.models import Explanation, StarCase
+from metalookup.core.content import Content
 from metalookup.core.extractor import Extractor
-from metalookup.core.website_manager import WebsiteData
 
 _FOUND_NON_EMBEDDED_JAVASCRIPT = "Found non embedded javascript block(s)"
 _FOUND_NO_NON_EMBEDDED_JAVASCRIPT = "Found no non embedded javascript block(s)"
@@ -18,9 +18,9 @@ class Javascript(Extractor[set[str]]):
     async def setup(self):
         pass
 
-    async def extract(self, site: WebsiteData, executor: Executor) -> tuple[StarCase, Explanation, set[str]]:
+    async def extract(self, content: Content, executor: Executor) -> tuple[StarCase, Explanation, set[str]]:
         matches = set()
-        for script in site.soup.select("script"):
+        for script in (await content.soup()).select("script"):
             # fixme: as stated in the documentation (acceptance.md) we only consider script blocks with a
             #        `src` attribute as "javascript". However, the script could also be embedded (instead of loaded from
             #        somewhere). E.g.:

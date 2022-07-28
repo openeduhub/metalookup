@@ -2,7 +2,7 @@ import pytest
 
 from metalookup.app.models import StarCase
 from metalookup.features.malicious_extensions import MaliciousExtensions
-from tests.extractors.conftest import mock_website_data
+from tests.extractors.conftest import mock_content
 
 
 @pytest.mark.asyncio
@@ -43,8 +43,8 @@ from tests.extractors.conftest import mock_website_data
 async def test_malicious_extensions(expected_values, input_html, expected_decision, executor):
     feature = MaliciousExtensions()
     await feature.setup()
-    site = await mock_website_data(html=input_html)
+    content = mock_content(html=input_html)
 
-    stars, explanation, matches = await feature.extract(site, executor=executor)
+    stars, explanation, matches = await feature.extract(content, executor=executor)
     assert matches == expected_values
     assert stars == expected_decision

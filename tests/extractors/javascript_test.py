@@ -1,7 +1,7 @@
 import pytest
 
 from metalookup.features.javascript import Javascript
-from tests.extractors.conftest import mock_website_data
+from tests.extractors.conftest import mock_content
 
 
 @pytest.mark.asyncio
@@ -13,6 +13,6 @@ async def test_javascript(executor):
            <script src='/xlayer/layer.php?uid='></script>
            <script href='some_test_javascript.js'></script>
            """
-    site = await mock_website_data(html=html)
-    stars, explanation, matches = await feature.extract(site, executor=executor)
+    content = mock_content(html=html)
+    stars, explanation, matches = await feature.extract(content, executor=executor)
     assert matches == {"/xlayer/layer.php?uid="}

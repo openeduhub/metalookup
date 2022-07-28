@@ -12,11 +12,12 @@ import PyPDF2
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 from pdfminer.high_level import extract_text
+from pydantic import HttpUrl
 from PyPDF2.errors import PdfReadError
 
 from metalookup.app.models import Explanation, StarCase
+from metalookup.core.content import Content
 from metalookup.core.extractor import Extractor
-from metalookup.core.website_manager import WebsiteData
 from metalookup.lib.settings import RETURN_IMAGES_IN_METADATA
 
 logger = logging.getLogger(__file__)
@@ -64,8 +65,8 @@ class ExtractFromFiles(Extractor[set[str]]):
     async def setup(self):
         pass
 
-    async def extract(self, site: WebsiteData, executor: Executor) -> tuple[StarCase, Explanation, set[str]]:
-        extractable_files = self._get_extractable_files(site)
+    async def extract(self, content: Content, executor: Executor) -> tuple[StarCase, Explanation, set[str]]:
+        extractable_files = self._get_extractable_files(await content.raw_links())
 
         if len(extractable_files) == 0:  # avoid division by zero error below
             return StarCase.FIVE, _NO_FILES_TO_EXTRACT, set()
@@ -182,7 +183,7 @@ class ExtractFromFiles(Extractor[set[str]]):
 
         return len(content) > 0
 
-    async def _work_files(self, executor: Executor, files: list) -> set[str]:
+    async def _work_files(self, executor: Executor, files: set[str]) -> set[str]:
         async with ClientSession() as session:
 
             async def task(url: str) -> Optional[str]:
@@ -202,9 +203,7 @@ class ExtractFromFiles(Extractor[set[str]]):
         return {file for file in extractable_files if file is not None}
 
     @staticmethod
-    def _get_extractable_files(website_data: WebsiteData) -> set[str]:
-        file_extensions = [os.path.splitext(link)[-1] for link in website_data.raw_links]
+    def _get_extractable_files(links: list[str]) -> set[str]:
+        file_extensions = [os.path.splitext(link)[-1] for link in links]
 
-        return {
-            file for file, extension in zip(website_data.raw_links, file_extensions) if extension in [".docx", ".pdf"]
-        }
+        return {file for file, extension in zip(links, file_extensions) if extension in [".docx", ".pdf"]}

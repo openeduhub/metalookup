@@ -2,8 +2,8 @@ from concurrent.futures import Executor
 from typing import Callable
 
 from metalookup.app.models import Explanation, StarCase
+from metalookup.core.content import Content
 from metalookup.core.extractor import Extractor
-from metalookup.core.website_manager import WebsiteData
 
 _MINIMUM_SECURITY_REQUIREMENTS_COVERED = "Minimum security requirements covered"
 _INDICATORS_FOR_INSUFFICIENT_SECURITY_FOUND = "Indicators for insufficient security found"
@@ -35,10 +35,11 @@ class Security(Extractor[set[str]]):
     async def setup(self):
         pass
 
-    async def extract(self, site: WebsiteData, executor: Executor) -> tuple[StarCase, Explanation, set[str]]:
+    async def extract(self, content: Content, executor: Executor) -> tuple[StarCase, Explanation, set[str]]:
         # No need to dispatch to the executor as this is a rather trivial computation
+        headers = await content.headers()
         passed_checks = [
-            field for field, check in self.header_checks.items() if field in site.headers and check(site.headers[field])
+            field for field, check in self.header_checks.items() if field in headers and check(headers[field])
         ]
         failed_checks = set(self.header_checks.keys()) - set(passed_checks)
 

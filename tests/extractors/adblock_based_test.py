@@ -11,17 +11,17 @@ from metalookup.features.adblock_based import (
     FanboySocialMedia,
 )
 from metalookup.lib.tools import runtime
-from tests.extractors.conftest import mock_website_data
+from tests.extractors.conftest import mock_content
 
 
 @pytest.mark.asyncio
 async def test_advertisement(executor):
     feature = Advertisement()
     await feature.setup()
-    site = await mock_website_data(html="<script src='/layer.php?bid='></script>")
+    content = mock_content(html="<script src='/layer.php?bid='></script>")
 
     with runtime() as t:
-        stars, explanation, matches = await feature.extract(site, executor=executor)
+        stars, explanation, matches = await feature.extract(content, executor=executor)
     assert t() < 10
     assert matches == {"/layer.php?bid="}
 
@@ -34,10 +34,10 @@ async def test_easylist_adult(executor):
            <link href='bookofsex.com'/>
            <link href='geofamily.ru^$third-party'/>
            """
-    site = await mock_website_data(html=html)
+    content = mock_content(html=html)
 
     with runtime() as t:
-        stars, explanation, matches = await feature.extract(site, executor=executor)
+        stars, explanation, matches = await feature.extract(content, executor=executor)
 
     assert t() < 10
     assert matches == {"bookofsex.com", "geofamily.ru^$third-party"}
@@ -59,9 +59,9 @@ async def test_easy_privacy(executor):
            (window,"googletag","function");</script><script type="6cf3255238f69b4dbff7a6d1-text/javascript"
            src='https://cdn.fluidplayer.com/v2/current/fluidplayer.min.js?ver=5.6' id='fluid-player-js-js'></script>
            """
-    site = await mock_website_data(html=html)
+    content = mock_content(html=html)
     with runtime() as t:
-        stars, explanation, matches = await feature.extract(site, executor=executor)
+        stars, explanation, matches = await feature.extract(content, executor=executor)
     assert t() < 10
     assert matches == {
         "//www.googletagmanager.com",
@@ -78,9 +78,9 @@ async def test_fanboy_social_media(executor):
 <link rel='stylesheet' id='wpzoom-social-icons-block-style-css' href='https://canyoublockit.com/wp-content/plugins/social-icons-widget-by-wpzoom/block/dist/blocks.style.build.css?ver=1603794146' type='text/css' media='all' />
 <script type="4fc846f350e30f875f7efd7a-text/javascript" src='https://canyoublockit.com/wp-content/plugins/elementor/assets/lib/share-link/share-link.min.js?ver=3.0.15' id='share-link-js'></script>
 """
-    site = await mock_website_data(html=html)
+    content = mock_content(html=html)
     with runtime() as t:
-        stars, explanation, matches = await feature.extract(site, executor=executor)
+        stars, explanation, matches = await feature.extract(content, executor=executor)
     assert t() < 2
     assert matches == {
         "https://canyoublockit.com/wp-content/plugins/elementor/assets/lib/share-link/share-link.min.js?ver=3.0.15",
@@ -98,9 +98,9 @@ async def test_easylist_germany(executor):
            <link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='.at/werbung/' type='text/css' media='all' />
            <link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='finanzen100.de' type='text/css' media='all' />
            """
-    site = await mock_website_data(html=html)
+    content = mock_content(html=html)
     with runtime() as t:
-        stars, explanation, matches = await feature.extract(site, executor=executor)
+        stars, explanation, matches = await feature.extract(content, executor=executor)
     assert t() < 2
     assert matches == {"/werbung/banner_", ".at/werbung/"}
 
@@ -116,9 +116,9 @@ async def test_anti_adblock(executor):
             <link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='cmath.fr/images/fond2.gif' type='text/css' media='all' />
             <link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='||dbz-fantasy.com/ads.css' type='text/css' media='all' />
             """
-    site = await mock_website_data(html=html)
+    content = mock_content(html=html)
     with runtime() as t:
-        stars, explanation, matches = await feature.extract(site, executor=executor)
+        stars, explanation, matches = await feature.extract(content, executor=executor)
     assert t() < 2
     assert matches == {"cmath.fr/images/fond2.gif", "/adb_script/", "/adbDetect."}
 
@@ -133,9 +133,9 @@ async def test_fanboy_notification(executor):
            <link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='/notification-ext.' type='text/css' media='all' />
            <link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='indianexpress.com' type='text/css' media='all' />
            """
-    site = await mock_website_data(html=html)
+    content = mock_content(html=html)
     with runtime() as t:
-        stars, explanation, matches = await feature.extract(site, executor=executor)
+        stars, explanation, matches = await feature.extract(content, executor=executor)
     assert t() <= 2
     assert matches == {"/build/push.js", "/notification-ext."}
 
@@ -150,8 +150,8 @@ async def test_fanboy_annoyance(executor):
            <link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='/notification-ext.' type='text/css' media='all' />
            <link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='indianexpress.com' type='text/css' media='all' />
            """
-    site = await mock_website_data(html=html)
+    content = mock_content(html=html)
     with runtime() as t:
-        stars, explanation, matches = await feature.extract(site, executor=executor)
+        stars, explanation, matches = await feature.extract(content, executor=executor)
     assert t() < 2
     assert matches == {"/build/push.js", "/notification-ext."}

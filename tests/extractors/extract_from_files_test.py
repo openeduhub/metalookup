@@ -9,7 +9,7 @@ import pytest
 from aiohttp import ClientSession
 
 from metalookup.features.extract_from_files import ExtractFromFiles
-from tests.extractors.conftest import mock_website_data
+from tests.extractors.conftest import mock_content
 
 
 @contextlib.contextmanager
@@ -35,16 +35,16 @@ async def test_extract_from_files(executor: Executor):
            <a href=\"https://dummy.wirlernenonline.de/arbeitsblatt_analog_losung.docx\" target=\"_blank\">
            Arbeitsblatt analog L\u00f6sung.docx</a>
            """
-    site = await mock_website_data(html=html)
+    content = mock_content(html=html)
 
-    extractable = ExtractFromFiles._get_extractable_files(site)
+    extractable = ExtractFromFiles._get_extractable_files(await content.raw_links())
     assert extractable == {
         "https://dummy.wirlernenonline.de/arbeitsblatt_analog_losung.pdf",
         "https://dummy.wirlernenonline.de/arbeitsblatt_analog_losung.docx",
     }
 
     with file_download_mock():
-        stars, explanation, extra = await feature.extract(site, executor=executor)
+        stars, explanation, extra = await feature.extract(content, executor=executor)
         assert extra == {
             "https://dummy.wirlernenonline.de/arbeitsblatt_analog_losung.pdf",
             "https://dummy.wirlernenonline.de/arbeitsblatt_analog_losung.docx",

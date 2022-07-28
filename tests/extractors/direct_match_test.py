@@ -2,17 +2,17 @@ import pytest
 
 from metalookup.features.direct_match import LogInOut, Paywalls, PopUp, RegWall
 from metalookup.lib.tools import runtime
-from tests.extractors.conftest import mock_website_data
+from tests.extractors.conftest import mock_content
 
 
 @pytest.mark.asyncio
 async def test_paywalls(executor):
     feature = Paywalls()
     await feature.setup()
-    site = await mock_website_data(html="<paywall></paywalluser>")
+    content = mock_content(html="<paywall></paywalluser>")
 
     with runtime() as t:
-        stars, explanation, values = await feature.extract(site, executor=executor)
+        stars, explanation, values = await feature.extract(content, executor=executor)
 
     assert t() < 10
     assert values == {"paywall", "paywalluser"}
@@ -35,9 +35,9 @@ async def test_pop_up(executor):
 "anOptionModalShowAfter":0,"anPageMD5":"","anSiteID":0,
 "modalHTML":"
 """
-    site = await mock_website_data(html=html)
+    content = mock_content(html=html)
     with runtime() as t:
-        stars, explanation, values = await feature.extract(site, executor=executor)
+        stars, explanation, values = await feature.extract(content, executor=executor)
     assert t() < 2
     assert values == {
         "modal",
@@ -53,9 +53,9 @@ async def test_log_in_out(executor):
     html = """input[type="email"]:focus,input[type="url"]:focus,input[type="password"]:focus,input[type="reset"]:
            input#submit,input[type="button"],input[type="submit"],input[type="reset"]
            """
-    site = await mock_website_data(html=html)
+    content = mock_content(html=html)
     with runtime() as t:
-        stars, explanation, values = await feature.extract(site, executor=executor)
+        stars, explanation, values = await feature.extract(content, executor=executor)
     assert t() < 2
     assert values == {
         "email",
@@ -73,8 +73,8 @@ async def test_reg_wall(executor):
            <link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='regwall' type='text/css' media='all' />
            <link rel='stylesheet' id='wpzoom-social-icons-block-style-css'  href='registerbtn' type='text/css' media='all' />
            """
-    site = await mock_website_data(html=html)
+    content = mock_content(html=html)
     with runtime() as t:
-        stars, explanation, values = await feature.extract(site, executor=executor)
+        stars, explanation, values = await feature.extract(content, executor=executor)
     assert t() < 2
     assert set(values) == {"register", "regwall", "registerbtn"}

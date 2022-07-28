@@ -11,7 +11,7 @@ from urllib.parse import urlparse
 from aiohttp import ClientSession
 
 from metalookup.app.models import Explanation, StarCase
-from metalookup.core.website_manager import WebsiteData
+from metalookup.core.content import Content
 from metalookup.lib.settings import USE_LOCAL_IF_POSSIBLE
 
 T = TypeVar("T")
@@ -28,11 +28,11 @@ class Extractor(Generic[T]):
         """
 
     @abc.abstractmethod
-    async def extract(self, site: WebsiteData, executor: Executor) -> tuple[StarCase, Explanation, T]:
+    async def extract(self, content: Content, executor: Executor) -> tuple[StarCase, Explanation, T]:
         """
         Extract information from the website returning its star rating, an explanation and additional extractor specific
         information.
-        :param site: The content to be analysed.
+        :param content: The Content that should be analysed.
         :param executor: An executor to which CPU bound processing should be dispatched.
         """
 

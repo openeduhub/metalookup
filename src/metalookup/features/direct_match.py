@@ -1,8 +1,8 @@
 from concurrent.futures import Executor
 
 from metalookup.app.models import Explanation, StarCase
+from metalookup.core.content import Content
 from metalookup.core.extractor import Extractor
-from metalookup.core.website_manager import WebsiteData
 
 _FOUND_LIST_MATCHES = "Found list matches"
 _FOUND_NO_LIST_MATCHES = "Found no list matches"
@@ -20,11 +20,11 @@ class DirectMatch(Extractor[set[str]]):
     async def setup(self):
         pass
 
-    async def extract(self, site: WebsiteData, executor: Executor) -> tuple[StarCase, Explanation, set[str]]:
+    async def extract(self, content: Content, executor: Executor) -> tuple[StarCase, Explanation, set[str]]:
         # fixme: html.lower() might be expensive but we do it multiple times (once for each of the derived classes)
         # fixme: eventually (if it turns out that below two lines regularly quite CPU heavy) move evaluation to
         #        executor and await
-        html = site.html.lower()
+        html = (await content.html()).lower()
         matches = {ele for ele in self.tag_list if ele in html}
 
         explanation = _FOUND_LIST_MATCHES if len(matches) > 0 else _FOUND_NO_LIST_MATCHES

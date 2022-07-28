@@ -3,6 +3,7 @@ from unittest import mock
 import pytest
 
 from metalookup.app.models import StarCase
+from metalookup.core.content import Content
 from metalookup.features.accessibility import Accessibility, AccessibilityScores
 
 
@@ -31,7 +32,7 @@ async def test_extract(score, expected_decision, executor):
     # intercept the request to the non-running splash and lighthouse container
     # and instead use the checked in response json and a hardcoded score value
     with mock.patch("metalookup.features.accessibility.Accessibility._execute_api_call", accessibility_api_call_mock):
-        decision, explanation, extra = await accessibility.extract(site=mock.Mock(url="url"), executor=executor)
+        decision, explanation, extra = await accessibility.extract(content=Content(url="url"), executor=executor)
 
         assert decision == expected_decision
         assert isinstance(extra, AccessibilityScores)

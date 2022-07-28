@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from metalookup.app.splash_models import SplashResponse
+from metalookup.app.splash_models import HAR, SplashResponse
 
 
 @contextlib.contextmanager
@@ -32,7 +32,8 @@ def splash_mock():
     the data from the test resources. This allows running unittests without a dependency on a running splash container.
     """
 
-    def load_response(url: str) -> SplashResponse:
+    async def fetch(self) -> tuple[str, HAR]:
+        url = self.url
         if url.startswith("https://www.google.com"):
             path = Path(__file__).parent / "resources" / "splash-response-google.json"
         elif url.startswith("https://wirlernenonline.de/does-not-exist.html"):
@@ -40,11 +41,10 @@ def splash_mock():
         else:
             raise ValueError(f"Cannot provide mocked splash response for {url=}")
         with open(path, "r") as f:
-            return SplashResponse.parse_obj(json.load(f))
+            response = SplashResponse.parse_obj(json.load(f))
+            return response.html, response.har
 
-    with mock.patch(
-        "metalookup.core.website_manager.WebsiteData.fetch_content", new=AsyncMock(side_effect=load_response)
-    ):
+    with mock.patch("metalookup.core.content.Content._fetch", new=fetch):
         yield
 
 

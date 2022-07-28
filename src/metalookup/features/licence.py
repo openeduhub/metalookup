@@ -6,8 +6,8 @@ from typing import Optional
 from pydantic import BaseModel
 
 from metalookup.app.models import StarCase
+from metalookup.core.content import Content
 from metalookup.core.extractor import Explanation, Extractor
-from metalookup.core.website_manager import WebsiteData
 
 
 # see https://docs.python.org/3/library/enum.html#using-automatic-values
@@ -142,9 +142,9 @@ class LicenceExtractor(Extractor[DetectedLicences]):
             total=sum(nonzero.values()),
         )
 
-    async def extract(self, site: WebsiteData, executor: Executor) -> tuple[StarCase, Explanation, DetectedLicences]:
+    async def extract(self, content: Content, executor: Executor) -> tuple[StarCase, Explanation, DetectedLicences]:
         loop = asyncio.get_running_loop()
-        result = await loop.run_in_executor(executor, self.result, site.html)
+        result = await loop.run_in_executor(executor, self.result, await content.html())
         if result.guess is None:
             return StarCase.ZERO, "Found insufficient matches of any licence strings in content", result
         return (

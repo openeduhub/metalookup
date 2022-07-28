@@ -2,8 +2,8 @@ import re
 from concurrent.futures import Executor
 
 from metalookup.app.models import Explanation, StarCase
+from metalookup.core.content import Content
 from metalookup.core.extractor import Extractor
-from metalookup.core.website_manager import WebsiteData
 
 _MINIMUM_GDPR_REQUIREMENT_COVERED = "Minimum GDPR Requirements covered"
 _POTENTIALLY_INSUFFICIENT_GDPR_REQUIREMENTS = "Potentially non GDPR compliant"
@@ -19,8 +19,8 @@ class GDPR(Extractor[set[str]]):
     async def setup(self):
         pass
 
-    async def extract(self, site: WebsiteData, executor: Executor) -> tuple[StarCase, Explanation, set[str]]:
-        html = site.html.lower()
+    async def extract(self, content: Content, executor: Executor) -> tuple[StarCase, Explanation, set[str]]:
+        html = (await content.html()).lower()
         values = [ele for ele in self.tag_list if ele in html]
 
         for func in [
@@ -30,7 +30,7 @@ class GDPR(Extractor[set[str]]):
             self._find_fonts,
             self._find_input_fields,
         ]:
-            values += func(website_data=site)
+            values += await func(content=content)
 
         values = set(values)
 
@@ -69,13 +69,14 @@ class GDPR(Extractor[set[str]]):
         return decision, explanation
 
     @staticmethod
-    def _check_https_in_url(website_data: WebsiteData) -> list[str]:
-        value = "not" if "https" not in website_data.url else ""
+    async def _check_https_in_url(content: Content) -> list[str]:
+        value = "not" if "https" not in content.url else ""
         return [value + "https_in_url"]
 
-    def _get_hsts(self, website_data: WebsiteData) -> list:
-        if "strict-transport-security" in website_data.headers.keys():
-            sts = website_data.headers["strict-transport-security"]
+    async def _get_hsts(self, content: Content) -> list:
+        headers = await content.headers()
+        if "strict-transport-security" in headers.keys():
+            sts = headers["strict-transport-security"]
             values = ["hsts"]
             values.extend(self._extract_sts(sts.split(";")))
             values.extend(self._extract_max_age(sts.split(";")))
@@ -97,15 +98,17 @@ class GDPR(Extractor[set[str]]):
         return [key if key in normalized else f"do_not_{key}" for key in ["includesubdomains", "preload"]]
 
     @staticmethod
-    def _get_referrer_policy(website_data: WebsiteData) -> list[str]:
+    async def _get_referrer_policy(content: Content) -> list[str]:
+        headers = await content.headers()
+        html = await content.html()
         referrer_policy = "referrer-policy"
-        if referrer_policy in website_data.headers.keys():
-            values = [website_data.headers[referrer_policy]]
+        if referrer_policy in headers.keys():
+            values = [headers[referrer_policy]]
         else:
             values = [f"no_{referrer_policy}"]
 
         regex = re.compile(r"<link rel=(.*?)href")
-        matches = re.findall(regex, website_data.html.lower())
+        matches = re.findall(regex, html.lower())
         if matches:
             values += [match.replace('"', "").replace(" ", "") for match in matches]
         else:
@@ -113,9 +116,9 @@ class GDPR(Extractor[set[str]]):
         return values
 
     @staticmethod
-    def _find_fonts(website_data: WebsiteData) -> list[str]:
+    async def _find_fonts(content: Content) -> list[str]:
         regex = re.compile(r"@font-face\s*{[\s\w\d\D\n]*?}")
-        matches = re.findall(regex, website_data.html.lower())
+        matches = re.findall(regex, (await content.html()).lower())
         url_regex = re.compile(r"url\((.*?)\)")
 
         found_fonts = []
@@ -129,7 +132,7 @@ class GDPR(Extractor[set[str]]):
         return [found_fonts]
 
     @staticmethod
-    def _find_input_fields(website_data: WebsiteData) -> list[str]:
+    async def _find_input_fields(content: Content) -> list[str]:
         inputs = []
         input_types = [
             "input",
@@ -158,7 +161,7 @@ class GDPR(Extractor[set[str]]):
             "datetime",
         ]
         for input_type in input_types:
-            matches = website_data.soup.find_all(input_type)
+            matches = (await content.soup()).find_all(input_type)
             if matches:
                 inputs += [input_type]
 

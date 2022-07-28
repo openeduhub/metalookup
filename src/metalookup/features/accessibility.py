@@ -1,14 +1,18 @@
 import asyncio
 import json
+import logging
 from concurrent.futures import Executor
 
 from aiohttp import ClientSession
 from pydantic import BaseModel
 
 from metalookup.app.models import Explanation, StarCase
+from metalookup.core.content import Content
 from metalookup.core.extractor import Extractor
-from metalookup.core.website_manager import WebsiteData
 from metalookup.lib.settings import LIGHTHOUSE_TIMEOUT, LIGHTHOUSE_URL
+from metalookup.lib.tools import runtime
+
+logger = logging.getLogger(__name__)
 
 _DESKTOP = "desktop"
 _MOBILE = "mobile"
@@ -44,12 +48,12 @@ class Accessibility(Extractor[AccessibilityScores]):
     async def setup(self):
         pass
 
-    async def extract(self, site: WebsiteData, executor: Executor) -> tuple[StarCase, Explanation, AccessibilityScores]:
+    async def extract(self, content: Content, executor: Executor) -> tuple[StarCase, Explanation, AccessibilityScores]:
         async with ClientSession() as session:
 
             scores = await asyncio.gather(
                 *[
-                    self._execute_api_call(url=site.url, session=session, strategy=strategy)
+                    self._execute_api_call(url=content.url, session=session, strategy=strategy)
                     for strategy in [_DESKTOP, _MOBILE]
                 ]
             )
@@ -78,9 +82,11 @@ class Accessibility(Extractor[AccessibilityScores]):
             "strategy": strategy,
         }
         try:
-            response = await session.get(
-                url=f"{self.lighthouse_url}/{_ACCESSIBILITY}", timeout=self.lighthouse_timeout, json=params
-            )
+            with runtime() as t:
+                response = await session.get(
+                    url=f"{self.lighthouse_url}/{_ACCESSIBILITY}", timeout=self.lighthouse_timeout, json=params
+                )
+            logger.debug(f"Fetched accessibility for {strategy} in {t():5.2f}s")
         except asyncio.exceptions.TimeoutError:
             raise RuntimeError(
                 f"Lighthouse request for {strategy=} and {url=} timed out after {self.lighthouse_timeout} seconds"
