@@ -24,12 +24,13 @@ async def client() -> AsyncClient:
         os.remove(cache_db)
     from databases import Database
 
-    cache_backend.database = Database("sqlite://./meta-lookup-cache.db")
+    if cache_backend is not None:
+        cache_backend.database = Database("sqlite://./meta-lookup-cache.db")
 
-    # Using an async client allows to have async unit tests which simplifies checking the desired
-    # side effects (e.g. cache modifications). However it means we manually need to ensure that
-    # the application state is setup.
-    await cache_backend.setup()
+        # Using an async client allows to have async unit tests which simplifies checking the desired
+        # side effects (e.g. cache modifications). However it means we manually need to ensure that
+        # the application state is setup.
+        await cache_backend.setup()
     await manager.setup()
 
     async with AsyncClient(app=app, base_url="http://localhost") as client:
@@ -47,17 +48,14 @@ async def test_ping_endpoint(client):
 async def test_extract_endpoint(client):
     """
     This test:
-     - does not require the splash container because it sends the full har together with the initial request
-     - does not need the lighthouse container because it expects the lighthouse extractor to fail (with a timeout or
-       connection refused)
-     - does not need postgres container because it uses sqlite cache backend
+     - mocks lighthouse and splash
+     - tests the whole application flow through the API layer
+     - uses whatever caching is configured in the client fixture
     """
-    path = Path(__file__).parent.parent / "resources" / "splash-response-google.json"
-    with open(path, "r") as f:
-        splash = SplashResponse.parse_obj(json.load(f))
 
-    input = Input(url="https://google.com", splash_response=splash)
-    response = await client.post("/extract", json=input.dict(), timeout=10, headers={"Cache-Control": "no-cache"})
+    with splash_mock(key="google.com"), lighthouse_mock():
+        input = Input(url="https://www.google.com/")
+        response = await client.post("/extract", json=input.dict(), timeout=10, headers={"Cache-Control": "no-cache"})
 
     pprint.pprint(response.json())
 
@@ -67,26 +65,22 @@ async def test_extract_endpoint(client):
     output = Output.parse_obj(json.loads(response.text))
     assert output.url == input.url
     assert isinstance(output.security, MetadataTags), "did not receive data for security extractor"
-    # This should not be present, as the request to the accessibility container will fail
-    assert isinstance(output.accessibility, Error), "received accessibility result but container should not be running"
+    assert isinstance(output.accessibility, MetadataTags), "did not receive data for accessibility extractor"
 
 
 @pytest.mark.asyncio
 async def test_suggest_endpoint(client):
     """
     This test:
-     - does not require the splash container because it sends the full har together with the initial request
-     - does not need the lighthouse container because it assumes an accessibility extraction error
-     - does not need postgres container because it uses sqlite cache backend
+     - mocks lighthouse and splash
+     - tests the whole application flow through the API layer
+     - uses whatever caching is configured in the client fixture
     """
-    path = Path(__file__).parent.parent / "resources" / "splash-response-google.json"
-    with open(path, "r") as f:
-        splash = SplashResponse.parse_obj(json.load(f))
-
-    input = Input(url="https://google.com", splash_response=splash)
-    response = await client.post(
-        "/lrmi-suggestions", json=input.dict(), timeout=10, headers={"Cache-Control": "no-cache"}
-    )
+    with splash_mock(key="google.com"), lighthouse_mock():
+        input = Input(url="https://www.google.com/")
+        response = await client.post(
+            "/lrmi-suggestions", json=input.dict(), timeout=10, headers={"Cache-Control": "no-cache"}
+        )
     assert response.status_code == 200
     response = json.loads(response.text)
 
@@ -97,10 +91,7 @@ async def test_suggest_endpoint(client):
 
     # make sure, that our result actually complies with the promised open api spec.
     suggestion = LRMISuggestions.parse_obj(response)
-
-    assert hasattr(
-        suggestion.accessibility, "error"
-    ), f"Accessibility extraction is expected to be an error but was: {suggestion.accessibility}"
+    assert isinstance(suggestion.accessibility, MetadataTags)
 
 
 @pytest.mark.asyncio
@@ -117,22 +108,22 @@ async def test_extract_endpoint_cache(client):
          - or loads the response from cache (no need to issue a request)
      - does not need postgres container because it uses sqlite cache backend
     """
-    path = Path(__file__).parent.parent / "resources" / "splash-response-google.json"
+    path = Path(__file__).parent.parent / "resources" / "splash" / "google.com.json"
     with open(path, "r") as f:
         splash = SplashResponse.parse_obj(json.load(f))
 
     response = await client.post(
         "/extract",
-        json=Input(url="https://www.google.com", splash_response=splash).dict(),
+        json=Input(url="https://www.google.com/", splash_response=splash).dict(),
         timeout=10,
         headers={"Cache-Control": "only-if-cached"},
     )
     assert response.status_code == 400, "response cannot be cached, as the whole har body is part of the request."
 
-    with splash_mock():
+    with splash_mock(key="google.com"), lighthouse_mock():
         response = await client.post(
             "/extract",
-            json=Input(url="https://www.google.com").dict(),
+            json=Input(url="https://www.google.com/").dict(),
             timeout=10,
             headers={"Cache-Control": "only-if-cached"},
         )
@@ -140,19 +131,18 @@ async def test_extract_endpoint_cache(client):
 
         response = await client.post(
             "/extract",
-            json=Input(url="https://www.google.com").dict(),
+            json=Input(url="https://www.google.com/").dict(),
             timeout=10,
             headers={"Cache-Control": "max-age=5000"},
         )
         assert response.status_code == 200
 
         output = Output.parse_obj(json.loads(response.text))
-        assert output.url == "https://www.google.com"
+        assert output.url == "https://www.google.com/"
         assert isinstance(output.security, MetadataTags), "did not receive data for security extractor"
-        assert isinstance(output.accessibility, Error), "did not receive an error for accessibility"
 
         assert (
-            await cache_backend.get(key="https://www.google.com") is None
+            await cache_backend.get(key="https://www.google.com/") is None
         ), "should not be cached, as it was not a complete result"
 
         with lighthouse_mock():
@@ -160,7 +150,7 @@ async def test_extract_endpoint_cache(client):
             # which should also get cached.
             response = await client.post(
                 "/extract?extra=true",
-                json=Input(url="https://www.google.com").dict(),
+                json=Input(url="https://www.google.com/").dict(),
                 timeout=10,
             )
 
@@ -171,14 +161,14 @@ async def test_extract_endpoint_cache(client):
 
             assert response.status_code == 200, response.text
             assert (
-                cache_backend.get(key="https://www.google.com") is not None
+                cache_backend.get(key="https://www.google.com/") is not None
             ), "should be cached, as it was a complete result"
 
-            assert output.url == "https://www.google.com"
+            assert output.url == "https://www.google.com/"
             assert isinstance(output.licence.extra, dict)
             # should be possible to deserialize the extra data
             print(DetectedLicences.parse_obj(output.licence.extra))
-            assert isinstance(output.security, MetadataTags), "did not receive data for security extactor"
+            assert isinstance(output.security, MetadataTags), "did not receive data for security extractor"
             # This should not be present, as the request to the accessibility container will fail
             assert isinstance(
                 output.accessibility, MetadataTags

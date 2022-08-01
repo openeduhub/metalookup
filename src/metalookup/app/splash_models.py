@@ -40,6 +40,8 @@ class Request(BaseModel):
     See also http://www.softwareishard.com/blog/har-12-spec/#request
     """
 
+    url: HttpUrl
+    method: str
     headers: list[Header]
     cookies: list[Cookie]
 

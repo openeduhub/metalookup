@@ -8,6 +8,7 @@ from fastapi import HTTPException
 from pydantic import ValidationError
 
 from metalookup.app.models import Error, Input, MetadataTags, Output
+from metalookup.app.splash_models import SplashResponse
 from metalookup.core.content import Content
 from metalookup.core.extractor import Extractor
 from metalookup.features.accessibility import Accessibility
@@ -91,7 +92,12 @@ class MetadataManager:
         if message.splash_response is None:
             content = Content(url=message.url)
         else:
-            content = Content(url=message.url, html=message.splash_response.html, har=message.splash_response.har)
+            content = Content(
+                url=message.url,
+                splash=SplashResponse(
+                    url=message.url, html=message.splash_response.html, har=message.splash_response.har
+                ),
+            )
 
         async def run_extractor(extractor: Extractor) -> Union[MetadataTags, Error]:
             """Call the extractor and transform its result into the expected output format"""
@@ -102,9 +108,12 @@ class MetadataManager:
                     )
                 self.logger.info(f"Extracted {extractor.__class__.__name__} in {t():5.2f}s.")
                 return MetadataTags(stars=stars, explanation=explanation, extra=extra_data if extra else None)
-            except Exception as e:
+
+            except Exception:
+                # While we let the extractor exceptions pass upwards, we provide a uniform logging here that will
+                # allow to understand what went wrong and why.
                 self.logger.exception(f"Failed to extract {extractor.key} for {message.url}")
-                return Error(error=str(e))
+                raise
 
         self.logger.debug("Dispatching extractor calls.")
 
@@ -117,21 +126,9 @@ class MetadataManager:
             )
             self.logger.debug("Received all extractor results.")
 
-            # fixme: Correctly Identify and handle within Content class:
-            #        https://github.com/openeduhub/metalookup/issues/155
-            #   - 404 page content
-            #   - non-html urls
-            # Make sure we didn't extract meta information from a 404 placeholder site or similar.
-            # This happens after the calls to extractors to prevent awaiting splash and then awaiting the
-            # extractors in sequential order.
-            response_code = (await content.har()).log.entries[-1].response.status
-            if response_code != 200:
-                raise HTTPException(
-                    status_code=502, detail=f"Resource could not be loaded by splash (reported: {response_code})"
-                )
-
             return Output(url=message.url, **{e.key: v for e, v in zip(self.extractors, results)})
 
+        # fixme: As the run_extractor task would swallow every exception nothing is to be caught here.
         # Technically, for the user the communication with the splash container (which will eventually happen
         # during the extractor calls) is an implementation detail of the server. Returning a 502 (Bad Gateway)
         # should indicate to the user, that the resource (in this case the url that was transmitted to the extract

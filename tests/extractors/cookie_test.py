@@ -33,6 +33,8 @@ async def test_cookies_har(executor):
                         "status" : 200
                     },
                     "request": {
+                        "url": "https://some-domain.org",
+                        "method": "GET",
                         "headers": [],
                         "cookies": [
                             {

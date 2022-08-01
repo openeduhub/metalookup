@@ -12,13 +12,13 @@ import PyPDF2
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
 from pdfminer.high_level import extract_text
-from pydantic import HttpUrl
 from PyPDF2.errors import PdfReadError
 
 from metalookup.app.models import Explanation, StarCase
 from metalookup.core.content import Content
 from metalookup.core.extractor import Extractor
-from metalookup.lib.settings import RETURN_IMAGES_IN_METADATA
+
+RETURN_IMAGES_IN_METADATA = False
 
 logger = logging.getLogger(__file__)
 

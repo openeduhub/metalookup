@@ -1,10 +1,12 @@
 from unittest import mock
 
 import pytest
+from fastapi import HTTPException
 
 from metalookup.app.models import StarCase
 from metalookup.core.content import Content
 from metalookup.features.accessibility import Accessibility, AccessibilityScores
+from tests.conftest import lighthouse_mock
 
 
 @pytest.mark.asyncio
@@ -39,3 +41,16 @@ async def test_extract(score, expected_decision, executor):
         assert extra.mobile_score == score - 0.01
         assert extra.desktop_score == score + 0.01
         assert extra.average_score == score
+
+
+async def test_extract_non_html(executor):
+    accessibility = Accessibility()
+
+    with lighthouse_mock(status=502, detail="Non-HTML Content"), pytest.raises(HTTPException) as info:
+        await accessibility.extract(
+            content=Content(
+                url="https://wirlernenonline.de/wp-content/themes/wir-lernen-online/src/assets/img/wlo-logo.svg"  # noqa
+            ),
+            executor=executor,
+        )
+        assert info.value.status_code == 400, "accessibility extractor did not translate invalid content to 400 error"

@@ -34,6 +34,3 @@ USE_LOCAL_IF_POSSIBLE = True
 # Lighthouse
 LIGHTHOUSE_URL = os.environ.get("LIGHTHOUSE_URL", "http://lighthouse:5058")
 LIGHTHOUSE_TIMEOUT = int(os.environ.get("LIGHTHOUSE_TIMEOUT", 120))
-
-# Miscellaneous
-RETURN_IMAGES_IN_METADATA = False

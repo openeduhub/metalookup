@@ -7,6 +7,7 @@ from typing import Optional
 
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
+from fastapi import HTTPException
 from pydantic import HttpUrl
 from tldextract.tldextract import TLDExtract
 
@@ -31,17 +32,16 @@ class Content:
 
     tld_extractor: TLDExtract = TLDExtract(cache_dir=None)
 
-    def __init__(self, url: HttpUrl, html: Optional[str] = None, har: Optional[HAR] = None):
+    def __init__(self, url: HttpUrl, splash: Optional[SplashResponse] = None):
         self.url = url
-        self._html: Optional[str] = html
-        self._har: Optional[HAR] = har
+        self._splash: Optional[SplashResponse] = splash
         self._task: Optional[Task[SplashResponse]] = None
         self._domain: Optional[str] = None
         self._soup: Optional[BeautifulSoup] = None
         self._headers: Optional[dict[str, str]] = None
         self._raw_links: Optional[list[str]] = None
 
-    async def _fetch(self) -> tuple[str, HAR]:
+    async def _fetch(self) -> SplashResponse:
         # a pretty primitive implementation of request deduplication.
         # If a request is issued, we check if there is already a request for
         # given URL (self._task).
@@ -49,8 +49,7 @@ class Content:
         #   issuing a new one (that's why tasks are used - instead of plain
         #   awaitables - one can await a task multiple times).
         # - If not, then a respective task is created.
-        assert self._html is None, "Should not fetch when html is already preset"
-        assert self._har is None, "Should not fetch when HAR is already preset"
+        assert self._splash is None, "Should not fetch when splash is already preset"
 
         async def _task() -> SplashResponse:
             async with ClientSession() as session:
@@ -72,17 +71,55 @@ class Content:
         else:
             logger.debug(f"Splash request already in progress, awaiting task {self._task}")
             response = await self._task
-        return response.html, response.har
+        return response
 
     async def html(self) -> str:
-        if self._html is None:
-            self._html, self._har = await self._fetch()
-        return self._html
+        """
+        The fulltext HTML-DOM as rendered by splash.
+        Getting the HTML may raise the following Exceptions:
+         - ?? when a 404 (Gone) is received while fetching the content
+         - ?? when the response type of the content is not HTML (e.g. when loading a jpg, or pdf).
+        """
+        if self._splash is None:
+            self._splash = await self._fetch()
+        # Make sure no meta information is extracted from a 404 placeholder site or similar.
+        # Raises an HTTPException which is meant to bubble up to an actual user of the service.
+        # To do so, we need to find the HAR entry where the actual content is requested (and skip redirects or
+        # other sider requests (e.g. from trackers).
+
+        if len(self._splash.har.log.entries) == 0:
+            # This happens e.g. for a URLs that point to SVG content - for whatever reason
+            # splash does not include the request/response logs for those scenarios.
+            raise HTTPException(status_code=400, detail=f"URL {self.url} points to non-html content.")
+
+        # unpack to single entry, which will raise in case there are multiple!
+        (entry,) = (
+            # we compare the entry request url with the HAR url, because in
+            # contrast to self.url, the HAR url will have resolved potential redirects.
+            e
+            for e in self._splash.har.log.entries
+            if e.request.url == self._splash.url and e.request.method == "GET"
+        )
+
+        if entry.response.status != 200:
+            raise HTTPException(
+                status_code=502, detail=f"Resource could not be loaded by splash (reported: {entry.response.status})"
+            )
+
+        headers = {header.name.lower(): header.value for header in entry.response.headers}
+        if "html" not in (
+            content_type := headers.get("content-type", "text/html")
+        ):  # assume text/html content type as default
+            raise HTTPException(
+                status_code=400, detail=f"URL {self.url} points to non-html content (Content-Type: {content_type}."
+            )
+
+        return self._splash.html
 
     async def har(self) -> HAR:
-        if self._har is None:
-            self._html, self._har = await self._fetch()
-        return self._har
+        if self._splash is None:
+            self._splash = await self._fetch()
+        return self._splash.har
 
     async def domain(self) -> str:
         if self._domain is None:
