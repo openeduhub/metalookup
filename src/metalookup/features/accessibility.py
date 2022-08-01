@@ -1,9 +1,9 @@
 import asyncio
-import json
 import logging
 from concurrent.futures import Executor
 
 from aiohttp import ClientSession
+from fastapi import HTTPException
 from pydantic import BaseModel
 
 from metalookup.app.models import Explanation, StarCase
@@ -91,8 +91,14 @@ class Accessibility(Extractor[AccessibilityScores]):
             raise RuntimeError(
                 f"Lighthouse request for {strategy=} and {url=} timed out after {self.lighthouse_timeout} seconds"
             )
-
+        content = await response.json()
         if response.status == 200:
             # expected result looks like {"score": [0.123]}
-            return float(json.loads(await response.text())["score"][0])
-        raise RuntimeError(f"Request to lighthouse failed with {response.status}: {await response.text()}")
+            return float(content["score"][0])
+        elif response.status == 502:
+            detail = content.get("detail", "Unknown Error")
+            logger.debug(f"Lighthouse request for {url} failed: {detail}")
+            # received for content that is not HTML.
+            raise HTTPException(status_code=400, detail=f"Cannot analyze non-html content for accessibility: {detail}")
+        else:
+            raise RuntimeError(f"Request to lighthouse failed with {response.status}: {await response.text()}")

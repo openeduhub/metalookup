@@ -35,18 +35,16 @@ services:
         - traefik.docker.network=traefik-public
         - traefik.frontend.entryPoints=http,https
         - traefik.frontend.redirect.entryPoint=https
-  splash:
+
+  playwright:
     dns: 8.8.8.8
-    image: scrapinghub/splash:latest
-    command: --maxrss 4000
+    image: browserless/chrome
     restart: always
-    expose:
-      - "8050"
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8050/_ping" ]
-      interval: 30s
-      timeout: 5s
-      retries: 3
+    environment:
+      - "DEFAULT_LAUNCH_ARGS:[\"--disable-dev-shm-usage\"]"
+      - "EXIT_ON_HEALTH_FAILURE=true"
+    ports:
+      - "3000:3000"
     networks:
       - traefik-public
 

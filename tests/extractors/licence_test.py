@@ -1,11 +1,9 @@
 import json
 from concurrent.futures import Executor
-from pathlib import Path
 
 import pytest
 
 from metalookup.app.models import StarCase
-from metalookup.app.splash_models import SplashResponse
 from metalookup.features.licence import DetectedLicences, Licence, LicenceExtractor
 from tests.extractors.conftest import mock_content
 
@@ -21,13 +19,9 @@ def test_serialize_extra():
 
 @pytest.mark.asyncio
 async def test_extract(executor: Executor):
-    with open(Path(__file__).parent.parent / "resources" / "splash-response-google.json", "r") as f:
-        splash_response = SplashResponse.parse_obj(json.load(f))
-    # we dont want to count "CC BY-SA" as "CC BY"!
+
     content = mock_content(
-        url="https://www.google.com",  # noqa
-        har=splash_response.har,
-        html="Lorem ipsum Creative Commons Zero ... CC BY-SA ... CC BY ... CC0 ...",
+        url="https://www.google.com", html="Lorem ipsum Creative Commons Zero ... CC BY-SA ... CC BY ... CC0 ..."
     )
 
     extractor = LicenceExtractor()

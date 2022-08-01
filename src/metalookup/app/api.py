@@ -57,7 +57,7 @@ async def caching_and_response_time(request: Request, call_next):
 )
 @cache(
     expire=24 * 60 * 60 * 28,
-    key=lambda input, request, response, extra: f"{input.url}-{extra}" if input.splash_response is None else None,
+    key=lambda input, request, response, extra: f"{input.url}-{extra}",
     backend=cache_backend,
 )
 # request and response arguments are needed for the cache wrapper.
@@ -74,14 +74,14 @@ async def extract(input: Input, request: Request, response: Response, extra: boo
 
 
 @app.post(
-    "/lrmi-suggestions",
+    "/suggestions",
     response_model=LRMISuggestions,
-    description="Use the available extractors to deduce PoC level suggestions for four of the meta data fields of the LRMI.",
+    description="Use the available extractors to deduce PoC level suggestions for four of the meta data fields.",
 )
 @cache(
     expire=24 * 60 * 60 * 28,
     # Note, we simply modify the cache key here to use the same codebase as for the extract endpoint.
-    key=lambda input, request, response, extra: f"{input.url}-lrmi" if input.splash_response is None else None,
+    key=lambda input, request, response: f"{input.url}-suggestions",
     backend=cache_backend,
 )
 # request and response arguments are needed for the cache wrapper.
@@ -105,7 +105,7 @@ async def suggest(input: Input, request: Request, response: Response):
             stars=StarCase.from_number(min(int(field.stars) for field in fields.values())),
             explanation=(
                 "Deduced from the minimum star rating of the following extractors.\n"
-                "\n".join(f"{name}-explanation: {field.explanation}" for name, field in fields.items())
+                + "\n".join(f"{name}-explanation: {field.explanation}" for name, field in fields.items())
             ),
             extra={name: field.extra for name, field in fields.items()},
         )
@@ -124,7 +124,7 @@ async def suggest(input: Input, request: Request, response: Response):
     description="The legacy endpoint for metadata extraction.",
 )
 # request and response arguments are needed for the cache wrapper.
-async def legacy_extract(input: Input):
+async def legacy_extract(input: Input, request: Request, response: Response):
     logger.info(f"Received legacy request for {input.url}")
 
     # need extra data for accessibility score below!

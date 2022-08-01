@@ -1,7 +1,7 @@
 # Meta-Data extraction with MetaLookup
 The _MetaLookup_ service extracts and suggests metadata related to OER from a given URL. To achieve this, it
-uses [Splash](https://splash.readthedocs.io/en/stable/) to fetch the content of the URL and then analyzes the
-[HAR](http://www.softwareishard.com/blog/har-12-spec) (cookies & headers) and the received HTML document. It further
+uses the [Playwright](https://playwright.dev/) [python package](https://pypi.org/project/playwright/) to fetch the
+content of the URL and then analyzes the issued requests and responses and the final rendered HTML document. It further
 uses [Lighthouse](https://github.com/GoogleChrome/lighthouse) to assess the accessibility of the content.
 It requires iterative optimization and continuous maintenance due to the ever-changing nature of URL content.
 

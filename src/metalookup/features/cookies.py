@@ -1,8 +1,9 @@
 import asyncio
 from concurrent.futures import Executor
 
+from playwright.async_api import Cookie
+
 from metalookup.app.models import Explanation, StarCase
-from metalookup.app.splash_models import Cookie, Entry
 from metalookup.core.content import Content
 from metalookup.features.adblock_based import AdBlockBasedExtractor
 
@@ -30,21 +31,15 @@ class Cookies(AdBlockBasedExtractor):
     async def extract(self, content: Content, executor: Executor) -> tuple[StarCase, Explanation, set[str]]:
         # Note: we derive from AdBlockBasedExtractor, but fully reimplement the extract function, as we don't want
         #       to apply the ad-block rules on links, but the detected cookies instead.
-        entries: list[Entry] = (await content.har()).log.entries
-
         insecure_cookies: list[Cookie] = [
-            cookie
-            for entry in entries
-            for cookies in (entry.response.cookies, entry.request.cookies)
-            for cookie in cookies
-            if not cookie.secure or not cookie.httpOnly
+            cookie for cookie in await content.cookies() if cookie["secure"] == "false" or cookie["httpOnly"] == "false"
         ]
 
         loop = asyncio.get_running_loop()
 
         # validate the detected insecure cookies against the above adblock rules.
         duration, matches = await loop.run_in_executor(
-            executor, self.apply_rules, await content.domain(), [cookie.name for cookie in insecure_cookies]
+            executor, self.apply_rules, await content.domain(), [cookie["name"] for cookie in insecure_cookies]
         )
         self.logger.info(f"Found {len(matches)} potentially malicious cookies in {duration:5.2}s")
 

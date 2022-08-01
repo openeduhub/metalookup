@@ -3,46 +3,80 @@ import json
 import logging
 from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
+from typing import Optional
 from unittest import mock
-from unittest.mock import AsyncMock
+from unittest.mock import Mock
 
 import pytest
+from playwright.async_api import Request, Response
 
-from metalookup.app.splash_models import HAR, SplashResponse
+from metalookup.core.content import Content
 
 
 @contextlib.contextmanager
-def lighthouse_mock(score: float = 0.98):
+def lighthouse_mock(score: float = 0.98, status=200, detail: Optional[str] = None):
     """
     Mock the request to the lighthouse service of the accessibility extractor. This allows running unittests without
     a dependency on a running lighthouse container.
+    Use the status and detail kwargs to simulate a failed request.
     """
 
-    async def accessibility_api_call_mock(self, url, session, strategy) -> float:  # noqa
-        return score
+    async def client_mock(self, url, **kwargs):  # noqa
+        async def json():
+            if status == 200:
+                return {"score": [score]}
+            else:
+                return {"detail": detail}
 
-    with mock.patch("metalookup.features.accessibility.Accessibility._execute_api_call", accessibility_api_call_mock):
+        return Mock(status=status, json=json)
+
+    with mock.patch("aiohttp.ClientSession.get", client_mock):
         yield
 
 
 @contextlib.contextmanager
-def splash_mock():
+def playwright_mock(key: str = None):
     """
-    Mock the request to splash in case of a missing splash response field of the incoming extract requests by loading
-    the data from the test resources. This allows running unittests without a dependency on a running splash container.
+    Mock the communication with playwright by replacing the _fetch call of the Content class.
+    This allows running unittests without a dependency on a running playwright container.
+
+    This function loads the data from a HAR file from the test resources and directly assigns
+    to the private variables of the Content class.
     """
 
-    async def fetch(self) -> tuple[str, HAR]:
-        url = self.url
-        if url.startswith("https://www.google.com"):
-            path = Path(__file__).parent / "resources" / "splash-response-google.json"
-        elif url.startswith("https://wirlernenonline.de/does-not-exist.html"):
-            path = Path(__file__).parent / "resources" / "splash-response-404.json"
-        else:
-            raise ValueError(f"Cannot provide mocked splash response for {url=}")
-        with open(path, "r") as f:
-            response = SplashResponse.parse_obj(json.load(f))
-            return response.html, response.har
+    async def fetch(self: Content):
+        with open(Path(__file__).parent / "resources" / "splash" / f"{key}.json", "r") as f:
+            splash = json.load(f)
+
+        def convert_headers(headers) -> dict[str, str]:
+            return {h["name"]: h["value"] for h in headers}
+
+        def convert_entry(entry) -> tuple[Request, Response]:
+            request = Mock(
+                # add other fields here on demand.
+                url=entry["request"]["url"],
+                method=entry["response"]["status"],
+                headers=convert_headers(entry["request"]["headers"]),
+            )
+            return (
+                request,
+                Mock(
+                    status=entry["response"]["status"],
+                    text=Mock(side_effect=splash["html"]),
+                    headers=convert_headers(entry["response"]["headers"]),
+                    request=request,
+                ),
+            )
+
+        entries = splash["har"]["log"]["entries"]
+        self._html = splash["html"]
+        if len(entries) > 0:
+            self._headers = convert_headers(entries[-1]["response"]["headers"])
+            # need to convert to string values!
+            self._cookies = [{k: str(v) for k, v in c.dict()} for c in entries[-1]["response"]["cookies"]]
+            _, self._response = convert_entry(entries[-1])
+            self._requests = [convert_entry(entry)[0] for entry in entries]
+            self._responses = [convert_entry(entry)[1] for entry in entries]
 
     with mock.patch("metalookup.core.content.Content._fetch", new=fetch):
         yield

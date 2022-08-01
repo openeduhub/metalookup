@@ -9,6 +9,17 @@ env:
 jobs:
   python-build-and-test:
     runs-on: ubuntu-latest
+    env:
+      PLAYWRIGHT_WS_ENDPOINT: ws://localhost:3000
+    services:
+      # Required for playwright unit tests
+      playwright:
+        image: browserless/chrome
+        env:
+          DEFAULT_LAUNCH_ARGS: '[\"--disable-dev-shm-usage\"]'
+        ports:
+          - "3000:3000"
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
