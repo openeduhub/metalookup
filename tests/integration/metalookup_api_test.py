@@ -78,7 +78,7 @@ async def test_suggest_endpoint(client):
     with playwright_mock(key="google.com"), lighthouse_mock():
         input = Input(url="https://www.google.com/")
         response = await client.post(
-            "/lrmi-suggestions", json=input.dict(), timeout=10, headers={"Cache-Control": "no-cache"}
+            "/suggestions", json=input.dict(), timeout=10, headers={"Cache-Control": "no-cache"}
         )
     assert response.status_code == 200
     response = json.loads(response.text)

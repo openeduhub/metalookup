@@ -45,7 +45,7 @@ def playwright_mock(key: str = None):
     """
 
     async def fetch(self: Content):
-        with open(Path(__file__).parent / "resources" / "splash" / f"{key}.json", "r") as f:
+        with open(Path(__file__).parent / "resources" / "har" / f"{key}.json", "r") as f:
             splash = json.load(f)
 
         def convert_headers(headers) -> dict[str, str]:
