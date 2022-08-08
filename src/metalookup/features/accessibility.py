@@ -83,7 +83,7 @@ class Accessibility(Extractor[AccessibilityScores]):
         }
         try:
             with runtime() as t:
-                response = await session.get(
+                response = await session.post(
                     url=f"{self.lighthouse_url}/{_ACCESSIBILITY}", timeout=self.lighthouse_timeout, json=params
                 )
             logger.debug(f"Fetched accessibility for {strategy} in {t():5.2f}s")
