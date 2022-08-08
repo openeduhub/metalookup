@@ -30,7 +30,7 @@ def lighthouse_mock(score: float = 0.98, status=200, detail: Optional[str] = Non
 
         return Mock(status=status, json=json)
 
-    with mock.patch("aiohttp.ClientSession.get", client_mock):
+    with mock.patch("aiohttp.ClientSession.post", client_mock):
         yield
 
 
