@@ -1,7 +1,7 @@
 # Meta-Data extraction with MetaLookup
 The _MetaLookup_ service extracts and suggests metadata related to OER from a given URL. To achieve this, it
-uses [Splash](https://splash.readthedocs.io/en/stable/) to fetch the content of the URL and then analyzes the
-[HAR](http://www.softwareishard.com/blog/har-12-spec) (cookies & headers) and the received HTML document. It further
+uses the [Playwright](https://playwright.dev/) [python package](https://pypi.org/project/playwright/) to fetch the
+content of the URL and then analyzes the issued requests and responses and the final rendered HTML document. It further
 uses [Lighthouse](https://github.com/GoogleChrome/lighthouse) to assess the accessibility of the content.
 It requires iterative optimization and continuous maintenance due to the ever-changing nature of URL content.
 
@@ -75,8 +75,30 @@ TODO: https://github.com/openeduhub/metalookup/issues/150
 - Docker tags will be extracted from the git tags as `{MAJOR}.{MINOR}.{PATCH}`
 
 ## Deployment
-MetaLookup requires Splash and Lighthouse containers to be running. To deploy them together the two docker-compose files
-for [dev](./meta-lookup-compose-dev.yml) and [prod](./meta-lookup-compose-prod.yml) are used.
+MetaLookup requires Playwright and Lighthouse containers to be running. To deploy them together the two docker-compose files
+for [dev](./meta-lookup-compose-dev.yml) and [prod](./meta-lookup-compose-prod.yml) are used. These dockerfiles also
+contain the configuration to run MetaLookup with a persistent cache via a postgres container.
+
+### Extractor Container (custom image)
+This container contains the main API and implementation of MetaLookup. Other services should only communicate with this
+container, the other containers are considered internal and should not be exposed to the outside world.
+
+### Playwright Container (`browserless/chrome` image)
+Playwright is a toolkit that allows to remote-control a browser. We here use the
+[browserless/chrome](https://hub.docker.com/r/browserless/chrome) image which essentially provides "chrome as a
+service" to which MetaLookup talks with the [playwright python package](https://pypi.org/project/playwright/) via a
+websocket.
+
+### Lighthouse Container (custom image)
+Lighthouse is a software tool that analyses accessibility of a website. This repository contains a custom dockerfile
+where this tool is packaged together with a browser
+([google-chrome-headless image](https://hub.docker.com/r/femtopixel/google-chrome-headless)). Here the accessibility
+command line tool is provided via a [minimal custom-made HTTP API](./src/app/api.py).
+
+### Postgres Container (optional, official `postgres` image)
+The postgres container provides a way to persist cache for the Extractor container. It is optional, as caching can
+also be done via sqlite (for a single instance of MetaLookup) or completely disabled. Alternatively a dedicated other
+postgres database can be used and configured. See [settings.py](./src/metalookup/lib/settings.py).
 
 ## Configuration
 The application can be configured via environment variables or a `.env` file. See

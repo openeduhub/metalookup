@@ -5,8 +5,6 @@ from typing import Any, Optional, Union
 
 from pydantic import BaseModel, Field, HttpUrl
 
-from metalookup.app.splash_models import SplashResponse
-
 Explanation = str
 
 
@@ -192,13 +190,6 @@ class LRMISuggestions(BaseModel):
 
 class Input(BaseModel):
     url: HttpUrl = Field(..., description="The URL where the content was crawled from.")
-    splash_response: Optional[SplashResponse] = Field(
-        default=None,
-        description="The response object returned from splash when queried with "
-        "html=1, iframes=1, har=1, response_body=1, render_all=1, script=1."
-        "See https://splash.readthedocs.io/en/stable/api.html#render-html for more information."
-        "If omitted, a respective query will be issued to splash internally.",
-    )
 
 
 class Ping(BaseModel):
@@ -206,14 +197,3 @@ class Ping(BaseModel):
         default="not ok",
         description="Ping output. Should be 'ok' in happy case.",
     )
-
-
-class DeleteCacheOutput(BaseModel):
-    deleted_rows: int = Field(
-        default=-1,
-        description="Number of deleted rows from cache. Each row represents one top-level-domain.",
-    )
-
-
-class DeleteCacheInput(BaseModel):
-    domain: Optional[str] = Field(default="", description="The host domain to be reset.")

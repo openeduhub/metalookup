@@ -3,7 +3,7 @@ version: '3.4'
 # To make these settings work with regular docker-compose the services need to be deployed with the `--compatibility`
 # flag. This tells the docker-daemon to translate the `deploy.resources.limits.memory` settings to the v2 compose file
 # equivalents and sets the appropriate limits.
-# Use: > docker-compose --compatibility up extractor splash lighthouse
+# Use: > docker-compose --compatibility up extractor playwright lighthouse
 
 services:
   extractor:
@@ -12,7 +12,7 @@ services:
     ports:
       - "5057:5057"
     links:
-      - splash
+      - playwright
       - lighthouse
       - postgres
     depends_on:
@@ -35,29 +35,17 @@ services:
         max-size: "1m"
         max-file: "1"
 
-  splash:
+  playwright:
     dns: 8.8.8.8
-    image: scrapinghub/splash:latest
-    command: --maxrss 4000
-    ports:
-      - "8050:8050"
+    image: browserless/chrome
     restart: always
-    deploy:
-      resources:
-        limits:
-          memory: 2000M
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8050/_ping" ]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 40s
+    environment:
+      - "DEFAULT_LAUNCH_ARGS:[\"--disable-dev-shm-usage\"]"
+      - "EXIT_ON_HEALTH_FAILURE=true"
+    ports:
+      - "3000:3000"
     networks:
       - backend
-    logging:
-      options:
-        max-size: "1m"
-        max-file: "1"
 
   lighthouse:
     dns: 8.8.8.8

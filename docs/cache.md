@@ -1,7 +1,7 @@
 # Server internal Caching
-To analyze and extract meta information, at first a request to Splash is issued which takes at least 10 seconds.
+To analyze and extract meta information, the content first needs to be fetched via playwright.
 After that, the lighthouse assessment and the various other extractors usually take another couple of seconds to
-complete. Adding up, the total response time is typically at around 20-40 seconds.
+complete. Adding up, the total response time is typically at around 10-30 seconds.
 
 To at least mitigate those long response times for URLs that have been analyzed previously, the _MetaLookup_ service
 tries to cache results.

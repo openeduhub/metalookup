@@ -1,55 +1,27 @@
-import json
-
 import pytest
 
-from metalookup.app.splash_models import HAR
 from metalookup.features.cookies import Cookies
 from tests.extractors.conftest import mock_content
 
 
 @pytest.mark.asyncio
-async def test_cookies_har(executor):
+async def test_cookies(executor):
     feature = Cookies()
     await feature.setup()
 
     # make sure that the cookie name partially matches some entries of e.g.
     # https://raw.githubusercontent.com/easylist/easylist/master/easylist_cookie/easylist_cookie_general_block.txt
-    har = HAR.parse_obj(
-        json.loads(
-            """{
-        "log": {
-            "entries": [
-                {
-                    "response": {
-                        "headers": [],
-                        "cookies": [
-                            {
-                                "name": "prefix-cookie-notice.suffix",
-                                "value": "dummy",
-                                "httpOnly": "false",
-                                "secure": "true"
-                            }
-                        ],
-                        "status" : 200
-                    },
-                    "request": {
-                        "headers": [],
-                        "cookies": [
-                            {
-                                "name": "https://some-domain.org/agreements/cookie?key=value",
-                                "value": "dummy",
-                                "httpOnly": "true",
-                                "secure": "false"
-                            }
-                        ]
-                    }
-                }
-            ]
-        }
-    }"""
-        )
+    content = mock_content(
+        cookies=[
+            {
+                "name": "https://some-domain.org/agreements/cookie?key=value",
+                "value": "dummy",
+                "httpOnly": "true",
+                "secure": "false",
+            },
+            {"name": "prefix-cookie-notice.suffix", "value": "dummy", "httpOnly": "false", "secure": "true"},
+        ]
     )
-    content = mock_content(har=har)
     stars, explanation, values = await feature.extract(content, executor=executor)
 
     # extra data returns "cookie-name=cookie-value" pairs for cookies extracted from har

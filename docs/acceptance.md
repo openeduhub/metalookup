@@ -399,8 +399,6 @@ Dies erzeugt Doppelungen, bspw., im Programmcode, der sich um die Verwaltung der
 Würden bestimmte Merkmale zusammengefasst, könnte sich dadurch ein Performanceboost ergeben.
 Weiterhin könnte es spannend sein, Merkmale zusammenzufassen und hernach anhand der gefundenen Listeneinträge festzustellen,
 ob bspw., Popups vorhanden sind o.ä.
-Inwiefern ein solcher Wandel in der Architektur lohnenswert ist, hängt auch vom jeweiligen Flaschenhals ab.
-Derzeit ist das Abrufen des Inhalts via Splash, sowie die `accessibility` Analyse via Lighthouse der Flaschenhals.
 
 Wie besprochen, benötigen viele der Merkmale Daten aus der Produktion, um weiter verfeinert zu werden.
 Idealerweise werden die `extras` der Merkmale, die neben `stars` und `explanation` zurückgegeben werden,
