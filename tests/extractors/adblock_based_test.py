@@ -1,3 +1,6 @@
+import contextlib
+from unittest import mock
+
 import pytest
 
 from metalookup.features.adblock_based import (
@@ -14,16 +17,39 @@ from metalookup.lib.tools import runtime
 from tests.extractors.conftest import mock_content
 
 
+@contextlib.contextmanager
+def mock_download_rules(rules: set[str]):
+    """
+    Mock the call that download the adblock rules from various sources to return specified rules instead.
+    """
+
+    async def download_tag_lists(session, urls, logger):
+        return rules
+
+    with mock.patch("metalookup.features.adblock_based.download_tag_lists", download_tag_lists):
+        yield
+
+
 @pytest.mark.asyncio
 async def test_advertisement(executor):
     feature = Advertisement()
-    await feature.setup()
-    content = mock_content(html="<script src='/layer.php?bid='></script>")
+    # overwrite rules with a custom test, rendering the test independent on changes of the downloaded lists.
+    with mock_download_rules(rules={"/ads/*$script"}):
+        await feature.setup()
+
+    content = mock_content(html="<script src='https://some-domain.com/ads/123.json'></script>")
+    expected = {"https://some-domain.com/ads/123.json"}
+
+    domain = await content.domain()
+    links = await content.raw_links()
+
+    _, matches = feature.apply_rules(domain, links)
+    assert matches == expected
 
     with runtime() as t:
         stars, explanation, matches = await feature.extract(content, executor=executor)
     assert t() < 10
-    assert matches == {"/layer.php?bid="}
+    assert matches == expected
 
 
 @pytest.mark.asyncio
