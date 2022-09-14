@@ -1,7 +1,6 @@
 site_name: Metadata Extractor
 nav:
   - Home: 'index.md'
-  - Setup: 'setup.md'
-  - Config: 'config.md'
+  - Cache: 'cache.md'
   - Features: 'features.md'
   - Acceptance: 'acceptance.md'

@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "oeh-search-meta"
-version = "0.1.0"
+name = "oeh-meta-lookup"
+version = "0.0.0" # controlled via github action
 description = ""
 authors = [
     "Robert Meissner <robert.meissner@codecentric.de>",

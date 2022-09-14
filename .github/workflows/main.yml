@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PLAYWRIGHT_WS_ENDPOINT: ws://localhost:3000
+      CACHE_DATABASE_URL: sqlite:///./cache.sqlite
     services:
       # Required for playwright unit tests
       playwright:
@@ -23,6 +24,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          # we need more than the last commit to figure out the version from the tags and commits.
+          fetch-depth: 0
       - name: Install poetry
         run: pipx install poetry
       - name: Set up Python 3.9
@@ -31,8 +35,10 @@ jobs:
           python-version: "3.9.7"
           cache: 'poetry'
       - name: build artifact and install
+        # always use the latest tag as package version. Not perfect, but anything else gets crazy with corner cases...
         run: |
           poetry env use 3.9
+          poetry version $(git describe --tags --abbrev=0 | sed 's/^v//')
           poetry build
           poetry install
       - name: run pre-commit hooks
@@ -47,31 +53,52 @@ jobs:
             dist/*.whl
 
   docker-build-and-push:
-    runs-on: ubuntu-latest
     needs: python-build-and-test # because we generate the wheel file there.
+    strategy:
+      matrix:
+        include:
+          - image: api
+          - image: lighthouse
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
       - name: Download wheel artifact
         uses: actions/download-artifact@v3
         with:
           name: wheel
 
-      - name: Log in to edu sharing (only on main)
-        run: docker login ${{env.docker_repository}} -u ${{ secrets.DOCKER_EDU_HUB_REGISTRY_USERNAME }} -p ${{ secrets.DOCKER_EDU_HUB_REGISTRY_PASSWORD }}
-        if: ${{ github.ref == 'refs/heads/main' }}
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Build the extractor image
-        run: docker build -f dockerfile_api -t ${{env.docker_repository}}${{env.path_prefix}}-api:latest .
+      - name: Get wheel filename
+        run: export VERSION_TAG=$(git describe --tags --abbrev=0 | sed 's/^v//')
 
-      - name: Push the extractor image (only on main)
-        run: docker push ${{env.docker_repository}}${{env.path_prefix}}-api:latest
-        if: ${{ github.ref == 'refs/heads/main' }}
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            name=${{ env.docker_repository }}${{ env.path_prefix }}-${{ matrix.image }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern=v{{major}}.{{minor}}.{{patch}}
 
-      - name: Build the lighthouse image
-        run: docker build -f dockerfile_lighthouse -t ${{env.docker_repository}}${{env.path_prefix}}-lighthouse:latest .
+      - name: Login to EDU-Sharing Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.docker_repository }}
+          username: ${{ secrets.DOCKER_EDU_HUB_REGISTRY_USERNAME }}
+          password: ${{ secrets.DOCKER_EDU_HUB_REGISTRY_PASSWORD }}
 
-      - name: Push the lighthouse image (only on main)
-        run: docker push ${{env.docker_repository}}${{env.path_prefix}}-lighthouse:latest
-        if: ${{ github.ref == 'refs/heads/main' }}
+      - name: Build and push Image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: dockerfile_${{ matrix.image }}
+          # only push if we build from main branch
+          # might need tweaks for pushing of tags.
+          push: ${{ github.ref == 'main' || github.ref == 'v${VERSION_TAG}' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: | # not really needed for the lighthouse matrix job, but oh well...
+            WHEEL_FILE=oeh_meta_lookup-${VERSION_TAG}-py3-none-any.whl

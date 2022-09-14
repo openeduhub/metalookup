@@ -1,3 +1,4 @@
+ARG WHEEL_FILE
 FROM python:3.9-slim
 
 RUN adduser --system extractor
@@ -8,11 +9,12 @@ WORKDIR /home/extractor
 RUN apt-get update && apt-get install -y curl
 
 # make wheel file built with poetry build available in docker build step
-COPY ./*.whl /home/extractor
+COPY ./${WHEEL_FILE} /home/extractor
 
 # install the wheel file and all its (transitive) dependencies. We install directly into
 # the system python environment.
-RUN pip install --no-cache-dir /home/extractor/*.whl
+RUN pip install --no-cache-dir /home/extractor/${WHEEL_FILE}
+
 
 USER extractor
 

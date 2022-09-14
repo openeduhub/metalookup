@@ -68,8 +68,8 @@ services:
       - "5432:5432"
     restart: always
     environment:
-      - POSTGRES_USER=metalookup
-      - POSTGRES_PASSWORD=metalookup
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - db_volume:/var/lib/postgresql/data
     networks:

@@ -77,8 +77,8 @@ services:
     restart: always
     environment:
       # by default this will then also use metalookup db
-      - POSTGRES_USER=metalookup
-      - POSTGRES_PASSWORD=metalookup
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - db_volume:/var/lib/postgresql/data
     networks:
