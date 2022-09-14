@@ -13,6 +13,7 @@ src/app/__pycache__/
 
 # Local data
 .env
+*.sqlite
 dist
 /local_tools/
 .coverage
