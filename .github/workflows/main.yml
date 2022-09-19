@@ -27,6 +27,7 @@ jobs:
         with:
           # we need more than the last commit to figure out the version from the tags and commits.
           fetch-depth: 0
+
       - name: Install poetry
         run: pipx install poetry
       - name: Set up Python 3.9
@@ -69,8 +70,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Get wheel filename
-        run: export VERSION_TAG=$(git describe --tags --abbrev=0 | sed 's/^v//')
+      - name: Set version tag
+        # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#set-an-output-parameter-set-output
+        run: echo "::set-output name=VERSION_TAG::v$(git describe --tags --abbrev=0 | sed 's/^v//')"
+        id: version-tag-step
 
       - name: Docker meta
         id: meta
@@ -81,7 +84,6 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}}
             type=semver,pattern=v{{major}}.{{minor}}.{{patch}}
 
       - name: Login to EDU-Sharing Container Registry
@@ -96,9 +98,8 @@ jobs:
         with:
           context: .
           file: dockerfile_${{ matrix.image }}
-          # only push if we build from main branch
-          # might need tweaks for pushing of tags.
-          push: ${{ github.ref == 'main' || github.ref == 'v${VERSION_TAG}' }}
+          # only push if we build from main branch or a tag that matches
+          push: ${{ github.ref == 'refs/heads/main' || github.ref_name == steps.version-tag-step.outputs.VERSION_TAG }}
           tags: ${{ steps.meta.outputs.tags }}
           build-args: | # not really needed for the lighthouse matrix job, but oh well...
             WHEEL_FILE=oeh_meta_lookup-${VERSION_TAG}-py3-none-any.whl
