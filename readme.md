@@ -79,7 +79,7 @@ MetaLookup requires Playwright and Lighthouse containers to be running. To deplo
 for [dev](./meta-lookup-compose-dev.yml) and [prod](./meta-lookup-compose-prod.yml) are used. These dockerfiles also
 contain the configuration to run MetaLookup with a persistent cache via a postgres container.
 
-### Extractor Container (custom image)
+### API Container (custom image)
 This container contains the main API and implementation of MetaLookup. Other services should only communicate with this
 container, the other containers are considered internal and should not be exposed to the outside world.
 

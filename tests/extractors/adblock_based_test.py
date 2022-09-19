@@ -23,7 +23,7 @@ def mock_download_rules(rules: set[str]):
     Mock the call that download the adblock rules from various sources to return specified rules instead.
     """
 
-    async def download_tag_lists(session, urls, logger):
+    async def download_tag_lists(urls, logger):
         return rules
 
     with mock.patch("metalookup.features.adblock_based.download_tag_lists", download_tag_lists):

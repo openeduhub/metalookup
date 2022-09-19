@@ -8,11 +8,11 @@ from logging import Logger
 from typing import Generic, Optional, TypeVar, Union
 from urllib.parse import urlparse
 
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientTimeout
 
 from metalookup.app.models import Explanation, StarCase
 from metalookup.core.content import Content
-from metalookup.lib.settings import USE_LOCAL_IF_POSSIBLE
+from metalookup.lib.settings import ADBLOCK_DOWNLOAD_TIMEOUT, USE_LOCAL_IF_POSSIBLE
 
 T = TypeVar("T")
 
@@ -37,10 +37,9 @@ class Extractor(Generic[T]):
         """
 
 
-async def download_tag_lists(session: ClientSession, urls: Union[str, list[str]], logger: Logger) -> set[str]:
+async def download_tag_lists(urls: Union[str, list[str]], logger: Logger) -> set[str]:
     """
     Download tags from a list of urls and combine all downloaded tag lists into set removing all duplicates.
-    :param session: The client to use for the downloads.
     :param urls: The urls from where to download individual tag lists.
     :param logger: Logger to be used.
     :return: The combined set of all tags.
@@ -80,15 +79,16 @@ async def download_tag_lists(session: ClientSession, urls: Union[str, list[str]]
             with open(taglist_path + filename, "r") as file:
                 tag_list = file.read().splitlines()
         else:
-            result = await session.get(url=url)
-            if result.status == 200:
-                text = await result.text()
-                tag_list = text.splitlines()
-                if USE_LOCAL_IF_POSSIBLE:
-                    with open(taglist_path + filename, "w+") as file:
-                        file.write(text)
-            else:
-                raise RuntimeError(f"Downloading tag list from '{url}' yielded status code '{result.status}'.")
+            async with ClientSession(timeout=ClientTimeout(total=ADBLOCK_DOWNLOAD_TIMEOUT)) as session:
+                result = await session.get(url=url)
+                if result.status == 200:
+                    text = await result.text()
+                    tag_list = text.splitlines()
+                    if USE_LOCAL_IF_POSSIBLE:
+                        with open(taglist_path + filename, "w+") as file:
+                            file.write(text)
+                else:
+                    raise RuntimeError(f"Downloading tag list from '{url}' yielded status code '{result.status}'.")
 
         expiration, last_modification = extract_dates(tag_list)
         logger.info(

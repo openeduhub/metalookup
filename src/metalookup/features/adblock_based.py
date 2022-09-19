@@ -6,7 +6,6 @@ from typing import Optional
 from unittest import mock
 
 import adblockparser
-from aiohttp import ClientSession
 
 from metalookup.app.models import Explanation, StarCase
 from metalookup.core.content import Content
@@ -90,10 +89,9 @@ class AdBlockBasedExtractor(Extractor[set[str]]):
 
             return re.compile(joined_regexes, flags=flags)
 
-        async with ClientSession() as session:
-            rules = await download_tag_lists(urls=self.urls, session=session, logger=self.logger)
-            with mock.patch("adblockparser.parser._combined_regex", new=_combined_regex):
-                self.rules = adblockparser.AdblockRules(list(rules), skip_unsupported_rules=False, use_re2=True)
+        rules = await download_tag_lists(urls=self.urls, logger=self.logger)
+        with mock.patch("adblockparser.parser._combined_regex", new=_combined_regex):
+            self.rules = adblockparser.AdblockRules(list(rules), skip_unsupported_rules=False, use_re2=True)
 
     def apply_rules(self, domain: str, links: list[str]) -> tuple[float, set[str]]:
         """Return the list of matches and the total computation time taken."""

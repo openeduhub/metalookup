@@ -49,44 +49,45 @@ class Accessibility(Extractor[AccessibilityScores]):
         pass
 
     async def extract(self, content: Content, executor: Executor) -> tuple[StarCase, Explanation, AccessibilityScores]:
-        async with ClientSession() as session:
+        scores = await asyncio.gather(
+            *[self._execute_api_call(url=content.url, strategy=strategy) for strategy in [_DESKTOP, _MOBILE]],
+            # see https://docs.python.org/3/library/asyncio-task.html#running-tasks-concurrently
+            return_exceptions=True,
+        )
+        if any(isinstance(s, BaseException) for s in scores):
+            logger.warning(f"Failed to extract with lighthouse: {scores}")
+            raise HTTPException(status_code=500, detail="Failed to receive scores from lighthouse")
 
-            scores = await asyncio.gather(
-                *[
-                    self._execute_api_call(url=content.url, session=session, strategy=strategy)
-                    for strategy in [_DESKTOP, _MOBILE]
-                ]
-            )
+        scores = AccessibilityScores(
+            desktop_score=scores[0], mobile_score=scores[1], average_score=(scores[0] + scores[1]) / 2
+        )
 
-            scores = AccessibilityScores(
-                desktop_score=scores[0], mobile_score=scores[1], average_score=(scores[0] + scores[1]) / 2
-            )
+        if scores.average_score <= self.star_levels[0]:
+            return StarCase.ZERO, _LIGHTHOUSE_SCORE_TOO_LOW, scores
+        elif scores.average_score <= self.star_levels[1]:
+            return StarCase.ONE, _LIGHTHOUSE_SCORE_TOO_LOW, scores
+        elif scores.average_score <= self.star_levels[2]:
+            return StarCase.TWO, _LIGHTHOUSE_SCORE_TOO_LOW, scores
+        elif scores.average_score <= self.star_levels[3]:
+            return StarCase.THREE, _LIGHTHOUSE_SCORE_TOO_LOW, scores
+        elif scores.average_score <= self.star_levels[4]:
+            return StarCase.FOUR, _LIGHTHOUSE_SCORE_SUITABLE, scores
+        else:  # scores.average_score > self.star_levels[4]:
+            return StarCase.FIVE, _LIGHTHOUSE_SCORE_SUITABLE, scores
 
-            if scores.average_score <= self.star_levels[0]:
-                return StarCase.ZERO, _LIGHTHOUSE_SCORE_TOO_LOW, scores
-            elif scores.average_score <= self.star_levels[1]:
-                return StarCase.ONE, _LIGHTHOUSE_SCORE_TOO_LOW, scores
-            elif scores.average_score <= self.star_levels[2]:
-                return StarCase.TWO, _LIGHTHOUSE_SCORE_TOO_LOW, scores
-            elif scores.average_score <= self.star_levels[3]:
-                return StarCase.THREE, _LIGHTHOUSE_SCORE_TOO_LOW, scores
-            elif scores.average_score <= self.star_levels[4]:
-                return StarCase.FOUR, _LIGHTHOUSE_SCORE_SUITABLE, scores
-            else:  # scores.average_score > self.star_levels[4]:
-                return StarCase.FIVE, _LIGHTHOUSE_SCORE_SUITABLE, scores
-
-    async def _execute_api_call(self, url: str, session: ClientSession, strategy: str = "desktop") -> float:
+    async def _execute_api_call(self, url: str, strategy: str = "desktop") -> float:
         params = {
             "url": url,
             "category": _ACCESSIBILITY,
             "strategy": strategy,
         }
         try:
-            with runtime() as t:
-                response = await session.post(
-                    url=f"{self.lighthouse_url}/{_ACCESSIBILITY}", timeout=self.lighthouse_timeout, json=params
-                )
-            logger.debug(f"Fetched accessibility for {strategy} in {t():5.2f}s")
+            async with ClientSession() as session:
+                with runtime() as t:
+                    response = await session.post(
+                        url=f"{self.lighthouse_url}/{_ACCESSIBILITY}", timeout=self.lighthouse_timeout, json=params
+                    )
+                logger.debug(f"Fetched accessibility for {strategy} in {t():5.2f}s")
         except asyncio.exceptions.TimeoutError:
             raise RuntimeError(
                 f"Lighthouse request for {strategy=} and {url=} timed out after {self.lighthouse_timeout} seconds"

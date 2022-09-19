@@ -24,7 +24,7 @@ from tests.conftest import lighthouse_mock
 async def test_extract(score, expected_decision, executor):
     accessibility = Accessibility()
 
-    async def accessibility_api_call_mock(self, url, session, strategy) -> float:  # noqa
+    async def accessibility_api_call_mock(self, url, strategy) -> float:  # noqa
         if strategy == "desktop":
             return score + 0.01
         elif strategy == "mobile":

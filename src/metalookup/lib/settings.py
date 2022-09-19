@@ -26,6 +26,8 @@ PLAYWRIGHT_PAGE_LOAD_TIMEOUT = int(os.environ.get("PLAYWRIGHT_PAGE_LOAD_TIMEOUT"
 # Extractors
 # Online lists
 USE_LOCAL_IF_POSSIBLE = True
+# timeout in seconds for download of each of the addblock rule lists
+ADBLOCK_DOWNLOAD_TIMEOUT = int(os.environ.get("ADBLOCK_DOWNLOAD_TIMEOUT", 300))
 
 # Lighthouse
 LIGHTHOUSE_URL = os.environ.get("LIGHTHOUSE_URL", "http://lighthouse:5058")
