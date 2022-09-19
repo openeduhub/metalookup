@@ -6,13 +6,14 @@ from fastapi import HTTPException
 
 from metalookup.app.models import Input, MetadataTags
 from metalookup.core.metadata_manager import MetadataManager
-from tests.conftest import lighthouse_mock, playwright_mock
+from tests.conftest import adblock_rules_mock, lighthouse_mock, playwright_mock
 
 
 @pytest.fixture
 async def manager() -> MetadataManager:
     manager = MetadataManager()
-    await manager.setup()
+    with adblock_rules_mock(rules=set()):
+        await manager.setup()
     return manager
 
 

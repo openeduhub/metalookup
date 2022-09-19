@@ -14,6 +14,19 @@ from metalookup.core.content import Content
 
 
 @contextlib.contextmanager
+def adblock_rules_mock(rules: set[str]):
+    """
+    Mock the call that download the adblock rules from various sources to return specified rules instead.
+    """
+
+    async def download_tag_lists(urls, logger):
+        return rules
+
+    with mock.patch("metalookup.features.adblock_based.download_tag_lists", download_tag_lists):
+        yield
+
+
+@contextlib.contextmanager
 def lighthouse_mock(score: float = 0.98, status=200, detail: Optional[str] = None):
     """
     Mock the request to the lighthouse service of the accessibility extractor. This allows running unittests without

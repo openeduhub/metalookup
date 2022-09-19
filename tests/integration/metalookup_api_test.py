@@ -9,7 +9,7 @@ from httpx import AsyncClient
 from metalookup.app.api import Input, app, cache_backend, manager
 from metalookup.app.models import LRMISuggestions, MetadataTags, Output
 from metalookup.features.licence import DetectedLicences
-from tests.conftest import lighthouse_mock, playwright_mock
+from tests.conftest import adblock_rules_mock, lighthouse_mock, playwright_mock
 
 
 @pytest.fixture()
@@ -30,7 +30,8 @@ async def client() -> AsyncClient:
         # side effects (e.g. cache modifications). However it means we manually need to ensure that
         # the application state is setup.
         await cache_backend.setup()
-    await manager.setup()
+    with adblock_rules_mock(rules=set()):
+        await manager.setup()
 
     async with AsyncClient(app=app, base_url="http://localhost") as client:
         yield client
