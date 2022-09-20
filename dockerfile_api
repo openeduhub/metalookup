@@ -3,6 +3,11 @@ FROM python:3.9-slim
 
 RUN adduser --system extractor
 
+
+RUN echo "${WHEEL_FILE}"
+RUN echo ${WHEEL_FILE}
+RUN echo $WHEEL_FILE
+
 WORKDIR /home/extractor
 
 # needed for docker healthcheck

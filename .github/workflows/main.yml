@@ -69,6 +69,9 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          # we need more than the last commit to figure out the version from the tags and commits.
+          fetch-depth: 0
 
       - name: Set version tag
         # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#set-an-output-parameter-set-output
@@ -95,11 +98,13 @@ jobs:
 
       - name: Build and push Image
         uses: docker/build-push-action@v3
+        env:
+          WHEEL_FILE: oeh_meta_lookup-v0.3.0-py3-none-any.whl
         with:
           context: .
           file: dockerfile_${{ matrix.image }}
           # only push if we build from main branch or a tag that matches
           push: ${{ github.ref == 'refs/heads/main' || github.ref_name == steps.version-tag-step.outputs.VERSION_TAG }}
           tags: ${{ steps.meta.outputs.tags }}
-          build-args: | # not really needed for the lighthouse matrix job, but oh well...
-            WHEEL_FILE=oeh_meta_lookup-${VERSION_TAG}-py3-none-any.whl
+          build-args: WHEEL_FILE
+#          build-args: WHEEL_FILE=oeh_meta_lookup-${{ steps.version-tag-step.outputs.VERSION_TAG }}-py3-none-any.whl
