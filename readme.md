@@ -41,6 +41,7 @@ Unit-tests are divided into two categories:
 
 All tests make use of mocks and static (checked in) resources. Hence, they can run independently of any docker
 container or other environment constraints.
+**FIXME: [Issue #163](https://github.com/openeduhub/metalookup/issues/163)**
 
 ## Branching Model
 This repository follows the [GitHub Flow](http://scottchacon.com/2011/08/31/github-flow.html) branching model:
@@ -68,11 +69,13 @@ It will perform the following steps:
  - (on main branch) push docker images to registry.
 
 ## Releases & Versioning
-- This repository uses [Sem-Ver](https://semver.org/lang/de/).
-TODO: https://github.com/openeduhub/metalookup/issues/150
-- New releases are created via the GitHub release interface.
-- Release Tags must follow the pattern `v{MAJOR}.{MINOR}.{PATCH}`
-- Docker tags will be extracted from the git tags as `{MAJOR}.{MINOR}.{PATCH}`
+- This repository uses [Sem-Ver](https://semver.org/lang/de/)
+- New releases are created via the GitHub release interface
+- Release tags must follow the pattern `v{MAJOR}.{MINOR}.{PATCH}`
+- Docker image tags will be extracted from the git tags as `v{MAJOR}.{MINOR}.{PATCH}`
+- Tag creation will build and push images with a `latest` and a `vX.Y.Z` tag
+- Commits (merges) to the main branch will build and push images with a `main` tag
+- Commits to other branches and in PRs will only build, but not push the images
 
 ## Deployment
 MetaLookup requires Playwright and Lighthouse containers to be running. To deploy them together the two docker-compose files
@@ -83,17 +86,17 @@ contain the configuration to run MetaLookup with a persistent cache via a postgr
 This container contains the main API and implementation of MetaLookup. Other services should only communicate with this
 container, the other containers are considered internal and should not be exposed to the outside world.
 
-### Playwright Container (`browserless/chrome` image)
-Playwright is a toolkit that allows to remote-control a browser. We here use the
-[browserless/chrome](https://hub.docker.com/r/browserless/chrome) image which essentially provides "chrome as a
-service" to which MetaLookup talks with the [playwright python package](https://pypi.org/project/playwright/) via a
-websocket.
-
 ### Lighthouse Container (custom image)
 Lighthouse is a software tool that analyses accessibility of a website. This repository contains a custom dockerfile
 where this tool is packaged together with a browser
 ([google-chrome-headless image](https://hub.docker.com/r/femtopixel/google-chrome-headless)). Here the accessibility
 command line tool is provided via a [minimal custom-made HTTP API](./src/app/api.py).
+
+### Playwright Container (official `browserless/chrome` image)
+Playwright is a toolkit that allows to remote-control a browser. We here use the
+[browserless/chrome](https://hub.docker.com/r/browserless/chrome) image which essentially provides "chrome as a
+service" to which MetaLookup talks with the [playwright python package](https://pypi.org/project/playwright/) via a
+websocket.
 
 ### Postgres Container (optional, official `postgres` image)
 The postgres container provides a way to persist cache for the Extractor container. It is optional, as caching can
