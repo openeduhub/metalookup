@@ -54,7 +54,6 @@ jobs:
             dist/*.whl
 
   docker-build-and-push:
-    needs: python-build-and-test # because we generate the wheel file there.
     strategy:
       matrix:
         include:
@@ -62,22 +61,8 @@ jobs:
           - image: lighthouse
     runs-on: ubuntu-latest
     steps:
-      - name: Download wheel artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: wheel
-
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          # we need more than the last commit to figure out the version from the tags and commits.
-          fetch-depth: 0
-
-      - name: Set version tag
-        # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#set-an-output-parameter-set-output
-        run: echo "::set-output name=VERSION_TAG::v$(git describe --tags --abbrev=0 | sed 's/^v//')"
-        id: version-tag-step
-
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v4
@@ -98,13 +83,9 @@ jobs:
 
       - name: Build and push Image
         uses: docker/build-push-action@v3
-        env:
-          WHEEL_FILE: oeh_meta_lookup-v0.3.0-py3-none-any.whl
         with:
           context: .
           file: dockerfile_${{ matrix.image }}
           # only push if we build from main branch or a tag that matches
           push: ${{ github.ref == 'refs/heads/main' || github.ref_name == steps.version-tag-step.outputs.VERSION_TAG }}
           tags: ${{ steps.meta.outputs.tags }}
-          build-args: WHEEL_FILE
-#          build-args: WHEEL_FILE=oeh_meta_lookup-${{ steps.version-tag-step.outputs.VERSION_TAG }}-py3-none-any.whl

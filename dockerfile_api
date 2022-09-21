@@ -1,25 +1,19 @@
-ARG WHEEL_FILE
 FROM python:3.9-slim
 
 RUN adduser --system extractor
-
-
-RUN echo "${WHEEL_FILE}"
-RUN echo ${WHEEL_FILE}
-RUN echo $WHEEL_FILE
 
 WORKDIR /home/extractor
 
 # needed for docker healthcheck
 RUN apt-get update && apt-get install -y curl
 
-# make wheel file built with poetry build available in docker build step
-COPY ./${WHEEL_FILE} /home/extractor
+# copy sources to image
+COPY . /home/extractor
 
-# install the wheel file and all its (transitive) dependencies. We install directly into
-# the system python environment.
-RUN pip install --no-cache-dir /home/extractor/${WHEEL_FILE}
-
+# install the package. this will use the pyproject.toml file to first build the wheel and then install it.
+# using the generated artifact from the actual python build step would be nice, but piping the wheel file name
+# via build-args through the docker/build-push-action@v3 turned out to be a massive problem.
+RUN pip install --no-cache-dir /home/extractor/
 
 USER extractor
 
