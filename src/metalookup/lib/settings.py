@@ -21,7 +21,7 @@ CACHE_WARMUP_CONCURRENCY = int(os.environ.get("CACHE_WARMUP_CONCURRENCY", 6))
 
 # Playwright
 PLAYWRIGHT_WS_ENDPOINT = os.environ.get("PLAYWRIGHT_WS_ENDPOINT", "ws://playwright:3000")
-PLAYWRIGHT_PAGE_LOAD_TIMEOUT = int(os.environ.get("PLAYWRIGHT_PAGE_LOAD_TIMEOUT", 15))
+PLAYWRIGHT_PAGE_LOAD_TIMEOUT = int(os.environ.get("PLAYWRIGHT_PAGE_LOAD_TIMEOUT", 35))
 
 # Extractors
 # Online lists
