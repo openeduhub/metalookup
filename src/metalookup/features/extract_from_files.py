@@ -66,7 +66,7 @@ class ExtractFromFiles(Extractor[set[str]]):
         pass
 
     async def extract(self, content: Content, executor: Executor) -> tuple[StarCase, Explanation, set[str]]:
-        extractable_files = self._get_extractable_files(await content.raw_links())
+        extractable_files = await self._get_extractable_files(content)
 
         if len(extractable_files) == 0:  # avoid division by zero error below
             return StarCase.FIVE, _NO_FILES_TO_EXTRACT, set()
@@ -203,7 +203,29 @@ class ExtractFromFiles(Extractor[set[str]]):
         return {file for file in extractable_files if file is not None}
 
     @staticmethod
-    def _get_extractable_files(links: list[str]) -> set[str]:
-        file_extensions = [os.path.splitext(link)[-1] for link in links]
+    async def _get_extractable_files(content: Content) -> set[str]:
+        """
+        Search through the html and extract all links that end in docx or pdf.
+        Filters out email, phone, javascript, or section links (see https://www.w3schools.com/tags/att_a_href.asp)
 
-        return {file for file, extension in zip(links, file_extensions) if extension in [".docx", ".pdf"]}
+        Note: Extracted links will all be absolute, i.e. relative links will be modified to be valid URLs.
+        """
+        soup = await content.soup()
+
+        def filter(link: str) -> bool:
+            correct_extension = any(link.endswith(ext) for ext in (".docx", ".pdf"))
+            wrong_kind = any(link.startswith(s) for s in ("#", "javascript", "tel", "mailto"))
+            return correct_extension and not wrong_kind
+
+        def process(link: str) -> str:
+            if link.startswith("http"):
+                return link  # we are good.
+            url = urlparse(content.url)
+            link = link.strip("/")
+            if url.path == "":
+                return f"{url.scheme}://{url.netloc}/{link}"
+            # avoid multiple // in generated link...
+            path = url.path.strip("/")
+            return f"{url.scheme}://{url.netloc}/{path}/{link}"
+
+        return {process(link.get("href")) for link in soup.find_all(name="a", href=filter)}
