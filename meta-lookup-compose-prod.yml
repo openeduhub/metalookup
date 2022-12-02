@@ -3,7 +3,7 @@ version: '3.3'
 services:
   extractor:
     dns: 8.8.8.8
-    image: docker.edu-sharing.com/projects/oeh-redaktion/edusharing-projects-oeh-redaktion-metalookup-api:latest
+    image: docker.edu-sharing.com/projects/wlo/edu_sharing-projects-wlo-metalookup-api:latest
     ports:
       - "5057:5057"
     links:
@@ -50,7 +50,7 @@ services:
 
   lighthouse:
     dns: 8.8.8.8
-    image: docker.edu-sharing.com/projects/oeh-redaktion/edusharing-projects-oeh-redaktion-metalookup-lighthouse:latest
+    image: docker.edu-sharing.com/projects/wlo/edu_sharing-projects-wlo-metalookup-lighthouse:latest
     restart: always
     ports:
       - "5058:5058"

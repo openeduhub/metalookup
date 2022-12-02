@@ -4,7 +4,7 @@ on: push
 
 env:
   docker_repository: "docker.edu-sharing.com"
-  path_prefix: "/projects/oeh-redaktion/edusharing-projects-oeh-redaktion-metalookup"
+  path_prefix: "/projects/wlo/edu_sharing-projects-wlo-metalookup"
 
 jobs:
   python-build-and-test:
