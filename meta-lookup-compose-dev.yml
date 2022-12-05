@@ -8,7 +8,12 @@ version: '3.4'
 services:
   extractor:
     dns: 8.8.8.8
-    image: docker.edu-sharing.com/projects/wlo/edu_sharing-projects-wlo-metalookup-api:latest
+    image: docker.edu-sharing.com/projects/wlo/edu_sharing-projects-wlo-metalookup-api:dev
+    build:
+      dockerfile: dockerfile_api
+      context: .
+    environment:
+      - CACHE_DATABASE_URL=${CACHE_DATABASE_URL}
     ports:
       - "5057:5057"
     links:
@@ -49,7 +54,7 @@ services:
 
   lighthouse:
     dns: 8.8.8.8
-    image: docker.edu-sharing.com/projects/wlo/edu_sharing-projects-wlo-metalookup-lighthouse:latest
+    image: docker.edu-sharing.com/projects/wlo/edu_sharing-projects-wlo-metalookup-lighthouse:dev
     ports:
       - "5058:5058"
     restart: always
