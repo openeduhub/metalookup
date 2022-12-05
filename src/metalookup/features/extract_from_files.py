@@ -229,6 +229,6 @@ class ExtractFromFiles(Extractor[set[str]]):
             return f"{url.scheme}://{url.netloc}/{path}/{link}"
 
         return {process(link.get("href")) for link in filter(
-            lambda x: x != None,
+            lambda x: x is not None,
             soup.find_all(name="a", href=filter_links)
         )}
