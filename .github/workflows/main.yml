@@ -38,7 +38,7 @@ jobs:
       - name: build artifact and install
         # always use the latest tag as package version. Not perfect, but anything else gets crazy with corner cases...
         run: |
-          poetry env use 3.9
+          poetry env use 3.10
           poetry version $(git describe --tags --abbrev=0 | sed 's/^v//')
           poetry build
           poetry install
