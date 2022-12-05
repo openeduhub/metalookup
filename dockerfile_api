@@ -14,6 +14,7 @@ COPY . /home/extractor
 # using the generated artifact from the actual python build step would be nice, but piping the wheel file name
 # via build-args through the docker/build-push-action@v3 turned out to be a massive problem.
 RUN pip install --no-cache-dir /home/extractor/
+RUN chown -R extractor:nogroup /home/extractor
 
 USER extractor
 
