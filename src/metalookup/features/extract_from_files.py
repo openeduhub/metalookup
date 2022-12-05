@@ -212,7 +212,7 @@ class ExtractFromFiles(Extractor[set[str]]):
         """
         soup = await content.soup()
 
-        def filter(link: str) -> bool:
+        def filter_links(link: str) -> bool:
             correct_extension = any(link.endswith(ext) for ext in (".docx", ".pdf"))
             wrong_kind = any(link.startswith(s) for s in ("#", "javascript", "tel", "mailto"))
             return correct_extension and not wrong_kind
@@ -228,4 +228,7 @@ class ExtractFromFiles(Extractor[set[str]]):
             path = url.path.strip("/")
             return f"{url.scheme}://{url.netloc}/{path}/{link}"
 
-        return {process(link.get("href")) for link in soup.find_all(name="a", href=filter)}
+        return {process(link.get("href")) for link in filter(
+            lambda x: x != None,
+            soup.find_all(name="a", href=filter_links)
+        )}
