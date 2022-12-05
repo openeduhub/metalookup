@@ -230,4 +230,4 @@ class ExtractFromFiles(Extractor[set[str]]):
             path = url.path.strip("/")
             return f"{url.scheme}://{url.netloc}/{path}/{link}"
 
-        return {process(link.get("href")) for link in soup.find_all(name="a", href=filter_links())}
+        return {process(link.get("href")) for link in soup.find_all(name="a", href=filter_links)}
