@@ -30,10 +30,10 @@ jobs:
 
       - name: Install poetry
         run: pipx install poetry
-      - name: Set up Python 3.9
+      - name: Set up Python 3.10.8
         uses: actions/setup-python@v3
         with:
-          python-version: "3.9.7"
+          python-version: "3.10.8"
           cache: 'poetry'
       - name: build artifact and install
         # always use the latest tag as package version. Not perfect, but anything else gets crazy with corner cases...
