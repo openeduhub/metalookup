@@ -6,6 +6,22 @@ version: '3.4'
 # Use: > docker-compose --compatibility up extractor playwright lighthouse
 
 services:
+
+  # The docker-compose 'restart: always' option does not automatically restart unhealthy containers.
+  # It only restarts the container if it terminated (from within), or e.g. the host or docker daemon
+  # restarted.
+  # To avoid being stuck with a running, but unhealthy container, we use the autoheal container which
+  # restarts containers explicitly once they become unhealthy. To do that, it needs access to the
+  # host's docker socket. See also: https://stackoverflow.com/a/48538213/2160256
+  autoheal:
+    restart: always
+    image: willfarrell/autoheal
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=all
+      - AUTOHEAL_START_PERIOD=30
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
   extractor:
     dns: 8.8.8.8
     image: docker.edu-sharing.com/projects/wlo/edu_sharing-projects-wlo-metalookup-api:latest
@@ -17,13 +33,16 @@ services:
       - postgres
     depends_on:
       - postgres
+    restart: always
+    labels:
+      # tell the autoheal container to restart this container in case of failure
+      autoheal: true
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:5057/_ping" ]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 40s
-    restart: always
     deploy:
       resources:
         limits:
@@ -53,6 +72,9 @@ services:
     ports:
       - "5058:5058"
     restart: always
+    labels:
+      # this should tell the autoheal container to restart this container in case of failure
+      autoheal: true
     deploy:
       resources:
         limits:
@@ -74,7 +96,6 @@ services:
     image: postgres
     ports:
       - "5432:5432"
-    restart: always
     environment:
       # by default this will then also use metalookup db
       - POSTGRES_USER=${POSTGRES_USER}
