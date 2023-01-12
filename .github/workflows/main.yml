@@ -87,5 +87,5 @@ jobs:
           context: .
           file: dockerfile_${{ matrix.image }}
           # only push if we build from main branch or a tag that matches
-          push: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' || github.ref_name == steps.version-tag-step.outputs.VERSION_TAG }}
+          # push: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' || github.ref_name == steps.version-tag-step.outputs.VERSION_TAG }}
           tags: ${{ steps.meta.outputs.tags }}
