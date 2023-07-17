@@ -5,7 +5,8 @@ from logging import Logger
 from typing import Optional
 from unittest import mock
 
-import adblockparser
+import adblock
+from playwright.sync_api import Request
 
 from metalookup.app.models import Explanation, StarCase
 from metalookup.core.content import Content
@@ -32,6 +33,10 @@ class AdBlockBasedExtractor(Extractor[set[str]]):
 
     def __init__(self, logger: Optional[Logger] = None):
         self.logger = logger or logging.getLogger(__name__)
+        # playwright request resource types:
+        # `document`, `stylesheet`, `image`, `media`, `font`,
+        # `script`, `texttrack`, `xhr`, `fetch`, `eventsource`, `websocket`, `manifest`, `other`
+
         self.adblock_parser_options = {
             "script": True,
             "image": True,
@@ -55,62 +60,48 @@ class AdBlockBasedExtractor(Extractor[set[str]]):
             "websocket": True,
             # "domain" key must be populated on use
         }
-        self.rules: AdblockRules = None  # noqa will be initialized in async setup call
-        self.limit: Optional[int] = 2
+        self.engine: adblock.Engine = None  # noqa will be initialized in async setup call
+        self.limit: Optional[int] = None
         """
         Stop after finding a given amount of to be blocked links.
-        For websites with a lot of referenced content, this can significantly speed up the extraction process,
+        For websites with a lot of background requests, this can significantly speed up the extraction process,
         as once it is clear that there will be blocked content, there is no more need to check for more blocked content.
-        If set to none, then all links will be checked.
+        If set to none, then all requests will be checked.
         """
 
     async def setup(self) -> None:
         """Fetch tag lists from configured urls."""
         if len(self.urls) == 0:
             raise RuntimeError("Missing url specification of tag lists")
-        if self.rules is not None:
+        if self.engine is not None:
             raise RuntimeError("rules must be initialized in async setup call")
 
-        # patch the adblockparser python package to work with googles re2 package.
-        # re2 seems to be significantly faster than the builtin re package.
-        import re
-
-        def _combined_regex(regexes, flags=re.IGNORECASE, use_re2=False, max_mem=None):
-            joined_regexes = "|".join(r for r in regexes if r)
-            if not joined_regexes:
-                return None
-
-            if use_re2:
-                import re2
-
-                options = re2.Options()
-                options.max_mem = max_mem
-                return re2.compile(joined_regexes, options=options)
-
-            return re.compile(joined_regexes, flags=flags)
-
         rules = await download_tag_lists(urls=self.urls, logger=self.logger)
-        with mock.patch("adblockparser.parser._combined_regex", new=_combined_regex):
-            self.rules = adblockparser.AdblockRules(list(rules), skip_unsupported_rules=False, use_re2=True)
+        filterset = adblock.FilterSet()
+        filterset.add_filters(list(rules))
+        self.engine = adblock.Engine(filter_set=filterset)
 
-    def apply_rules(self, domain: str, links: list[str]) -> tuple[float, set[str]]:
+    def apply_rules(self, domain: str, requests: list[Request]) -> tuple[float, set[str]]:
         """Return the list of matches and the total computation time taken."""
         with runtime() as t:
-            options = self.adblock_parser_options.copy()
-            options["domain"] = domain
             values = set()
-            for url in links:
-                if self.rules.should_block(url=url, options=options):
-                    values.add(url)
+            for request in requests:
+                if self.engine.check_network_urls(
+                    url=request.url, source_url=domain, request_type=request.resource_type
+                ):
+                    values.add(request.url)
                     if self.limit is not None and len(values) > self.limit:
                         break
         return t(), values
 
     async def extract(self, content: Content, executor: Executor) -> tuple[StarCase, Explanation, set[str]]:
-        loop = asyncio.get_running_loop()
-        duration, values = await loop.run_in_executor(
-            executor, self.apply_rules, await content.domain(), await content.raw_links()
-        )
+        # fixme: cannot picke self.engine, hence we cannot dispatch the potentially CPU heavy stuff to a different
+        #        process
+        # loop = asyncio.get_running_loop()
+        # duration, values = await loop.run_in_executor(
+        #     executor, self.apply_rules, await content.domain(), await content.request()
+        # )
+        duration, values = self.apply_rules(await content.domain(), await content.requests())
         self.logger.info(
             f"Found {len(values)} links that should be blocked according to ad-block rules in {duration:5.2}s"
         )

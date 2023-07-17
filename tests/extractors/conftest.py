@@ -1,7 +1,7 @@
 from typing import Optional, Union
 from unittest.mock import Mock
 
-from playwright.async_api import Cookie
+from playwright.async_api import Cookie, Request
 from pydantic import HttpUrl
 
 from metalookup.core.content import Content
@@ -12,6 +12,7 @@ def mock_content(
     url: Optional[Union[str, HttpUrl]] = None,
     header: Optional[dict[str, str]] = None,
     cookies: Optional[list[Cookie]] = None,
+    requests: Optional[list[Request]] = None,
 ) -> Content:
 
     if header is not None:
@@ -23,5 +24,6 @@ def mock_content(
     content._headers = header or {}
     content._html = html or "<html></html>"
     content._response = Mock(status=200, text=Mock(return_value=html), headers=header or {})
+    content._requests = requests or []
 
     return content

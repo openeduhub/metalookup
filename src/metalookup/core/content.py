@@ -41,7 +41,6 @@ class Content:
         self._response: Optional[Response] = None
         self._html: Optional[str] = None
         self._cookies: Optional[list[Cookie]] = None
-        self._raw_links: Optional[list[str]] = None
 
     async def _fetch(self):
         # A pretty primitive implementation of "request deduplication".
@@ -182,52 +181,3 @@ class Content:
         if self._soup is None:
             self._soup = BeautifulSoup(await self.html(), "lxml")
         return self._soup
-
-    async def raw_links(self) -> list[str]:
-        # Note: The position where we await on the soup is actually critical:
-        #       If multiple tasks enter this method, they will all be suspended before the if block.
-        #       Once one of the tasks resumes, it will initialize self._raw_links, and once the remaining
-        #       tasks resume, they will skip the (expensive) if block. If the await statement would be within
-        #       the if block, all tasks would suspend within the if block and hence after resumption would _all_
-        #       perform the same rather expensive computation!
-        soup = await self.soup()
-        if self._raw_links is None:
-
-            def extract_raw_links(soup: BeautifulSoup, image_links: list[str]) -> list[str]:
-                source_regex = re.compile(r"src\=[\"|\']([\w\d\:\/\.\-\?\=]+)[\"|\']")
-                logger.debug("extracting raw links")
-                unique_tags = get_unique_list([tag.name for tag in soup.find_all()])
-                logger.debug(f"unique_tags: {unique_tags}")
-                if _SCRIPT in unique_tags:
-                    unique_tags.remove(_SCRIPT)
-                    source_regex = source_regex.findall
-                    script_links = [
-                        link
-                        for element in soup.find_all(_SCRIPT)
-                        for link in source_regex(str(element).replace("\n", ""))
-                        if link
-                    ]
-                else:
-                    script_links = []
-
-                attributes = [
-                    "href",
-                    "src",
-                    "srcset",
-                    "img src",
-                    "data-src",
-                    "data-srcset",
-                ]
-                links = [
-                    element.attrs.get(attribute)
-                    for tag in unique_tags
-                    for element in get_unique_list(soup.find_all(tag))
-                    for attribute in attributes
-                    if element.has_attr(attribute)
-                ]
-                logger.debug(f"Found {len(links)} links")
-                return get_unique_list(links + [el for el in image_links if el is not None] + script_links)
-
-            image_links = [image.attrs.get("src") for image in soup.findAll("img")]
-            self._raw_links = extract_raw_links(soup=soup, image_links=image_links)
-        return self._raw_links
